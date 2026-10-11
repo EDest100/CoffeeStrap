@@ -54,7 +54,7 @@ jobs:
           vpk download github --repoUrl $PACKAGES_REPO --token ${{ secrets.PACKAGE_TOKEN }} --channel windows-x64 --outputDir .build/velopack $PRE
 
       - name: Publish
-        run: dotnet run --project build -- Publish
+        run: cargo xtask publish
 
       - name: Upload to packages release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -139,8 +139,7 @@ jobs:
           SIGN: ${{ startsWith(github.ref, 'refs/tags/v') && 'true' || 'false' }}
           DEVELOPER_ID_APP: ${{ secrets.DEVELOPER_ID_APP }}
           DEVELOPER_ID_INSTALLER: ${{ secrets.DEVELOPER_ID_INSTALLER }}
-        run: dotnet run --project build -- Publish --override-arch ${{ matrix.arch }}
-
+        run: cargo xtask --override-arch ${{ matrix.arch }} publish 
       - name: Upload to packages release
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
@@ -182,7 +181,7 @@ jobs:
           vpk download github --repoUrl $PACKAGES_REPO --token ${{ secrets.PACKAGE_TOKEN }} --channel linux-x64 --outputDir .build/velopack $PRE
 
       - name: Publish
-        run: dotnet run --project build -- Publish
+        run: cargo xtask publish
 
       - name: Upload to packages release
         if: startsWith(github.ref, 'refs/tags/v')
