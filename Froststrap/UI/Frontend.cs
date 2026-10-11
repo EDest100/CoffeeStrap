@@ -22,9 +22,6 @@ namespace Froststrap.UI
 
         public static async Task ShowReleaseNotesDialog(string title, string releaseNotes)
         {
-            if (App.LaunchSettings.QuietFlag.Active)
-                return;
-
             await Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 var dialog = new FluentMessageBox(title, releaseNotes, Strings.Menu_Deployment_ReleaseNotes_Close);

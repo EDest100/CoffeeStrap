@@ -158,9 +158,6 @@ internal partial class App : Application
         if (version is null || string.IsNullOrWhiteSpace(notes))
             return;
 
-        if (LaunchSettings.QuietFlag.Active)
-            return;
-
         if (LaunchSettings.RobloxLaunchMode != LaunchMode.None || !string.Equals(version, Version, StringComparison.OrdinalIgnoreCase))
         {
             State.Prop.PendingUpdateVersion = null;
