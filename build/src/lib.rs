@@ -52,6 +52,7 @@ pub mod args {
 
     #[derive(Subcommand, Debug)]
     pub enum Action {
+        Clean,
         Restore,
         Build,
         Publish,

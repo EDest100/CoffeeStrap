@@ -33,6 +33,8 @@ pub fn main() {
 
     match args.action {
         xtask::args::Action::Build => action::build::main(),
+        xtask::args::Action::Restore => action::restore::main(),
+        xtask::args::Action::Clean => action::clean::main(),
         _ => println!("impl"),
     }
 }
