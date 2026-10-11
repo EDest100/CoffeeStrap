@@ -356,7 +356,7 @@ namespace Froststrap.UI.ViewModels.Settings
 
             if (!App.LaunchSettings.TestModeFlag.Active)
             {
-                string arg = SelectedLaunchMode == LaunchMode.Player ? "-player" : "-studio";
+                string arg = SelectedLaunchMode == LaunchMode.Player ? "--player" : "--studio";
                 Process.Start(Paths.Process, arg);
             }
             else

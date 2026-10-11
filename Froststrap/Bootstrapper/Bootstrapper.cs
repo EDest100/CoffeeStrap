@@ -2843,7 +2843,7 @@ internal partial class Bootstrapper : IDisposable
         checkLock.Dispose();
 
         App.Logger.Info("Starting background updater");
-        Process.Start(Paths.Process, "-backgroundupdater");
+        Process.Start(Paths.Process, "--background-updater");
     }
 
     private async Task<bool> ApplyModifications()

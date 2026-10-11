@@ -9,7 +9,6 @@ using Avalonia.Markup.Xaml;
 using Avalonia.Styling;
 using Avalonia.Threading;
 using Froststrap.AppData;
-using Froststrap.Backend;
 using Froststrap.Integrations;
 using Froststrap.UI.Elements.Base;
 using Microsoft.Win32;
@@ -65,11 +64,6 @@ internal partial class App : Application
     public static readonly string Version = (System.Reflection.Assembly.GetExecutingAssembly()
         .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
         ?? "unknown+asteo").Split("+")[0];
-
-    static App()
-    {
-        Logger.Info($"App.Version = '{Version}'");
-    }
 
     public static readonly string InternalVersion = Assembly.GetExecutingAssembly()
         .GetName().Version!.ToString()[..^2];

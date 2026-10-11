@@ -326,7 +326,7 @@ namespace Froststrap
             }
 
             if (App.LaunchSettings.TestModeFlag.Active)
-                Process.Start(Paths.Process, "-settings -testmode");
+                Process.Start(Paths.Process, "--settings --test-mode");
         }
 
         public void Dispose()

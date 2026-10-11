@@ -42,8 +42,6 @@ namespace Froststrap
 
         public static async Task ProcessLaunchArgs()
         {
-            LogUnknownArgs();
-
             if (App.State.Prop.IsFirstLaunch)
             {
                 App.Logger.Info("First launch detected, launching onboarding");
@@ -71,17 +69,6 @@ namespace Froststrap
                 App.Logger.Info($"Opening menu");
                 LaunchMenu();
             }
-        }
-
-        public static void LogUnknownArgs()
-        {
-            var unknown = App.LaunchSettings.UnknownArgs;
-
-            if (unknown.Count == 0)
-                return;
-
-            App.Logger.Error($"{unknown.Count} unrecognized argument(s): {string.Join(", ", unknown)}");
-            App.Terminate(ErrorCode.ERROR_CANCELLED);
         }
 
         public static void LaunchSettings(bool quitIfAlreadyRunning = false)
