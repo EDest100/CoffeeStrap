@@ -221,7 +221,7 @@ internal partial class App : Application
         Logger.Debug($"Terminating with exit code {exitCodeNum} ({exitCode})");
 
 #if __APPLE__
-        VirtualDisplay.End();
+        Froststrap.Backend.VirtualDisplay.End();
 #endif
         Environment.Exit(exitCodeNum);
     }
@@ -543,7 +543,7 @@ internal partial class App : Application
 #if __APPLE__
         desktop.ShutdownRequested += (_, _) =>
         {
-            VirtualDisplay.End();
+            Froststrap.Backend.VirtualDisplay.End();
         };
 #endif
 
