@@ -147,7 +147,7 @@ namespace Froststrap
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(ActivationRequestPath)!);
-                File.WriteAllText(ActivationRequestPath, DateTime.UtcNow.Ticks.ToString());
+                File.WriteAllText(ActivationRequestPath, DateTime.UtcNow.Ticks.ToString(CultureInfo.InvariantCulture));
             }
             catch (Exception ex)
             {
@@ -172,7 +172,7 @@ namespace Froststrap
 
                     lastSeen = request;
                     App.Logger.Info("Settings activation requested by another process");
-                    await Dispatcher.UIThread.InvokeAsync(() => RaiseWindow(window), DispatcherPriority.Normal);
+                    await Dispatcher.UIThread.InvokeAsync(() => RaiseWindow(window), DispatcherPriority.Normal, token);
                 }
             }
             catch (OperationCanceledException) { }
@@ -187,7 +187,7 @@ namespace Froststrap
             try
             {
                 return File.Exists(ActivationRequestPath)
-                    ? long.Parse(File.ReadAllText(ActivationRequestPath))
+                    ? long.Parse(File.ReadAllText(ActivationRequestPath), CultureInfo.InvariantCulture)
                     : null;
             }
             catch
