@@ -7,20 +7,24 @@
   typos,
   reuse,
   stdenv,
+  renovate,
   callPackage,
-  linuxdeploy,
 }:
 let
   inherit (callPackage ./devshell-tools.nix { }) mkFragment;
+  avdt = callPackage ./avdt.nix { };
+  vpk = callPackage ./vpk.nix { };
 in
 mkFragment {
   name = "extra";
   buildInputs = [
+    vpk # velopack tooling
+    avdt # avalonia devtools
     reuse
     typos
+    renovate
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [
-    linuxdeploy
     nfpm
   ];
 }

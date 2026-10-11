@@ -26,10 +26,11 @@
   omnisharp-roslyn,
   callPackage,
   nspr,
+  dbus,
+  squashfsTools,
 }:
 let
   inherit (callPackage ./devshell-tools.nix { }) mkFragment;
-  avdt = callPackage ./avdt.nix { };
   dotnet-tc = dotnetCorePackages.sdk_10_0-bin;
 in
 mkFragment (finalAttrs: {
@@ -44,6 +45,7 @@ mkFragment (finalAttrs: {
     wayland
     libxkbcommon
     libsecret
+    dbus
 
     # X11 libs
     libX11
@@ -60,7 +62,6 @@ mkFragment (finalAttrs: {
   buildInputs = [
     omnisharp-roslyn # lsp
     dotnet-tc
-    avdt # devtools for avalonia
   ]
   ++ lib.optionals stdenv.hostPlatform.isLinux [
     glib
@@ -71,6 +72,8 @@ mkFragment (finalAttrs: {
     libxcb
     xcbutil
     libxkbcommon
+
+    squashfsTools
   ];
 
   shellHook = ''

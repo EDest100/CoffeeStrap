@@ -5,6 +5,8 @@
   stdenv,
   callPackage,
   cargo-bloat,
+  pkg-config,
+  dbus
 }:
 {
   fenix,
@@ -15,7 +17,9 @@ let
   toolchain =
     with fenix.packages.${stdenv.system};
     combine [
-      latest.toolchain
+      minimal.toolchain
+      latest.clippy
+      latest.rust-analyzer
     ];
 in
 mkFragment {
@@ -23,5 +27,9 @@ mkFragment {
   buildInputs = [
     toolchain
     cargo-bloat
+  ];
+  nativeBuildInputs = [
+    pkg-config
+    dbus
   ];
 }

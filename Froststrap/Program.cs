@@ -4,6 +4,8 @@
 
 using NLog;
 using Avalonia;
+using Velopack;
+using Froststrap;
 using Froststrap.Backend;
 #if WINDOWS
 using System.Runtime.InteropServices;
@@ -23,6 +25,13 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        VelopackApp.Build()
+            .SetAutoApplyOnStartup(false)
+            .OnAfterInstallFastCallback(v => UriHandler.RegisterProtocolHandlers())
+            .OnAfterUpdateFastCallback(v => UriHandler.RegisterProtocolHandlers())
+            .OnBeforeUninstallFastCallback(v => UriHandler.UnregisterProtocolHandlers())
+            .Run();
+
         ThreadPool.SetMinThreads(Environment.ProcessorCount * 2, Environment.ProcessorCount * 2);
 
 #if WINDOWS
@@ -41,7 +50,7 @@ sealed class Program
 
         try
         {
-            NativeNotify.InitRing();
+            NativeNotify.Init();
             BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
         }
         catch (Exception ex)

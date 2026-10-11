@@ -24,6 +24,9 @@ namespace Froststrap.UI.ViewModels.Settings
 
     internal class MainWindowViewModel : ObservableObject
     {
+        private bool _isNotLinux = !OperatingSystem.IsLinux();
+        public bool IsNotLinux { get => _isNotLinux; }
+
         private static readonly Dictionary<string, LucideIconNames> _pageIconMap = new()
         {
             ["integrations"] = LucideIconNames.Plus,
@@ -307,7 +310,7 @@ namespace Froststrap.UI.ViewModels.Settings
         private void OpenAbout()
         {
             if (App.AboutOpen) return;
-            
+
             App.FrostRPC?.SetDialog("About");
             new Elements.About.MainWindow().Show();
             App.FrostRPC?.ClearDialog();
@@ -384,14 +387,9 @@ namespace Froststrap.UI.ViewModels.Settings
             get
             {
                 if (OperatingSystem.IsLinux())
-                {
-                    var clientPath = Path.Combine(Paths.Versions, "Sober", "data", "sober", "packages", "x86_64", "com.roblox.client");
-                    return Directory.Exists(clientPath) && Directory.EnumerateFiles(clientPath, "*", SearchOption.AllDirectories).Any();
-                }
+                    return App.LinuxPlayerInstalled;
                 else
-                {
                     return App.IsPlayerInstalled;
-                }
             }
         }
 
