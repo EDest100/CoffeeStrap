@@ -10,11 +10,11 @@ pub fn main() {
 
     println!(); // seperator
 
-    let g = xtask::integrate::git::info();
-    log::info!("Git commit: {}", g.commit);
-    log::info!("Git branch: {}", g.branch);
-    log::info!("Git local dir: {}", g.dir);
-    log::info!("Git tag: {}", g.tag.as_deref().unwrap_or("none"));
+    let git = xtask::integrate::git::info();
+    log::info!("Git commit: {}", git.commit);
+    log::info!("Git branch: {}", git.branch);
+    log::info!("Git local dir: {}", git.dir);
+    log::info!("Git tag: {}", git.tag.as_deref().unwrap_or("none"));
 
     println!(); // seperator
 
