@@ -1,5 +1,5 @@
 use xtask::{
-    arch,
+    action, arch,
     utils::{self, log},
 };
 
@@ -30,4 +30,9 @@ pub fn main() {
 
     let cargo_v = utils::process("cargo", ["-V"]).exec().unwrap();
     log::info!("Cargo version: {}", cargo_v.stdout());
+
+    match args.action {
+        xtask::args::Action::Build => action::build::main(),
+        _ => println!("impl"),
+    }
 }
