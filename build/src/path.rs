@@ -30,3 +30,6 @@ pub fn bundling_artifacts() -> PathBuf {
 pub fn dist() -> PathBuf {
     output_root().join("dist")
 }
+pub fn velopack() -> PathBuf {
+    output_root().join("velopack")
+}

@@ -1,9 +1,33 @@
 //! publish module
 
+mod velopack;
 
-use std::env;
+use std::{fs, env};
 use crate::integrate::git::git;
 use crate::{arch, args, path, utils::{log, process}};
+
+#[cfg(target_os = "linux")]
+#[path = "linux.rs"]
+mod os_specific;
+
+#[cfg(target_os = "macos")]
+#[path = "macos.rs"]
+mod os_specific;
+
+#[cfg(target_os = "windows")]
+#[path = "win.rs"]
+mod os_specific;
+
+fn delete_pdbs(dir: &std::path::Path) -> std::io::Result<()> {
+    for entry in fs::read_dir(dir)? {
+        let path = entry?.path();
+        if path.is_file() && path.extension().is_some_and(|e| e == "pdb") {
+            log::info!("Deleting debug file {}...", path.display());
+            fs::remove_file(&path)?;
+        }
+    }
+    Ok(())
+}
 
 fn env_nonempty(key: &str) -> Option<String> {
     env::var(key).ok().filter(|s| !s.trim().is_empty())
@@ -66,4 +90,10 @@ pub fn main() {
 
     std::fs::create_dir_all(path::dotnet_build_artifacts()).unwrap();
     process("dotnet", args).stream().exec().unwrap();
+
+    delete_pdbs(&path::dotnet_publish_artifacts()).unwrap();
+
+    os_specific::main();
+
+    log::info!("Build complete!");
 }
