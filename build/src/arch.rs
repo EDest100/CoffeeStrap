@@ -43,6 +43,33 @@ pub fn dotnet_arch() -> &'static str {
     }
 }
 
+#[cfg(target_os = "linux")]
+pub fn dotnet_rid() -> &'static str {
+    match normalized_arch() {
+        "x86_64" => "linux-x64",
+        "aarch64" => "linux-arm64",
+        _ => unreachable!(),
+    }
+}
+
+#[cfg(target_os = "macos")]
+pub fn dotnet_rid() -> &'static str {
+    match normalized_arch() {
+        "x86_64" => "osx-x64",
+        "aarch64" => "osx-arm64",
+        _ => unreachable!(),
+    }
+}
+
+#[cfg(target_os = "windows")]
+pub fn dotnet_rid() -> &'static str {
+    match normalized_arch() {
+        "x86_64" => "win-x64",
+        "aarch64" => "win-arm64",
+        _ => unreachable!(),
+    }
+}
+
 /// Maps the many spellings of an arch to a better name.
 pub fn normalize_arch(arch: &str) -> &'static str {
     match arch {
