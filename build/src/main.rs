@@ -1,6 +1,7 @@
 use std::fmt::{Display, Formatter};
 
 use clap::{Parser, Subcommand};
+use xtask::utils::log;
 use xtask::{arch, utils};
 
 #[derive(Parser, Debug)]
@@ -48,8 +49,8 @@ enum Action {
 pub fn main() {
     let args = AppArgs::parse();
 
-    println!("{args:#?}");
-    println!("hl: {}", arch::normalize_arch("arm64"));
+    log::info!("{args:#?}");
+    log::info!("hl: {}", arch::normalize_arch("arm64"));
     let cargo_v = utils::process("cargo", ["-V"]).exec().unwrap();
 
     println!("Cargo version: {}", cargo_v.stdout());
