@@ -5,3 +5,4 @@
 pub mod clean;
 pub mod build;
 pub mod restore;
+pub mod publish;

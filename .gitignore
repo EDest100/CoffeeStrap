@@ -12,6 +12,7 @@ DerivedData/
 # Velopack folders
 Releases/
 publish/
+!build/src/action/publish/
 
 # IDE stuff
 .vs/

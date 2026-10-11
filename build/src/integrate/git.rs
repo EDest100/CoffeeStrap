@@ -7,7 +7,7 @@ pub struct GitInfo {
     pub tag: Option<String>,
 }
 
-fn git(args: &[&str]) -> Option<String> {
+pub fn git(args: &[&str]) -> Option<String> {
     let p = process("git", args.iter().copied()).exec().ok()?;
     if !p.success() {
         return None;
