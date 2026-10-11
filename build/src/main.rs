@@ -19,6 +19,7 @@ struct AppArgs {
     /// What configuration to use as a base
     configuration: Configuration,
     #[arg(long)]
+    /// Override to cross-compile arch's
     override_arch: Option<String>,
 }
 
@@ -48,6 +49,13 @@ enum Action {
 
 pub fn main() {
     let args = AppArgs::parse();
+    log::info!("Starting xtask {}", env!("CARGO_PKG_VERSION"));
+
+    let g = xtask::integrate::git::info();
+    log::info!("Git commit: {}", g.commit);
+    log::info!("Git branch: {}", g.branch);
+    log::info!("Git local dir: {}", g.dir);
+    log::info!("Git tag: {}", g.tag.as_deref().unwrap_or("none"));
 
     log::info!("{args:#?}");
     log::info!("hl: {}", arch::normalize_arch("arm64"));
