@@ -27,6 +27,8 @@ namespace Froststrap
         public bool BypassUpdateCheck => BackgroundUpdaterFlag.Active;
 #endif
 
+        public bool Silent { get; set; }
+
         public LaunchMode RobloxLaunchMode { get; set; } = LaunchMode.None;
 
         public string RobloxLaunchArgs { get; set; } = "";

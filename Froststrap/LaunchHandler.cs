@@ -440,6 +440,7 @@ namespace Froststrap
         public static async Task LaunchBackgroundUpdater()
         {
             App.LaunchSettings.NoLaunchFlag.Active = true;
+            App.LaunchSettings.Silent = true;
 
             App.Logger.Info("Initializing bootstrapper");
             App.Bootstrapper = new Bootstrapper(LaunchMode.Player)

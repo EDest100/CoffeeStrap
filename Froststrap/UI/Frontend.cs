@@ -17,11 +17,21 @@ namespace Froststrap.UI
         public static async Task<MessageBoxResult> ShowMessageBox(string message, MessageBoxImage icon = MessageBoxImage.Information, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultResult = MessageBoxResult.None)
         {
             App.Logger.Info(message);
+
+            if (App.LaunchSettings.Silent)
+                return defaultResult;
+
             return await ShowFluentMessageBox(message, icon, buttons);
         }
 
         public static async Task ShowReleaseNotesDialog(string title, string releaseNotes)
         {
+            if (App.LaunchSettings.Silent)
+            {
+                App.Logger.Info("Suppressing release notes dialog in silent mode");
+                return;
+            }
+
             await Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 var dialog = new FluentMessageBox(title, releaseNotes, Strings.Menu_Deployment_ReleaseNotes_Close);
@@ -57,6 +67,12 @@ namespace Froststrap.UI
 
         public static async Task ShowExceptionDialog(Exception exception)
         {
+            if (App.LaunchSettings.Silent)
+            {
+                App.Logger.Error(exception, "Suppressing exception dialog in silent mode");
+                return;
+            }
+
             await Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 var dialog = new ExceptionDialog(exception);
@@ -83,6 +99,12 @@ namespace Froststrap.UI
 
         public static async Task ShowConnectivityDialog(string title, string description, MessageBoxImage image, Exception exception)
         {
+            if (App.LaunchSettings.Silent)
+            {
+                App.Logger.Error(exception, $"Suppressing connectivity dialog in silent mode: {title}");
+                return;
+            }
+
             await Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 var dialog = new ConnectivityDialog(title, description, image, exception);
