@@ -2,8 +2,9 @@
 //! functions quick
 
 use std::ffi::OsStr;
-use std::io;
-use std::process::Command;
+use std::io::{self, Read, Write};
+use std::process::{Command, Stdio};
+use std::thread;
 
 pub mod log {
     use std::fmt;
@@ -77,6 +78,7 @@ pub mod log {
 
 pub struct ProcessBuilder {
     cmd: Command,
+    stream: bool,
 }
 
 pub struct Process {
@@ -92,7 +94,25 @@ where
 {
     let mut cmd = Command::new(file_name);
     cmd.args(args);
-    ProcessBuilder { cmd }
+    ProcessBuilder { cmd, stream: false }
+}
+
+fn tee<R: Read, W: Write>(mut src: R, mut sink: W, echo: bool) -> Vec<u8> {
+    let mut all = Vec::new();
+    let mut buf = [0u8; 4096];
+    loop {
+        match src.read(&mut buf) {
+            Ok(0) | Err(_) => break,
+            Ok(n) => {
+                all.extend_from_slice(&buf[..n]);
+                if echo {
+                    let _ = sink.write_all(&buf[..n]);
+                    let _ = sink.flush();
+                }
+            }
+        }
+    }
+    all
 }
 
 impl ProcessBuilder {
@@ -106,13 +126,34 @@ impl ProcessBuilder {
         self
     }
 
+    pub fn stream(mut self) -> Self {
+        self.stream = true;
+        self
+    }
+
     /// Runs the process to completion and captures everything.
     pub fn exec(mut self) -> io::Result<Process> {
-        let out = self.cmd.output()?;
+        let stream = self.stream;
+        let mut child = self
+            .cmd
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped())
+            .spawn()?;
+
+        let out = child.stdout.take().expect("stdout was piped");
+        let err = child.stderr.take().expect("stderr was piped");
+
+        let out_t = thread::spawn(move || tee(out, io::stdout(), stream));
+        let err_t = thread::spawn(move || tee(err, io::stderr(), stream));
+
+        let status = child.wait()?;
+        let stdout = out_t.join().expect("stdout thread panicked");
+        let stderr = err_t.join().expect("stderr thread panicked");
+
         Ok(Process {
-            stdout: String::from_utf8_lossy(&out.stdout).into_owned(),
-            stderr: String::from_utf8_lossy(&out.stderr).into_owned(),
-            exit_code: out.status.code(),
+            stdout: String::from_utf8_lossy(&stdout).into_owned(),
+            stderr: String::from_utf8_lossy(&stderr).into_owned(),
+            exit_code: status.code(),
         })
     }
 }
