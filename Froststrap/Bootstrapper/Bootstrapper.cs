@@ -76,6 +76,8 @@ internal partial class Bootstrapper : IDisposable
 
     public bool QuitIfLockExists { get; set; }
 
+    public WatcherData? PendingWatcherData { get; private set; }
+
     #endregion
 
     #region Core
@@ -376,14 +378,11 @@ internal partial class Bootstrapper : IDisposable
 
             if (!App.LaunchSettings.NoLaunchFlag.Active && !_cancelTokenSource.IsCancellationRequested)
             {
-                if (!App.LaunchSettings.QuietFlag.Active)
-                {
-                    // show tips
-                    if (!_packageExtractionSuccess)
-                        Backend.NativeNotify.SendMessage(Strings.Bootstrapper_ExtractionFailed_Title, Strings.Bootstrapper_ExtractionFailed_Message);
-                    else if (!allModificationsApplied)
-                        Backend.NativeNotify.SendMessage(Strings.Bootstrapper_ModificationsFailed_Title, Strings.Bootstrapper_ModificationsFailed_Message);
-                }
+                // show tips
+                if (!_packageExtractionSuccess)
+                    Backend.NativeNotify.SendMessage(Strings.Bootstrapper_ExtractionFailed_Title, Strings.Bootstrapper_ExtractionFailed_Message);
+                else if (!allModificationsApplied)
+                    Backend.NativeNotify.SendMessage(Strings.Bootstrapper_ModificationsFailed_Title, Strings.Bootstrapper_ModificationsFailed_Message);
 
                 if (!OperatingSystem.IsLinux())
                 {
@@ -560,14 +559,11 @@ internal partial class Bootstrapper : IDisposable
             {
                 App.Logger.Warn($"Player version override invalid: {error}. Falling back to channel.");
 
-                if (!App.LaunchSettings.QuietFlag.Active)
-                {
-                    await Frontend.ShowMessageBox(
-                        string.Format(CultureInfo.InvariantCulture, Strings.Bootstrapper_Status_InvalidOverride, overrideHash, error),
-                        MessageBoxImage.Warning,
-                        MessageBoxButton.OK
-                    );
-                }
+                await Frontend.ShowMessageBox(
+                    string.Format(CultureInfo.InvariantCulture, Strings.Bootstrapper_Status_InvalidOverride, overrideHash, error),
+                    MessageBoxImage.Warning,
+                    MessageBoxButton.OK
+                );
 
                 App.Settings.Prop.PlayerVersionOverrideEnabled = false;
                 App.Settings.Prop.PlayerVersionOverrideHash = string.Empty;
@@ -1091,7 +1087,7 @@ internal partial class Bootstrapper : IDisposable
             }
         }
 
-        await LaunchWatcherIfNeededAsync(autoclosePids);
+        await PrepareWatcherIfNeededAsync(autoclosePids);
 
         // allow for window to show, since the log is created pretty far beforehand
         await Task.Delay(1000);
@@ -1226,7 +1222,7 @@ internal partial class Bootstrapper : IDisposable
             _appPid = process.Id;
             App.Logger.Info($"Sober launched with PID {_appPid}");
             App.Logger.Debug("Launching Watcher...");
-            await LaunchWatcherIfNeededAsync(autoclosePids);
+            await PrepareWatcherIfNeededAsync(autoclosePids);
 
             _ = Task.Run(async () =>
             {
@@ -1315,12 +1311,18 @@ internal partial class Bootstrapper : IDisposable
         }
     }
 
-    private async Task LaunchWatcherIfNeededAsync(List<int> autoclosePids, string? logFileName = null, string? logDirectory = null)
+    private async Task PrepareWatcherIfNeededAsync(List<int> autoclosePids, string? logFileName = null, string? logDirectory = null)
     {
         if (!(App.Settings.Prop.EnableActivityTracking
             || App.LaunchSettings.TestModeFlag.Active
             || autoclosePids.Count > 0))
             return;
+
+        if (PendingWatcherData is not null)
+        {
+            App.Logger.Error("A watcher was already prepared for this launch, ignoring the duplicate");
+            return;
+        }
 
         try
         {
@@ -1353,11 +1355,7 @@ internal partial class Bootstrapper : IDisposable
             }
         }
 
-        using var ipl = new InterProcessLock("WatcherLaunch", TimeSpan.FromSeconds(5));
-        if (!ipl.IsAcquired)
-            return;
-
-        var watcherData = new WatcherData
+        PendingWatcherData = new WatcherData
         {
             ProcessId = _appPid,
             LogFile = logFileName,
@@ -1366,15 +1364,7 @@ internal partial class Bootstrapper : IDisposable
             AccessCode = _joinData.AccessCode
         };
 
-        string watcherDataArg = Convert.ToBase64String(
-            Encoding.UTF8.GetBytes(JsonSerializer.Serialize(watcherData)));
-
-        string args = $"-watcher \"{watcherDataArg}\"";
-
-        if (App.LaunchSettings.TestModeFlag.Active)
-            args += " -testmode";
-
-        Process.Start(Paths.Process, args);
+        App.Logger.Info($"Watcher prepared for pid {_appPid} ({_launchMode})");
     }
 
     private static async Task LaunchIntegrationAsync(CustomIntegration integration, List<int> autoclosePids)
@@ -2796,7 +2786,7 @@ internal partial class Bootstrapper : IDisposable
 
         string wineLogDir = Path.Combine(wineMgr.PrefixDir, "drive_c", "users", Environment.UserName, "AppData", "Local", "Roblox", "logs");
         Directory.CreateDirectory(wineLogDir);
-        await LaunchWatcherIfNeededAsync(autoclosePids, logDirectory: wineLogDir);
+        await PrepareWatcherIfNeededAsync(autoclosePids, logDirectory: wineLogDir);
 
         await Task.Delay(1000);
     }
@@ -2853,7 +2843,7 @@ internal partial class Bootstrapper : IDisposable
         checkLock.Dispose();
 
         App.Logger.Info("Starting background updater");
-        Process.Start(Paths.Process, "-backgroundupdater");
+        Process.Start(Paths.Process, "--background-updater");
     }
 
     private async Task<bool> ApplyModifications()

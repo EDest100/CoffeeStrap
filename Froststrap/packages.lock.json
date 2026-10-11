@@ -97,6 +97,15 @@
           "Newtonsoft.Json": "13.0.1"
         }
       },
+      "DotMake.CommandLine": {
+        "type": "Direct",
+        "requested": "[3.7.0, )",
+        "resolved": "3.7.0",
+        "contentHash": "t7DvPCfFPd8Hz5Xk7zopOj7kG7ubRkQc2U47fiI3/SCircEDKBoyQBzoqrUokyl0KpU66u9ri486iG1s1sc/oA==",
+        "dependencies": {
+          "System.CommandLine": "[2.0.11, 3.0.0)"
+        }
+      },
       "HotAvalonia": {
         "type": "Direct",
         "requested": "[3.1.5, )",
@@ -482,6 +491,11 @@
         "type": "Transitive",
         "resolved": "3.119.4",
         "contentHash": "XOpbx/4CReO2wYsq2s6rbvdauc6dntG4Zv499sHGTJ87bwZaFXszFkwql3+FIZMc8kUPeaj3Mx2ezIJmo8a1Kg=="
+      },
+      "System.CommandLine": {
+        "type": "Transitive",
+        "resolved": "2.0.11",
+        "contentHash": "Pmg3/T0M37ZS3ovwPHtfBNTCdqNpnxo+tnZMg8JDHVR0qD8KwcPUKlheEiZysb1En8IyH7yDoa9QDq97Ny/vhQ=="
       },
       "Tmds.DBus.Protocol": {
         "type": "Transitive",
