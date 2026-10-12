@@ -7,14 +7,28 @@ pub mod build;
 pub mod restore;
 pub mod publish;
 
-use clap::Subcommand;
+use std::str::FromStr;
 
-#[derive(Subcommand, Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub enum Action {
     Clean,
     Restore,
     Build,
     Publish,
+}
+
+impl FromStr for Action {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "clean" => Ok(Self::Clean),
+            "restore" => Ok(Self::Restore),
+            "build" => Ok(Self::Build),
+            "publish" => Ok(Self::Publish),
+            _ => Err(format!("unknown command `{s}`")),
+        }
+    }
 }
 
 impl Action {
