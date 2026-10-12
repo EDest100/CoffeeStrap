@@ -43,31 +43,22 @@ pub fn dotnet_arch() -> &'static str {
     }
 }
 
-#[cfg(target_os = "linux")]
-pub fn dotnet_rid() -> &'static str {
-    match normalized_arch() {
-        "x86_64" => "linux-x64",
-        "aarch64" => "linux-arm64",
-        _ => unreachable!(),
-    }
+pub fn dotnet_rid() -> String {
+    let os = consts::OS;
+
+    let os = match os {
+        "linux" => "linux",
+        "windows" => "win",
+        "macos" => "osx",
+        _ => unreachable!()
+    };
+    
+    format!("{os}-{}", dotnet_arch())
 }
 
-#[cfg(target_os = "macos")]
-pub fn dotnet_rid() -> &'static str {
-    match normalized_arch() {
-        "x86_64" => "osx-x64",
-        "aarch64" => "osx-arm64",
-        _ => unreachable!(),
-    }
-}
-
-#[cfg(target_os = "windows")]
-pub fn dotnet_rid() -> &'static str {
-    match normalized_arch() {
-        "x86_64" => "win-x64",
-        "aarch64" => "win-arm64",
-        _ => unreachable!(),
-    }
+pub fn velopack_channel() -> String {
+    let os = consts::OS;
+    format!("{os}-{}", dotnet_arch())
 }
 
 /// Maps the many spellings of an arch to a better name.
