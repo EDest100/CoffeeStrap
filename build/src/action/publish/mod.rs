@@ -2,7 +2,7 @@
 
 mod velopack;
 
-use std::{fs, env};
+use std::{fs, env, sync::OnceLock};
 use crate::integrate::git::git;
 use crate::{arch, args, path, utils::{log, process}};
 
@@ -34,6 +34,11 @@ fn env_nonempty(key: &str) -> Option<String> {
 }
 
 fn version() -> String {
+    static VERSION: OnceLock<String> = OnceLock::new();
+    VERSION.get_or_init(version_for_run).clone()
+}
+
+fn version_for_run() -> String {
     const DEFAULT: &str = "v0.0.2";
 
     let tag = if env::var("GITHUB_REF_TYPE").as_deref() == Ok("tag") {
