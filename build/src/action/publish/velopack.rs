@@ -27,8 +27,8 @@ pub fn vpk() -> String {
     "vpk".to_string()
 }
 
-pub fn pack() {
-    let publish_path = path::dotnet_publish_artifacts();
+pub fn pack(pack_dir: &std::path::Path) {
+    let pack_path = pack_dir.to_string_lossy().into_owned();
     let velopack_path = path::velopack();
     let version = super::version();
     let channel = arch::velopack_channel();
@@ -43,7 +43,7 @@ pub fn pack() {
         "--packTitle", "Froststrap",
         "--packAuthors", "Froststrap",
         "--packVersion", &version,
-        "--packDir", &publish_path.to_string_lossy(),
+        "--packDir", &pack_path,
         "--outputDir", &velopack_path.to_string_lossy(),
         "--mainExe", main_exe,
         "--channel", &channel,
@@ -95,9 +95,6 @@ pub fn pack() {
     }
 
     log::info!("Packing with vpk on channel {}", channel);
-    let proc = process(&vpk(), args).stream().exec().unwrap();
-    if !proc.success() {
-        log::error!("vpk pack failed ({:?})", proc.exit_code());
-        std::process::exit(1);
-    }
+    let vpk_bin = vpk();
+    process(&vpk_bin, args).exec_checked(&vpk_bin);
 }

@@ -55,7 +55,7 @@ pub fn main() {
         Configuration::Release => "Release",
     };
 
-    let xcb = process(
+    process(
         "xcodebuild",
         [
             "-project".to_string(),
@@ -72,14 +72,7 @@ pub fn main() {
             "build".to_string(),
         ],
     )
-    .stream()
-    .exec()
-    .unwrap();
-
-    if !xcb.success() {
-        log::error!("xcodebuild failed with exit code {:?}", xcb.exit_code());
-        std::process::exit(1);
-    }
+    .exec_checked("xcodebuild");
 
     let dist = path::dist();
     fs::create_dir_all(&dist).unwrap();
@@ -91,15 +84,11 @@ pub fn main() {
     if dest.is_dir() {
         fs::remove_dir_all(&dest).unwrap();
     }
-    let ditto = process("ditto", [&src, &dest]).stream().exec().unwrap();
-    if !ditto.success() {
-        log::error!("ditto failed with exit code {:?}", ditto.exit_code());
-        std::process::exit(1);
-    }
+    process("ditto", [&src, &dest]).exec_checked("ditto");
 
     if a.no_installers {
         return;
     }
-    super::velopack::pack();
+    super::velopack::pack(&dest);
 }
 

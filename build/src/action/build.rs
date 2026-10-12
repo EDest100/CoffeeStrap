@@ -29,5 +29,5 @@ pub fn main() {
     ];
 
     std::fs::create_dir_all(path::dotnet_build_artifacts()).unwrap();
-    process("dotnet", args).stream().exec().unwrap();
+    process("dotnet", args).exec_checked("dotnet msbuild");
 }

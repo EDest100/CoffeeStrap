@@ -89,7 +89,7 @@ pub fn main() {
     ];
 
     std::fs::create_dir_all(path::dotnet_build_artifacts()).unwrap();
-    process("dotnet", args).stream().exec().unwrap();
+    process("dotnet", args).exec_checked("dotnet publish");
 
     delete_pdbs(&path::dotnet_publish_artifacts()).unwrap();
 

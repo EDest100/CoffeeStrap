@@ -1,26 +1,21 @@
 //! Handling for getting and serializing Arch details
 //! for different build system.
 
-use std::{env::consts, sync::RwLock};
+use std::env::consts;
 
-static OVERRIDE_ARCH: RwLock<&'static str> = RwLock::new("");
+use crate::utils::log;
 
-pub fn target_arch() -> String {
-    if let Some(a) = &crate::args::get().override_arch {
-        return a.clone();
-    }
-
-    let o = OVERRIDE_ARCH.read().expect("lock poisoned");
-    if o.is_empty() {
-        consts::ARCH.to_string()
-    } else {
-        o.to_string()
-    }
+pub fn target_arch() -> &'static str {
+    let raw = crate::args::get()
+        .override_arch
+        .as_deref()
+        .unwrap_or(consts::ARCH);
+    dotnet_arch_name(normalize_arch(raw))
 }
 
 /// Always "x86_64" or "aarch64".
 pub fn normalized_arch() -> &'static str {
-    normalize_arch(&target_arch())
+    normalize_arch(target_arch())
 }
 
 pub fn rust_triple() -> &'static str {
@@ -31,34 +26,49 @@ pub fn rust_triple() -> &'static str {
         ("aarch64", "windows") => "aarch64-pc-windows-msvc",
         ("x86_64", "linux") => "x86_64-unknown-linux-gnu",
         ("aarch64", "linux") => "aarch64-unknown-linux-gnu",
-        _ => "unknown-unknown-unknown",
-    }
-}
-
-pub fn dotnet_arch() -> &'static str {
-    match normalized_arch() {
-        "x86_64" => "x64",
-        "aarch64" => "arm64",
-        _ => unreachable!(),
+        _ => {
+            log::error!(
+                "Unsupported target architecture '{}' for the current operating system.",
+                target_arch()
+            );
+            std::process::exit(1);
+        }
     }
 }
 
 pub fn dotnet_rid() -> String {
-    let os = consts::OS;
-
-    let os = match os {
+    let os = match consts::OS {
         "linux" => "linux",
         "windows" => "win",
         "macos" => "osx",
-        _ => unreachable!()
+        other => {
+            log::error!("Unsupported operating system '{other}' for publishing.");
+            std::process::exit(1);
+        }
     };
-    
-    format!("{os}-{}", dotnet_arch())
+
+    format!("{os}-{}", target_arch())
+}
+
+/// Arch spelling expected by nFPM in its `arch:` field.
+pub fn nfpm_arch() -> &'static str {
+    nfpm_arch_name(normalized_arch())
 }
 
 pub fn velopack_channel() -> String {
-    let os = consts::OS;
-    format!("{os}-{}", dotnet_arch())
+    let arch = target_arch();
+    match (consts::OS, arch) {
+        ("windows", "x64") => "windows-x64".to_string(),
+        ("macos", a @ ("x64" | "arm64")) => format!("macos-{a}"),
+        ("linux", "x64") => "linux-x64".to_string(),
+        _ => {
+            log::error!(
+                "Velopack does not support channel for {} {arch}.",
+                consts::OS
+            );
+            std::process::exit(1);
+        }
+    }
 }
 
 /// Maps the many spellings of an arch to a better name.
@@ -67,5 +77,20 @@ pub fn normalize_arch(arch: &str) -> &'static str {
         "x64" | "x86_64" | "x86-64" | "amd64" => "x86_64",
         "aarch64" | "arm64" => "aarch64",
         other => panic!("Unrecognized arch: {other}"),
+    }
+}
+
+fn dotnet_arch_name(normalized: &str) -> &'static str {
+    match normalized {
+        "x86_64" => "x64",
+        "aarch64" => "arm64",
+        other => panic!("Unrecognized arch: {other}"),
+    }
+}
+
+fn nfpm_arch_name(normalized: &str) -> &'static str {
+    match normalized {
+        "aarch64" => "arm64",
+        _ => "amd64",
     }
 }

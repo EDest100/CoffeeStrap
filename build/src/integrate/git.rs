@@ -34,7 +34,7 @@ pub fn info() -> GitInfo {
     GitInfo {
         commit: git(&["rev-parse", "HEAD"]).unwrap_or_else(|| "unknown".into()),
         branch,
-        dir: git(&["rev-parse", "--show-toplevel"]).unwrap_or_else(|| ".".into()),
+        dir: crate::path::git_root().to_string_lossy().into_owned(),
         tag: git(&["describe", "--tags", "--exact-match"])
             .or_else(|| git(&["describe", "--tags", "--abbrev=0"])),
     }

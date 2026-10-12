@@ -33,10 +33,13 @@ pub fn main() {
 
     log::info!("Target Arch: {}", arch::target_arch());
     log::info!("Rust Target: {}", arch::rust_triple());
-    log::info!("Dotnet Target: {}", arch::dotnet_arch());
+    log::info!("Dotnet RID: {}", arch::dotnet_rid());
 
-    let cargo_v = utils::process("cargo", ["-V"]).exec().unwrap();
-    log::info!("Cargo version: {}", cargo_v.stdout());
+    match utils::process("cargo", ["-V"]).exec() {
+        Ok(v) if v.success() => log::info!("Cargo version: {}", v.stdout().trim()),
+        Ok(v) => log::warn!("cargo -V failed ({:?})", v.exit_code()),
+        Err(e) => log::warn!("cargo not available: {e}"),
+    }
 
     args.action.exec();
 }

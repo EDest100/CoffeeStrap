@@ -94,7 +94,43 @@ where
 {
     let mut cmd = Command::new(file_name);
     cmd.args(args);
+    cmd.current_dir(crate::path::git_root());
     ProcessBuilder { cmd, stream: false }
+}
+
+pub fn dedent(raw: &str) -> String {
+    let lines: Vec<&str> = raw.lines().collect();
+
+    let start = lines
+        .iter()
+        .position(|l| !l.trim().is_empty())
+        .unwrap_or(lines.len());
+    let end = lines
+        .iter()
+        .rposition(|l| !l.trim().is_empty())
+        .map_or(start, |i| i + 1);
+    let kept = &lines[start..end];
+    if kept.is_empty() {
+        return String::new();
+    }
+
+    let indent = kept
+        .iter()
+        .filter(|l| !l.trim().is_empty())
+        .map(|l| l.len() - l.trim_start().len())
+        .min()
+        .unwrap_or(0);
+
+    let mut out = String::new();
+    for line in kept {
+        if line.trim().is_empty() {
+            out.push('\n');
+        } else {
+            out.push_str(&line[indent..]);
+            out.push('\n');
+        }
+    }
+    out
 }
 
 fn tee<R: Read, W: Write>(mut src: R, mut sink: W, echo: bool) -> Vec<u8> {
@@ -131,7 +167,6 @@ impl ProcessBuilder {
         self
     }
 
-    /// Runs the process to completion and captures everything.
     pub fn exec(mut self) -> io::Result<Process> {
         let stream = self.stream;
         let mut child = self
@@ -155,6 +190,18 @@ impl ProcessBuilder {
             stderr: String::from_utf8_lossy(&stderr).into_owned(),
             exit_code: status.code(),
         })
+    }
+
+    pub fn exec_checked(self, what: &str) -> Process {
+        let proc = self.stream().exec().unwrap_or_else(|e| {
+            log::error!("failed to start {what}: {e}");
+            std::process::exit(1);
+        });
+        if !proc.success() {
+            log::error!("{what} failed ({:?})", proc.exit_code());
+            std::process::exit(1);
+        }
+        proc
     }
 }
 

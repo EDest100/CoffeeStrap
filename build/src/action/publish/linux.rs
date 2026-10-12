@@ -1,6 +1,6 @@
 //! os specific stuff for publish
 
-use crate::{args, arch, path::{self, dist, dotnet_publish_artifacts}, utils::{log, process}};
+use crate::{args, arch, path::{self, dist, dotnet_publish_artifacts}, utils::{dedent, log, process}};
 use std::{fs, path::{PathBuf, Path}, fs::File, io::Write};
 
 pub fn main() {
@@ -14,7 +14,17 @@ pub fn main() {
 
     std::fs::create_dir_all(path::dist()).unwrap();
 
-    let desktop_entry = format!(r#"
+    let entry = desktop_entry(&version);
+    let mut desktop_file = File::create(desktop.clone()).unwrap();
+    desktop_file.write_all(entry.as_bytes()).unwrap();
+
+    build_nfpm(dotnet_publish_artifacts(), version, desktop, icon);
+    super::velopack::pack(&dotnet_publish_artifacts());
+}
+
+fn desktop_entry(version: &str) -> String {
+    dedent(&format!(
+        r#"
         [Desktop Entry]
         Type=Application
         Name=Froststrap
@@ -26,13 +36,8 @@ pub fn main() {
         Categories=Game;
         MimeType=x-scheme-handler/roblox;x-scheme-handler/roblox-player;
         X-AppImage-Version={version}
-    "#);
-
-    let mut desktop_file = File::create(desktop.clone()).unwrap();
-    desktop_file.write_all(&desktop_entry.as_bytes()).unwrap();
-
-    build_nfpm(dotnet_publish_artifacts(), version, desktop, icon);
-    super::velopack::pack();    
+    "#
+    ))
 }
 
 fn build_nfpm(
@@ -48,7 +53,39 @@ fn build_nfpm(
     let config = dist().join("nfpm.yaml");
     let post_install_path = dist().join("nfpm-postinstall.sh");
 
-    let post_install = r#"
+    let script = post_install_script();
+    let mut post_install_file = File::create(post_install_path.clone()).unwrap();
+    post_install_file.write_all(script.as_bytes()).unwrap();
+
+    let nfpm_yaml = nfpm_config(
+        arch::nfpm_arch(),
+        &binary,
+        &icon,
+        &desktop,
+        &post_install_path,
+        &version,
+    );
+
+    let mut nfpm_yaml_file = File::create(config.clone()).unwrap();
+    nfpm_yaml_file.write_all(nfpm_yaml.as_bytes()).unwrap();
+
+    for p in ["deb", "rpm"] {
+        log::info!("Building .{} via nFPM", p);
+
+        let target = dist()
+            .join(format!("Froststrap-linux-{}.{}", arch::target_arch(), p))
+            .to_string_lossy()
+            .into_owned();
+        let config_s = config.to_string_lossy().into_owned();
+
+        let args = ["pkg", "--packager", p, "-f", &config_s, "-t", &target];
+        process(&nfpm, args).exec_checked(&nfpm);
+    }
+}
+
+fn post_install_script() -> String {
+    dedent(
+        r#"
         #!/bin/sh
         set -e
 
@@ -61,14 +98,22 @@ fn build_nfpm(
         fi
 
         /usr/bin/Froststrap --register-mime-types 2>/dev/null || :
-    "#;
-    let mut post_install_file = File::create(post_install_path.clone()).unwrap();
-    post_install_file.write_all(&post_install.as_bytes()).unwrap();
+    "#,
+    )
+}
 
-    let nfpm_yaml = format!(
+fn nfpm_config(
+    arch: &str,
+    binary: &Path,
+    icon: &Path,
+    desktop: &Path,
+    post_install: &Path,
+    version: &str,
+) -> String {
+    dedent(&format!(
         r#"
             name: froststrap
-            arch: {}
+            arch: {arch}
             platform: linux
             version: {version}
             maintainer: Froststrap-Dev
@@ -88,30 +133,12 @@ fn build_nfpm(
 
             scripts:
               postinstall: {}
-        "#, match arch::dotnet_arch() {
-            _ => "x64"
-        },
-        &binary.to_string_lossy(),
-        &icon.to_string_lossy(),
-        &desktop.to_string_lossy(),
-        &post_install_path.to_string_lossy()
-    );
-
-    let mut nfpm_yaml_file = File::create(config.clone()).unwrap();
-    nfpm_yaml_file.write_all(&nfpm_yaml.as_bytes()).unwrap();
-
-    for p in ["deb", "rpm"] {
-        log::info!("Building .{} via nFPM", p);
-
-        let target = dist()
-            .join(format!("Froststrap-linux-{}.{}", arch::target_arch(), p))
-            .to_string_lossy()
-            .into_owned();
-        let config_s = config.to_string_lossy().into_owned();
-
-        let args = ["pkg", "--packager", p, "-f", &config_s, "-t", &target];
-        process(&nfpm, args).stream().exec().unwrap();
-    }
+        "#,
+        binary.to_string_lossy(),
+        icon.to_string_lossy(),
+        desktop.to_string_lossy(),
+        post_install.to_string_lossy()
+    ))
 }
 
 pub fn ensure_tool(build_dir: &Path, name: &str, url: &str, extract_tar_gz: bool) -> String {
@@ -132,17 +159,17 @@ pub fn ensure_tool(build_dir: &Path, name: &str, url: &str, extract_tar_gz: bool
         let extract_s = extract_dir.to_string_lossy().into_owned();
 
         log::info!("{} not found on PATH, downloading archive to {}", name, archive_s);
-        run_checked("curl", ["-L", "--fail", "-o", &archive_s, url]);
+        process("curl", ["-L", "--fail", "-o", &archive_s, url]).exec_checked("curl");
 
         fs::create_dir_all(&extract_dir).unwrap();
-        run_checked("tar", ["-xzf", &archive_s, "-C", &extract_s]);
+        process("tar", ["-xzf", &archive_s, "-C", &extract_s]).exec_checked("tar");
 
         fs::copy(extract_dir.join(name), &tool_path).unwrap();
         fs::remove_file(&archive).unwrap();
         fs::remove_dir_all(&extract_dir).unwrap();
     } else {
         log::info!("{} not found on PATH, downloading to {}", name, tool_s);
-        run_checked("curl", ["-L", "--fail", "-o", &tool_s, url]);
+        process("curl", ["-L", "--fail", "-o", &tool_s, url]).exec_checked("curl");
     }
 
     #[cfg(unix)]
@@ -154,21 +181,10 @@ pub fn ensure_tool(build_dir: &Path, name: &str, url: &str, extract_tar_gz: bool
     tool_s
 }
 
-fn run_checked<const N: usize>(program: &str, args: [&str; N]) {
-    let proc = process(program, args).stream().exec().unwrap_or_else(|e| {
-        log::error!("failed to start {program}: {e}");
-        std::process::exit(1);
-    });
-    if !proc.success() {
-        log::error!("{program} failed ({:?})", proc.exit_code());
-        std::process::exit(1);
-    }
-}
-
 pub fn is_on_path(exe: &str) -> bool {
     std::env::var("PATH").unwrap_or("".into())
         .split(':')
-        .filter(|d| *d != "")
+        .filter(|d| !d.is_empty())
         .map(PathBuf::from)
         .any(|d| d.join(exe).exists())
 }

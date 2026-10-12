@@ -1,13 +1,28 @@
 //! Helpers for path finding
 
-use crate::integrate::git;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 
 const XTASK_DIR: &str = env!("CARGO_MANIFEST_DIR");
 
-pub fn git_root() -> PathBuf {
-    let git = git::info();
-    git.dir.into()
+pub fn git_root() -> &'static Path {
+    static ROOT: OnceLock<PathBuf> = OnceLock::new();
+    ROOT.get_or_init(discover_root)
+}
+
+fn discover_root() -> PathBuf {
+    if let Ok(out) = std::process::Command::new("git")
+        .args(["rev-parse", "--show-toplevel"])
+        .output()
+        && out.status.success()
+    {
+        let root = String::from_utf8_lossy(&out.stdout).trim().to_string();
+        if !root.is_empty() {
+            return PathBuf::from(root);
+        }
+    }
+
+    std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
 }
 
 pub fn xtask_root() -> PathBuf {
