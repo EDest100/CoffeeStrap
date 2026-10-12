@@ -34,18 +34,18 @@ internal class FroststrapCliCommand
     [CliOption(
         Name = "--player",
         Alias = "p",
-        Description = "Launch Roblox Player with the given URI or launch arguments",
+        Description = "Launch Roblox Player; pass a roblox-player: URI or launch arguments as a target",
         Required = false,
-        Arity = CliArgumentArity.ExactlyOne)]
-    public string? Player { get; set; }
+        Arity = CliArgumentArity.Zero)]
+    public bool Player { get; set; }
 
     [CliOption(
         Name = "--studio",
         Alias = "s",
-        Description = "Launch Roblox Studio with a URI or a local place file",
+        Description = "Launch Roblox Studio; pass a roblox-studio: URI or a local place file as a target",
         Required = false,
-        Arity = CliArgumentArity.ExactlyOne)]
-    public string? Studio { get; set; }
+        Arity = CliArgumentArity.Zero)]
+    public bool Studio { get; set; }
 
     [CliOption(
         Name = "--roblox-version",

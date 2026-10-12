@@ -70,21 +70,25 @@ namespace Froststrap
             ConsoleFlag.Active = cli.ShowConsole;
             NoGpuFlag.Active = cli.NoGpu;
 
-            SetFlag(PlayerFlag, cli.Player);
-            SetFlag(StudioFlag, cli.Studio);
             SetFlag(VersionFlag, cli.RobloxVersion);
             SetFlag(ChannelFlag, cli.Channel);
             SetFlag(GameShortcutFlag, cli.GameShortcut);
+
+            PlayerFlag.Active = cli.Player;
+            StudioFlag.Active = cli.Studio;
 
             ClassifyTargets(cli.Targets);
 
             if (VersionFlag.Active)
                 RobloxLaunchMode = LaunchMode.Unknown;
 
-            if (PlayerFlag.Active)
-                ParsePlayer(PlayerFlag.Data);
-            else if (StudioFlag.Active)
-                ParseStudio(StudioFlag.Data);
+            if (RobloxLaunchMode is LaunchMode.None or LaunchMode.Unknown)
+            {
+                if (PlayerFlag.Active)
+                    RobloxLaunchMode = LaunchMode.Player;
+                else if (StudioFlag.Active)
+                    RobloxLaunchMode = LaunchMode.Studio;
+            }
 
             if (GameShortcutFlag.Active && !string.IsNullOrEmpty(GameShortcutFlag.Data))
                 ParseGameShortcut(GameShortcutFlag.Data);
@@ -194,49 +198,6 @@ namespace Froststrap
             }
 
             return false;
-        }
-
-        private void ParsePlayer(string? data)
-        {
-            RobloxLaunchMode = LaunchMode.Player;
-
-            if (!string.IsNullOrEmpty(data))
-            {
-                Logger.Info("Got Roblox launch arguments");
-                RobloxLaunchArgs = data;
-            }
-            else
-            {
-                Logger.Error("No Roblox launch arguments were provided");
-            }
-        }
-
-        private void ParseStudio(string? data)
-        {
-            RobloxLaunchMode = LaunchMode.Studio;
-
-            if (string.IsNullOrEmpty(data))
-            {
-                Logger.Error("No Roblox launch arguments were provided");
-                return;
-            }
-
-            if (data.StartsWith("roblox-studio:", StringComparison.Ordinal))
-            {
-                Logger.Info("Got Roblox Studio launch arguments");
-                RobloxLaunchArgs = data;
-            }
-            else if (data.StartsWith("roblox-studio-auth:", StringComparison.Ordinal))
-            {
-                Logger.Info("Got Roblox Studio Auth launch arguments");
-                RobloxLaunchMode = LaunchMode.StudioAuth;
-                RobloxLaunchArgs = data;
-            }
-            else
-            {
-                Logger.Info("Got Roblox Studio local place file");
-                RobloxLaunchArgs = $"-task EditFile -localPlaceFile \"{data}\"";
-            }
         }
 
         private void ParseGameShortcut(string data)

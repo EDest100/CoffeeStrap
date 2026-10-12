@@ -356,14 +356,11 @@ namespace Froststrap.UI.ViewModels.Settings
 
             if (!App.LaunchSettings.TestModeFlag.Active)
             {
-                string arg = SelectedLaunchMode == LaunchMode.Player ? "--player" : "--studio";
-                Process.Start(Paths.Process, arg);
+                LaunchEntry.LaunchInChildProcess(SelectedLaunchMode);
             }
             else
             {
-                CloseAction = SelectedLaunchMode == LaunchMode.Player
-                    ? NextAction.LaunchRoblox
-                    : NextAction.LaunchRobloxStudio;
+                CloseAction = LaunchEntry.ToNextAction(SelectedLaunchMode);
                 CloseWindow();
             }
         }
