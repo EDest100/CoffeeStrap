@@ -56,7 +56,7 @@ fn compile_png_to_icns(png_path: &Path, out_icns_path: &Path) {
                 out_file.to_str().unwrap(),
             ],
         )
-        .exec_checked(&format!("sips ({filename})"));
+        .exec().unwrap();
     }
 
     process(
