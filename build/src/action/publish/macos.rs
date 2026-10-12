@@ -101,6 +101,6 @@ pub fn main() {
     if a.no_installers {
         return;
     }
-    super::velopack::pack(&dest);
+    super::velopack::pack();
 }
 
