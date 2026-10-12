@@ -1,16 +1,23 @@
-use xtask::{
-    arch,
-    utils::{self, log},
-};
+//! Build system for Froststrap
+
+pub mod action;
+pub mod arch;
+pub mod integrate;
+pub mod path;
+pub mod utils;
+pub mod args;
+
+use utils::log;
+use integrate::git;
 
 pub fn main() {
-    xtask::args::init();
+    args::init();
 
     log::info!("Running xtask {}", env!("CARGO_PKG_VERSION"));
 
     println!(); // seperator
 
-    let git = xtask::integrate::git::info();
+    let git = git::info();
     log::info!("Git commit: {}", git.commit);
     log::info!("Git branch: {}", git.branch);
     log::info!("Git local dir: {}", git.dir);
@@ -18,7 +25,7 @@ pub fn main() {
 
     println!(); // seperator
 
-    let args = xtask::args::get();
+    let args = args::get();
     log::info!("No Installers: {}", args.no_installers);
     log::info!("Configuration: {}", args.configuration);
 
