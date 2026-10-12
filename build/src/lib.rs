@@ -8,7 +8,7 @@ pub mod utils;
 
 /// Arg handling
 pub mod args {
-    use clap::{Parser, Subcommand};
+    use clap::Parser;
     use std::{
         fmt::{Display, Formatter},
         sync::OnceLock,
@@ -21,7 +21,7 @@ pub mod args {
     pub struct AppArgs {
         #[command(subcommand)]
         /// Instruction on which to do with the Build System
-        pub action: Action,
+        pub action: crate::action::Action,
         #[arg(long, default_value_t = false)]
         /// Skip installers on publish
         pub no_installers: bool,
@@ -48,14 +48,6 @@ pub mod args {
                 Release => "release",
             })
         }
-    }
-
-    #[derive(Subcommand, Debug)]
-    pub enum Action {
-        Clean,
-        Restore,
-        Build,
-        Publish,
     }
 
     static ARGS: OnceLock<AppArgs> = OnceLock::new();
