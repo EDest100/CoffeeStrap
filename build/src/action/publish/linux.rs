@@ -167,7 +167,7 @@ fn run_checked<const N: usize>(program: &str, args: [&str; N]) {
 
 pub fn is_on_path(exe: &str) -> bool {
     std::env::var("PATH").unwrap_or("".into())
-        .split(":")
+        .split(':')
         .filter(|d| *d != "")
         .map(PathBuf::from)
         .any(|d| d.join(exe).exists())

@@ -29,6 +29,11 @@ pub mod log {
         format!("{color}{text}{RESET}")
     }
 
+    pub fn emit(to_stderr: bool, color: &str, level: &str, args: std::fmt::Arguments<'_>) {
+        let line = format!("{} [{}] {}", paint(GRAY, &timestamp()), paint(color, level), args);
+        if to_stderr { eprintln!("{line}"); } else { println!("{line}"); }
+    }
+
     pub struct Blue<T>(pub T);
 
     macro_rules! forward {
@@ -46,29 +51,24 @@ pub mod log {
 
     #[macro_export]
     macro_rules! __log {
-        ($print:ident, $color:expr, $level:literal, $fmt:literal $(, $arg:expr)* $(,)?) => {
-            $print!(
-                "{} [{}] {}",
-                $crate::utils::log::paint($crate::utils::log::GRAY, &$crate::utils::log::timestamp()),
-                $crate::utils::log::paint($color, $level),
-                format_args!($fmt $(, $crate::utils::log::Blue(&$arg))*)
-            )
+        ($err:expr, $color:expr, $level:literal, $fmt:literal $(, $arg:expr)* $(,)?) => {
+            $crate::utils::log::emit($err, $color, $level, format_args!($fmt $(, $crate::utils::log::Blue(&$arg))*))
         };
     }
 
     #[macro_export]
     macro_rules! __info {
-        ($($t:tt)*) => { $crate::__log!(println, $crate::utils::log::BLUE, "INF", $($t)*) };
+        ($($t:tt)*) => { $crate::__log!(false, $crate::utils::log::BLUE, "INF", $($t)*) };
     }
 
     #[macro_export]
     macro_rules! __warn {
-        ($($t:tt)*) => { $crate::__log!(eprintln, $crate::utils::log::YELLOW, "WRN", $($t)*) };
+        ($($t:tt)*) => { $crate::__log!(true, $crate::utils::log::YELLOW, "WRN", $($t)*) };
     }
 
     #[macro_export]
     macro_rules! __error {
-        ($($t:tt)*) => { $crate::__log!(eprintln, $crate::utils::log::RED, "ERR", $($t)*) };
+        ($($t:tt)*) => { $crate::__log!(true, $crate::utils::log::RED, "ERR", $($t)*) };
     }
 
     pub use __error as error;
