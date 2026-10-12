@@ -33,6 +33,10 @@ pub fn output_root() -> PathBuf {
     git_root().join(".build")
 }
 
+pub fn write_output_gitignore() {
+    std::fs::write(output_root().join(".gitignore"), "*").unwrap();
+}
+
 pub fn dotnet_publish_artifacts() -> PathBuf {
     output_root().join("publish")
 }

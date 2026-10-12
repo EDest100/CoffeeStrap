@@ -88,7 +88,8 @@ pub fn main() {
         "-nologo".to_string(),
     ];
 
-    std::fs::create_dir_all(path::dotnet_build_artifacts()).unwrap();
+    std::fs::create_dir_all(path::dotnet_publish_artifacts()).unwrap();
+    path::write_output_gitignore();
     process("dotnet", args).exec_checked("dotnet publish");
 
     delete_pdbs(&path::dotnet_publish_artifacts()).unwrap();
