@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 use plist::Value;
-use crate::utils::{log, process};
+use crate::utils::{Process, log, process};
 
 fn copy_any(src: &Path, dest: &Path) {
     let meta = fs::symlink_metadata(src).unwrap();
@@ -56,7 +56,7 @@ fn compile_png_to_icns(png_path: &Path, out_icns_path: &Path) {
                 out_file.to_str().unwrap(),
             ],
         )
-        .exec().unwrap();
+        .exec().map(|x| x.stderr).unwrap();
     }
 
     process(
