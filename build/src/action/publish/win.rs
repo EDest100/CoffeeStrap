@@ -5,6 +5,6 @@ use crate::args;
 pub fn main() {
     let args = args::get();
     if !args.no_installers {
-        velopack::pack();
+        super::velopack::pack();
     }
 }
