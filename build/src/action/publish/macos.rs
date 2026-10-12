@@ -1,7 +1,6 @@
 //! os specific stuff for publish
 
-use std::{fs, path::{Path, PathBuf}};
-
+use std::{fs, path::PathBuf};
 use crate::{
     arch, args,
     args::Configuration,
