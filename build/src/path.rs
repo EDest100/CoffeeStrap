@@ -25,8 +25,16 @@ fn discover_root() -> PathBuf {
     std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
 }
 
-pub fn xtask_root() -> PathBuf {
-    PathBuf::from(XTASK_DIR)
+pub fn xtask_root() -> &'static Path {
+    static ROOT: OnceLock<PathBuf> = OnceLock::new();
+    ROOT.get_or_init(|| {
+        let checkout = git_root().join("build");
+        if checkout.join("Cargo.toml").exists() {
+            checkout
+        } else {
+            PathBuf::from(XTASK_DIR)
+        }
+    })
 }
 
 pub fn output_root() -> PathBuf {
