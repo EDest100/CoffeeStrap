@@ -182,9 +182,10 @@ pub fn ensure_tool(build_dir: &Path, name: &str, url: &str, extract_tar_gz: bool
 }
 
 pub fn is_on_path(exe: &str) -> bool {
-    std::env::var("PATH").unwrap_or("".into())
-        .split(':')
-        .filter(|d| !d.is_empty())
-        .map(PathBuf::from)
-        .any(|d| d.join(exe).exists())
+    let Some(path) = std::env::var_os("PATH") else {
+        return false;
+    };
+    std::env::split_paths(&path)
+        .filter(|dir| !dir.as_os_str().is_empty())
+        .any(|dir| dir.join(exe).exists())
 }
