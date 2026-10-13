@@ -1224,7 +1224,9 @@ internal partial class Bootstrapper : IDisposable
             App.Logger.Debug("Launching Watcher...");
             await PrepareWatcherIfNeededAsync(autoclosePids);
 
-            _ = Task.Run(async () =>
+            CancellationToken readyToken = _cancelTokenSource.Token;
+
+            var readyTask = Task.Run(async () =>
             {
                 string[] soberReadySignals = ["will_handle_app_startup", "will_handle_start_game"];
                 const int pollIntervalMs = 50;
@@ -1239,7 +1241,7 @@ internal partial class Bootstrapper : IDisposable
                     {
                         if (File.Exists(latestLog) && File.GetLastWriteTimeUtc(latestLog) >= launchTime)
                             break;
-                        await Task.Delay(pollIntervalMs);
+                        await Task.Delay(pollIntervalMs, readyToken);
                     }
 
                     if (!File.Exists(latestLog))
@@ -1255,10 +1257,10 @@ internal partial class Bootstrapper : IDisposable
 
                     while (DateTime.UtcNow < deadline)
                     {
-                        string? line = await reader.ReadLineAsync();
+                        string? line = await reader.ReadLineAsync(readyToken);
                         if (line is null)
                         {
-                            await Task.Delay(pollIntervalMs);
+                            await Task.Delay(pollIntervalMs, readyToken);
                             continue;
                         }
                         if (soberReadySignals.Any(signal => line.Contains(signal, StringComparison.Ordinal)))
@@ -1271,6 +1273,10 @@ internal partial class Bootstrapper : IDisposable
 
                     App.Logger.Warn("Timed out waiting for Sober ready signal, closing dialog.");
                 }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
                 catch (Exception ex)
                 {
                     App.Logger.Error($"Log watcher error: {ex.Message} — closing dialog.");
@@ -1279,21 +1285,11 @@ internal partial class Bootstrapper : IDisposable
                 {
                     Dialog?.CloseBootstrapper();
                 }
-            });
+            }, readyToken);
 
-            while (!_cancelTokenSource.IsCancellationRequested)
-            {
-                await Task.Delay(2500, _cancelTokenSource.Token);
+            await readyTask;
 
-                var soberProcesses = Process.GetProcessesByName("sober");
-                bool isRunning = soberProcesses.Length > 0;
-                foreach (var p in soberProcesses) p.Dispose();
-
-                if (!isRunning)
-                    break;
-            }
-
-            App.Logger.Info("Sober process exited");
+            App.Logger.Info("Sober is running, handing off to the watcher");
         }
         catch (OperationCanceledException)
         {
