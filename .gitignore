@@ -1,19 +1,22 @@
-# Build artifacts
-target
-result
-.build/
-[Bb]in/
-[Oo]bj/
+# FS/OS hint touches
 .DS_Store
-
-# Velopack folders
-Releases/
-publish/
-!build/src/action/publish/
+.Spotlight-V100
+.Trashes
+*humbs.db
+[Dd]esktop.ini
 
 # IDE stuff
 .vs/
 .idea/
 .vscode/
 *.user
-Publish.bat
+
+# Build artifacts
+target
+result
+.build/
+[Bb]in/
+[Oo]bj/
+Releases/
+publish/
+!build/src/action/publish/
