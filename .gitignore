@@ -1,13 +1,10 @@
 # Build artifacts
 target
 result
-build/macApp/build
 .build/
 [Bb]in/
 [Oo]bj/
-DerivedData/
 .DS_Store
-.fallout/temp
 
 # Velopack folders
 Releases/
