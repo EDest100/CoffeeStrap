@@ -39,7 +39,8 @@ objc2-core-foundation = "0.3"
 
 [workspace.dependencies.objc2-core-graphics]
 version = "0.3"
-features = ["CGDirectDisplay", "CGDisplayConfiguration"]
+default-features = false
+features = ["CGDirectDisplay", "CGDisplayConfiguration", "CGError", "libc"]
 
 [workspace.dependencies.dbus]
 version = "0.9"
