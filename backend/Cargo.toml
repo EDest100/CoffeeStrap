@@ -34,8 +34,12 @@ incremental = false
 objc2 = "0.6"
 block2 = "0.6"
 dispatch2 = "0.3"
-objc2-core-services = "0.3"
 objc2-core-foundation = "0.3"
+
+[workspace.dependencies.objc2-core-services]
+version = "0.3"
+default-features = false
+features = ["LaunchServices", "LSInfo"]
 
 [workspace.dependencies.objc2-core-graphics]
 version = "0.3"
