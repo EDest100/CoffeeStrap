@@ -114,6 +114,7 @@ pub fn main() {
     let icon_path = path::xtask_root().join("macicon512.png");
 
     let entitlements_path = path::bundling_artifacts().join("Froststrap.entitlements");
+    fs::create_dir_all(path::bundling_artifacts()).expect("Failed to create bundling directory");
     entitlements()
         .write(&entitlements_path)
         .expect("Failed to write Froststrap.entitlements");
