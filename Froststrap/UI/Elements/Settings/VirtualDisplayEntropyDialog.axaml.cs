@@ -70,7 +70,7 @@ namespace Froststrap.UI.Elements.Settings
                         [.. _passA],
                         [.. _passB]
                     );
-                    Close();
+                    Close(Result);
                     return;
                 }
             }
