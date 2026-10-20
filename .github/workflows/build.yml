@@ -11,18 +11,6 @@ env:
   PACKAGES_REPO: https://github.com/Froststrap/packages
 
 jobs:
-  prepare:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Create draft release in packages repo
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          GH_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
-        run: |
-          PRE=""; [[ "$GITHUB_REF_NAME" == *-* ]] && PRE="--prerelease"
-          gh release view "$GITHUB_REF_NAME" --repo Froststrap/packages >/dev/null 2>&1 || \
-            gh release create "$GITHUB_REF_NAME" --repo Froststrap/packages --draft --title "$GITHUB_REF_NAME" --notes "" $PRE
-
   windows:
     needs: prepare
     runs-on: windows-latest
