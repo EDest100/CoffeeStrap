@@ -89,7 +89,6 @@ jobs:
         with:
           dotnet-version: "10.0.x"
 
-
       - name: Use nightly Rust
         run: |
           rustup toolchain install nightly --profile minimal
@@ -102,22 +101,23 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         run: security delete-keychain signing_temp.keychain || true
 
-      - name: Import app cert
-        id: import_app_cert
+      - name: Import signing certs
         if: startsWith(github.ref, 'refs/tags/v')
         uses: apple-actions/import-codesign-certs@v7
         with:
           p12-file-base64: ${{ secrets.CERT_P12_BASE64 }}
-          p12-password: ${{ secrets.P12_PASSWORD }}
+          p12-password: ${{ secrets.CERT_P12_PASS }}
 
-      - name: Import installer cert
+      - name: Resolve signing identities
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: apple-actions/import-codesign-certs@v7
-        with:
-          p12-file-base64: ${{ secrets.CERT_P12_INSTALLER_BASE64 }}
-          p12-password: ${{ secrets.P12_PASSWORD }}
-          create-keychain: false
-          keychain-password: ${{ steps.import_app_cert.outputs.keychain-password }}
+        run: |
+          KC=~/Library/Keychains/signing_temp.keychain-db
+          APP=$(security find-identity -v "$KC" | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
+          INST=$(security find-identity -v "$KC" | grep "Developer ID Installer" | head -1 | awk -F'"' '{print $2}')
+          echo "::add-mask::$APP"
+          echo "::add-mask::$INST"
+          echo "DEVELOPER_ID_APP=$APP" >> "$GITHUB_ENV"
+          echo "DEVELOPER_ID_INSTALLER=$INST" >> "$GITHUB_ENV"
 
       - name: Store notary profile
         if: startsWith(github.ref, 'refs/tags/v')
@@ -140,9 +140,7 @@ jobs:
       - name: Publish
         env:
           SIGN: ${{ startsWith(github.ref, 'refs/tags/v') && 'true' || 'false' }}
-          DEVELOPER_ID_APP: ${{ secrets.DEVELOPER_ID_APP }}
-          DEVELOPER_ID_INSTALLER: ${{ secrets.DEVELOPER_ID_INSTALLER }}
-        run: cargo xtask --override-arch ${{ matrix.arch }} publish 
+        run: cargo xtask --override-arch ${{ matrix.arch }} publish
       - uses: actions/upload-artifact@v7
         if: always()
         with:
