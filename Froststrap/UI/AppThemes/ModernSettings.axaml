@@ -1,0 +1,208 @@
+<!-- SPDX-FileCopyrightText: 2026 CoffeeStrap contributors
+     SPDX-FileCopyrightText: 2025 amwx
+     SPDX-License-Identifier: MPL-2.0 AND MIT -->
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:uip="using:FluentAvalonia.UI.Controls.Primitives"
+        xmlns:controls="using:Froststrap.UI.Elements.Controls">
+    <Style Selector="controls|OptionControl">
+        <Setter Property="Padding" Value="20" />
+        <Setter Property="Transitions">
+            <Transitions>
+                <BrushTransition Property="Background" Duration="0:0:0.16" />
+                <BrushTransition Property="BorderBrush" Duration="0:0:0.16" />
+            </Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="ToggleSwitch">
+        <Setter Property="OnContent" Value="{x:Null}" />
+        <Setter Property="OffContent" Value="{x:Null}" />
+    </Style>
+    <Style Selector="ToggleSwitch"><Setter Property="Template">
+            <ControlTemplate>
+                <Grid Background="{TemplateBinding Background}"
+                      RowDefinitions="Auto,*">
+
+                    <ContentPresenter x:Name="PART_ContentPresenter"
+                                      Grid.Row="0"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"
+                                      VerticalAlignment="Top"
+                                      Margin="{DynamicResource ToggleSwitchTopHeaderMargin}"
+                                      RecognizesAccessKey="True"/>
+
+                    <Grid Grid.Row="1"
+                          HorizontalAlignment="Left"
+                          VerticalAlignment="Top">
+
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="0" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="0" />
+                        </Grid.RowDefinitions>
+
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="22" MaxWidth="22" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+
+                        <Border x:Name="SwitchAreaGrid"
+                                Grid.RowSpan="3"
+                                Grid.ColumnSpan="3"
+                                TemplatedControl.IsTemplateFocusTarget="True"
+                                Margin="0,5"
+                                CornerRadius="{TemplateBinding CornerRadius}"
+                                Background="{DynamicResource ToggleSwitchContainerBackground}"/>
+
+                        <ContentPresenter x:Name="PART_OffContentPresenter"
+                                          Grid.RowSpan="3"
+                                          Grid.Column="2"
+                                          Content="{TemplateBinding OffContent}"
+                                          ContentTemplate="{TemplateBinding OffContentTemplate}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+
+                        <ContentPresenter x:Name="PART_OnContentPresenter"
+                                          Grid.RowSpan="3"
+                                          Grid.Column="2"
+                                          Content="{TemplateBinding OnContent}"
+                                          ContentTemplate="{TemplateBinding OnContentTemplate}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
+
+                        <Border x:Name="OuterBorder"
+                                Background="{DynamicResource ToggleSwitchFillOff}"
+                                BorderBrush="{DynamicResource ToggleSwitchStrokeOff}"
+                                Grid.Row="1"
+                                Height="28"
+                                Width="48"
+                                CornerRadius="14"
+                                BorderThickness="{DynamicResource ToggleSwitchOuterBorderStrokeThickness}">
+                            <Border.Transitions>
+                                <Transitions>
+                                    <BrushTransition Duration="00:00:00.167" Property="BorderBrush" />
+                                    <BrushTransition Duration="00:00:00.167" Property="Background" />
+                                </Transitions>
+                            </Border.Transitions>
+                        </Border>
+
+                        <Border x:Name="SwitchKnobBounds"
+                                Background="{DynamicResource ToggleSwitchFillOn}"
+                                BorderBrush="{DynamicResource ToggleSwitchStrokeOn}"
+                                Grid.Row="1"
+                                Height="28"
+                                Width="48"
+                                CornerRadius="14"
+                                BorderThickness="{DynamicResource ToggleSwitchOnStrokeThickness}">
+                            <Border.Transitions>
+                                <Transitions>
+                                    <BrushTransition Duration="00:00:00.167" Property="BorderBrush" />
+                                    <BrushTransition Duration="00:00:00.167" Property="Background" />
+                                </Transitions>
+                            </Border.Transitions>
+                        </Border>
+
+                        <Canvas x:Name="PART_SwitchKnob" Grid.Row="1"
+                                HorizontalAlignment="Left"
+                                Width="20" Height="28">
+
+                            <Grid x:Name="PART_MovingKnobs"
+                                  Width="28" Height="28">
+
+                                <Ellipse x:Name="SwitchKnobOn"
+                                         Fill="#FFF9F2"
+                                         Width="22"
+                                         Height="22">
+                                    <Ellipse.Transitions>
+                                        <Transitions>
+                                            <DoubleTransition Duration="00:00:00.167" Easing="0,0 0,1" Property="Width" />
+                                            <DoubleTransition Duration="00:00:00.167" Easing="0,0 0,1" Property="Height" />
+                                        </Transitions>
+                                    </Ellipse.Transitions>
+                                </Ellipse>
+
+                                <Ellipse x:Name="SwitchKnobOff"
+                                         Fill="#FFF9F2"
+                                         Width="22"
+                                         Height="22">
+                                    <Ellipse.Transitions>
+                                        <Transitions>
+                                            <DoubleTransition Duration="00:00:00.167" Easing="0,0 0,1" Property="Width" />
+                                            <DoubleTransition Duration="00:00:00.167" Easing="0,0 0,1" Property="Height" />
+                                        </Transitions>
+                                    </Ellipse.Transitions>
+                                </Ellipse>
+                            </Grid>
+                        </Canvas>
+                    </Grid>
+                </Grid>
+            </ControlTemplate>
+        </Setter></Style>
+    <!-- Template adapted from FluentAvalonia ToggleSwitchStyles.axaml (MIT); upstream license retained in LICENSES. -->
+    <!-- Retain Avalonia's switch input, drag and automation behavior. Only restyle its parts. -->
+    <Style Selector="ToggleSwitch /template/ Border#OuterBorder, ToggleSwitch /template/ Border#SwitchKnobBounds">
+        <Setter Property="Width" Value="48" />
+        <Setter Property="Height" Value="28" />
+        <Setter Property="CornerRadius" Value="14" />
+    </Style>
+    <Style Selector="ToggleSwitch /template/ Canvas#PART_SwitchKnob, ToggleSwitch /template/ Grid#PART_MovingKnobs">
+        <Setter Property="Width" Value="28" />
+        <Setter Property="Height" Value="28" />
+    </Style>
+    <Style Selector="ToggleSwitch /template/ Ellipse#SwitchKnobOn, ToggleSwitch /template/ Ellipse#SwitchKnobOff,
+                     ToggleSwitch:pointerover /template/ Ellipse#SwitchKnobOn, ToggleSwitch:pointerover /template/ Ellipse#SwitchKnobOff">
+        <Setter Property="Width" Value="22" />
+        <Setter Property="Height" Value="22" />
+        <Setter Property="Fill" Value="#FFF9F2" />
+    </Style>
+    <Style Selector="ToggleSwitch /template/ Border#OuterBorder">
+        <Setter Property="Background" Value="{DynamicResource ControlStrongFillColorDefaultBrush}" />
+    </Style>
+    <Style Selector="ComboBox">
+        <Setter Property="controls:ChoiceAnimation.Enabled" Value="True" />
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="MinHeight" Value="36" />
+    </Style>
+    <Style Selector="controls|OptionControl ComboBox TextBlock">
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+    </Style>
+    <Style Selector="ComboBox /template/ Border#Background">
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrongStrokeColorDefaultBrush}" />
+        <Setter Property="Transitions">
+            <Transitions><BrushTransition Property="BorderBrush" Duration="0:0:0.15" /></Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="ComboBox:dropdownopen /template/ Border#Background, ComboBox:focus-visible /template/ Border#Background">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+    </Style>
+    <Style Selector="ComboBox /template/ ui|FAFontIcon#DropDownGlyph">
+        <Setter Property="RenderTransformOrigin" Value="50%,50%" />
+        <Setter Property="RenderTransform" Value="rotate(0deg)" />
+        <Setter Property="Transitions">
+            <Transitions><TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.17" Easing="CubicEaseOut" /></Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="ComboBox:dropdownopen /template/ ui|FAFontIcon#DropDownGlyph">
+        <Setter Property="RenderTransform" Value="rotate(180deg)" />
+    </Style>
+    <Style Selector="ComboBox /template/ Border#PopupBorder">
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="BoxShadow" Value="0 5 14 0 #28000000" />
+    </Style>
+    <Style Selector="uip|FANavigationViewItemPresenter /template/ Border#LayoutRoot">
+        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="Transitions">
+            <Transitions><BrushTransition Property="Background" Duration="0:0:0.16" /></Transitions>
+        </Setter>
+    </Style>
+    <Style Selector="controls|CardExpander /template/ controls|Card">
+        <Setter Property="CornerRadius" Value="16" />
+    </Style>
+    <Style Selector="controls|CardExpander /template/ controls|Card /template/ Border#PART_RootBorder">
+        <Setter Property="BoxShadow" Value="0 3 9 0 #20000000" />
+    </Style>
+</Styles>

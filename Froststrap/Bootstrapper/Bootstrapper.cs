@@ -796,66 +796,32 @@ internal partial class Bootstrapper : IDisposable
         return false;
     }
 
-    private async Task<string> GetBetterMatchmakingServerID(CancellationToken cancellationToken = default)
+    private async Task ApplyPreferredRegionAsync()
     {
-        string selectedRegion = App.Settings.Prop.SelectedRegion ?? "";
-
-        using var fetcher = new Integrations.RobloxServerFetcher();
-
-        if (!string.IsNullOrEmpty(selectedRegion) &&
-            !selectedRegion.Equals(Strings.Common_Auto, StringComparison.OrdinalIgnoreCase))
+        if (!Services.PreferredRegionMatchmaking.Applies(_joinData, _launchCommandLine)) return;
+        _matchmakingInProgress = true;
+        _skipMatchmaking = false;
+        _matchmakingCts = CancellationTokenSource.CreateLinkedTokenSource(_cancelTokenSource.Token);
+        Dialog?.CancelButtonText = Strings.Bootstrapper_CancelButton_Skip;
+        try
         {
-            App.Logger.Debug($"User selected specific region: {selectedRegion}");
-
-            SetStatus(string.Format(CultureInfo.InvariantCulture, Strings.Bootstrapper_Status_SearchingServers, selectedRegion));
-
-            var result = await fetcher.FindBestServerInSelectedRegionAsync(
-                (long)_joinData.PlaceId!,
-                selectedRegion,
-                cancellationToken: cancellationToken);
-
-            if (result.Found)
-            {
-                App.Logger.Info($"Found server in selected region {selectedRegion}: {result.ServerId}");
-                return result.ServerId!;
-            }
-
-            App.Logger.Info($"No servers found in selected region {selectedRegion}. Falling back to Auto mode.");
+            SetStatus("Finding the fullest available server in " + App.Settings.Prop.PreferredRegion);
+            using var fetcher = new Integrations.RobloxServerFetcher();
+            string server = await fetcher.FindFullestPreferredServerAsync(_joinData.PlaceId!.Value, App.Settings.Prop.PreferredRegion, _matchmakingCts.Token);
+            _launchCommandLine = Services.PreferredRegionMatchmaking.WithServer(_launchCommandLine, _joinData, server);
+            _joinData.JobId = server;
         }
-
-        if (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (_skipMatchmaking && !_cancelTokenSource.IsCancellationRequested)
+        { App.Logger.Info("Region search skipped by user; continuing with Roblox matchmaking."); }
+        catch (OperationCanceledException) when (!_cancelTokenSource.IsCancellationRequested)
+        { throw new HttpRequestException("The region search timed out. Retry or choose Auto."); }
+        finally
         {
-            App.Logger.Debug("Matchmaking was cancelled before auto mode could start.");
-            return "";
+            Dialog?.CancelButtonText = Strings.Common_Cancel;
+            _matchmakingInProgress = false;
+            _matchmakingCts.Dispose(); _matchmakingCts = null;
         }
-
-        cancellationToken.ThrowIfCancellationRequested();
-
-        SetStatus(Strings.Bootstrapper_Status_SearchingNearbyServers);
-
-        var topRegions = await fetcher.GetClosestRegionsForAutoModeAsync(cancellationToken);
-
-        if (cancellationToken.IsCancellationRequested)
-            return "";
-
-        if (topRegions.Count == 0)
-            throw new HttpRequestException("No regions found from datacenter list");
-
-        var autoResult = await fetcher.FindBestServerInRegionAsync(
-            (long)_joinData.PlaceId!,
-            topRegions,
-            cancellationToken: cancellationToken);
-
-        if (autoResult.Found)
-        {
-            App.Logger.Info($"Selected best server in {autoResult.Region} (rank {autoResult.Rank})");
-            return autoResult.ServerId!;
-        }
-
-        App.Logger.Warn("No server found in any region within timeout.");
-        return "";
     }
-
     private async Task StartRoblox()
     {
         App.Logger.Info("Starting Roblox");
@@ -873,85 +839,7 @@ internal partial class Bootstrapper : IDisposable
             App.Logger.Info($"Job ID: {_joinData.JobId ?? "null"}");
             App.Logger.Info($"Access Code: {_joinData.AccessCode ?? "null"}");
 
-            bool isRobloxUri = _launchCommandLine.StartsWith("roblox://", StringComparison.Ordinal);
-            if (isRobloxUri)
-                App.Logger.Info("Joining through roblox:// URI, skipping Better Matchmaking");
-            else
-            {
-                bool isFollowUser = false;
-
-                // _joinData.JoinType == GameJoinType.RequestFollowUser just doesnt work at all
-                // idk why they dont use it when the user is following a friend, but ok
-                if (App.Settings.Prop.EnableBetterMatchmaking &&
-                    (_joinData.JoinOrigin == "friendServerListJoin" || _joinData.JoinOrigin == "placesListInHomePage"))
-                {
-                    App.Logger.Debug("User is trying to join a friend, showing dialog");
-
-                    var result = await Frontend.ShowMessageBox(
-                        String.Format(CultureInfo.InvariantCulture, Strings.Menu_Bootstrapper_Experimental_BetterMatchmaking_FollowUser),
-                        MessageBoxImage.Question,
-                        MessageBoxButton.YesNo
-                    );
-
-                    if (result == MessageBoxResult.Yes)
-                        isFollowUser = true;
-                }
-
-                string? serverid = null;
-                bool matchmakingCancelled = false;
-
-                _matchmakingInProgress = true;
-                _skipMatchmaking = false;
-                _matchmakingCts = new CancellationTokenSource();
-
-                Dialog?.CancelButtonText = Strings.Bootstrapper_CancelButton_Skip;
-
-                try
-                {
-                    if (App.Settings.Prop.EnableBetterMatchmaking &&
-                        _joinData.JoinType == GameJoinType.RequestGame &&
-                        _joinData.PlaceId != null &&
-                        !isFollowUser)
-                    {
-                        if (_skipMatchmaking)
-                        {
-                            App.Logger.Info("Matchmaking was skipped due to user cancellation.");
-                            matchmakingCancelled = true;
-                        }
-                        else
-                        {
-                            serverid = await GetBetterMatchmakingServerID(_matchmakingCts.Token);
-                        }
-                    }
-                }
-                catch (OperationCanceledException)
-                {
-                    App.Logger.Debug("Better Matchmaking was skipped, joining original server.");
-                    matchmakingCancelled = true;
-                }
-                catch (HttpRequestException ex)
-                {
-                    _ = Frontend.ShowConnectivityDialog(
-                        String.Format(CultureInfo.InvariantCulture, Strings.Dialog_Connectivity_UnableToConnect, "rovalra.com"),
-                        Strings.Dialog_Connectivity_MatchmakingFailed,
-                        MessageBoxImage.Warning,
-                        ex
-                    );
-                }
-                finally
-                {
-                    Dialog?.CancelButtonText = Strings.Common_Cancel;
-                    _matchmakingInProgress = false;
-                    _matchmakingCts?.Dispose();
-                    _matchmakingCts = null;
-                }
-
-                if (!matchmakingCancelled && !string.IsNullOrEmpty(serverid) && _joinData.PlaceId is not null)
-                {
-                    string placeLauncherUrl = UrlBuilder.BuildPlacelauncherUrl((long)_joinData.PlaceId, serverid);
-                    _launchCommandLine = _launchCommandLine.Replace(_joinData.PlaceLauncherUrl, HttpUtility.UrlEncode(placeLauncherUrl), StringComparison.Ordinal);
-                }
-            }
+            await ApplyPreferredRegionAsync();
 
             if (!Deployment.IsDefaultRobloxDomain && string.IsNullOrEmpty(_launchCommandLine))
                 _launchCommandLine = "roblox://navigation/home";
@@ -1121,86 +1009,7 @@ internal partial class Bootstrapper : IDisposable
         App.Logger.Info($"Job ID: {_joinData.JobId ?? "null"}");
         App.Logger.Info($"Access Code: {_joinData.AccessCode ?? "null"}");
 
-        bool isRobloxUri = _launchCommandLine.StartsWith("roblox://", StringComparison.Ordinal);
-        if (isRobloxUri)
-            App.Logger.Info("Joining through roblox:// URI, skipping Better Matchmaking");
-        else
-        {
-            bool isFollowUser = false;
-
-            // _joinData.JoinType == GameJoinType.RequestFollowUser just doesnt work at all
-            // idk why they dont use it when the user is following a friend, but ok
-            if (App.Settings.Prop.EnableBetterMatchmaking &&
-                (_joinData.JoinOrigin == "friendServerListJoin" || _joinData.JoinOrigin == "placesListInHomePage"))
-            {
-                App.Logger.Debug("User is trying to join a friend, showing dialog");
-
-                var result = await Frontend.ShowMessageBox(
-                    String.Format(CultureInfo.InvariantCulture, Strings.Menu_Bootstrapper_Experimental_BetterMatchmaking_FollowUser),
-                    MessageBoxImage.Question,
-                    MessageBoxButton.YesNo
-                );
-
-                if (result == MessageBoxResult.Yes)
-                    isFollowUser = true;
-            }
-
-            string? serverid = null;
-            bool matchmakingCancelled = false;
-
-            _matchmakingInProgress = true;
-            _skipMatchmaking = false;
-            _matchmakingCts = new CancellationTokenSource();
-
-            Dialog?.CancelButtonText = Strings.Bootstrapper_CancelButton_Skip;
-
-            try
-            {
-                if (App.Settings.Prop.EnableBetterMatchmaking &&
-                    _joinData.JoinType == GameJoinType.RequestGame &&
-                    _joinData.PlaceId != null &&
-                    !isFollowUser)
-                {
-                    if (_skipMatchmaking)
-                    {
-                        App.Logger.Info("Matchmaking was skipped due to user cancellation.");
-                        matchmakingCancelled = true;
-                    }
-                    else
-                    {
-                        serverid = await GetBetterMatchmakingServerID(_matchmakingCts.Token);
-                    }
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                App.Logger.Info("Better Matchmaking was Skipped, joining original server.");
-                matchmakingCancelled = true;
-            }
-            catch (HttpRequestException ex)
-            {
-                _ = Frontend.ShowConnectivityDialog(
-                    String.Format(CultureInfo.InvariantCulture, Strings.Dialog_Connectivity_UnableToConnect, "rovalra.com"),
-                    Strings.Dialog_Connectivity_MatchmakingFailed,
-                    MessageBoxImage.Warning,
-                    ex
-                );
-            }
-            finally
-            {
-                Dialog?.CancelButtonText = Strings.Common_Cancel;
-                _matchmakingInProgress = false;
-                _matchmakingCts?.Dispose();
-                _matchmakingCts = null;
-            }
-
-            if (!matchmakingCancelled && !string.IsNullOrEmpty(serverid) && _joinData.PlaceId is not null)
-            {
-                string placeLauncherUrl = UrlBuilder.BuildPlacelauncherUrl((long)_joinData.PlaceId, serverid);
-                _launchCommandLine = _launchCommandLine.Replace(_joinData.PlaceLauncherUrl, HttpUtility.UrlEncode(placeLauncherUrl), StringComparison.Ordinal);
-                _joinData.JobId = serverid;
-            }
-        }
+        await ApplyPreferredRegionAsync();
 
         string? soberUri = GameJoin.BuildSoberUri(_joinData);
         if (soberUri is not null)
@@ -1317,7 +1126,9 @@ internal partial class Bootstrapper : IDisposable
 
     private async Task PrepareWatcherIfNeededAsync(List<int> autoclosePids, string? logFileName = null, string? logDirectory = null)
     {
-        if (!(App.Settings.Prop.EnableActivityTracking
+        if (!IsStudioLaunch && _joinData.PlaceId is > 0) Services.GameLaunchService.RecordPlace((long)_joinData.PlaceId.Value);
+        if (!(!IsStudioLaunch
+            || App.Settings.Prop.EnableActivityTracking
             || App.LaunchSettings.TestModeFlag.Active
             || autoclosePids.Count > 0))
             return;
@@ -1340,6 +1151,9 @@ internal partial class Bootstrapper : IDisposable
         if (string.IsNullOrEmpty(logFileName))
         {
             string rbxLogDir = logDirectory ?? Paths.RobloxLogs;
+            DateTime started = DateTime.UtcNow.AddSeconds(-30);
+            try { using var process = Process.GetProcessById(_appPid); started = process.StartTime.ToUniversalTime().AddSeconds(-2); }
+            catch (Exception error) when (error is ArgumentException or InvalidOperationException or System.ComponentModel.Win32Exception) { App.Logger.Warn(error, "Could not determine player start time for log selection."); }
 
             for (int i = 0; i < 60; i++)
             {
@@ -1347,7 +1161,8 @@ internal partial class Bootstrapper : IDisposable
                 {
                     logFileName = Directory.GetFiles(rbxLogDir, "*.log")
                         .Select(f => new FileInfo(f))
-                        .Where(f => f.CreationTimeUtc > DateTime.UtcNow.AddSeconds(-5))
+                        .Where(f => f.CreationTimeUtc >= started && !f.Name.Contains("Crash", StringComparison.OrdinalIgnoreCase) &&
+                            f.Name.Contains(IsStudioLaunch ? "Studio" : "Player", StringComparison.OrdinalIgnoreCase))
                         .OrderByDescending(f => f.CreationTimeUtc)
                         .FirstOrDefault()?.FullName;
                 }
@@ -1362,10 +1177,14 @@ internal partial class Bootstrapper : IDisposable
         PendingWatcherData = new WatcherData
         {
             ProcessId = _appPid,
+            PlaceId = _joinData.PlaceId ?? 0,
+            GameName = _joinData.PlaceId == App.State.Prop.LastPlaceId ? App.State.Prop.LastGameName : null,
             LogFile = logFileName,
             AutoclosePids = autoclosePids,
             LaunchMode = _launchMode,
-            AccessCode = _joinData.AccessCode
+            AccessCode = _joinData.AccessCode,
+            PublicJoin = _joinData.JoinType is GameJoinType.RequestGame or GameJoinType.RequestGameJob &&
+                string.IsNullOrEmpty(_joinData.AccessCode) && !_launchCommandLine.Contains("linkCode=", StringComparison.OrdinalIgnoreCase)
         };
 
         App.Logger.Info($"Watcher prepared for pid {_appPid} ({_launchMode})");
@@ -1987,7 +1806,7 @@ internal partial class Bootstrapper : IDisposable
         {
             App.Logger.Error(ex, "Flatpak not found.");
             await Frontend.ShowMessageBox(
-                "Flatpak is required on Linux.\n\nPlease install Flatpak first, then launch Froststrap again.",
+                "Flatpak is required on Linux.\n\nPlease install Flatpak first, then launch CoffeeStrap again.",
                 MessageBoxImage.Error
             );
             App.Terminate(ErrorCode.ERROR_CANCELLED);
@@ -2852,6 +2671,9 @@ internal partial class Bootstrapper : IDisposable
 
     private async Task<bool> ApplyModifications()
     {
+        using var applicationReport = new Services.ModApplicationReporter(IsStudioLaunch, _latestVersionGuid);
+        if (_cancelTokenSource.IsCancellationRequested) return true;
+        Services.RetiredPresets.RemoveAvatarBackground();
         bool success = true;
         SetStatus(Strings.Bootstrapper_Status_ApplyingModifications);
         App.Logger.Info("Checking file mods...");
@@ -2992,16 +2814,18 @@ internal partial class Bootstrapper : IDisposable
             if (!Directory.Exists(modSource))
             {
                 App.Logger.Warn($"Skipping mod '{mod.FolderName}': directory not found");
+                applicationReport.Record("", "Skipped", mod.FolderName, "The enabled mod's source folder is missing.");
                 continue;
             }
 
             App.Logger.Info($"Processing mod '{mod.FolderName}' (priority: {mod.Priority})");
 
-            foreach (string file in Directory.GetFiles(modSource, "*.*", SearchOption.AllDirectories))
+            foreach (var asset in Services.ModAssetPreparation.Files(modSource, (path, status, detail) => applicationReport.Record(path, status, mod.FolderName, detail)))
             {
-                string relativeFile = Path.GetRelativePath(modSource, file);
+                string file = asset.Source;
+                string relativeFile = asset.Relative;
 
-                if (relativeFile == "README.txt" ||
+                if (!Services.ModFilePolicy.IsAllowed(relativeFile) || relativeFile == "README.txt" ||
                     relativeFile.EndsWith("info.json", StringComparison.Ordinal) ||
                     relativeFile.EndsWith(".lock", StringComparison.Ordinal) ||
                     IsClientSettingsRelativePath(relativeFile))
@@ -3013,8 +2837,17 @@ internal partial class Bootstrapper : IDisposable
 
                 var info = new FileInfo(file);
 
-                allModFiles[relativeFile] = (file, mod.Priority, mod.FolderName, info);
+                if (!allModFiles.TryAdd(relativeFile, (file, mod.Priority, mod.FolderName, info)))
+                    applicationReport.Record(relativeFile, "Shadowed", mod.FolderName, "A higher-priority enabled mod supplies this file.");
             }
+        }
+
+        foreach (var asset in Services.BuiltInVisualMods.Files())
+        {
+            if (!File.Exists(Path.Combine(contentDirectory, asset.Relative)) && !AppData.DistributionState.ModManifest.Contains(asset.Relative, StringComparer.OrdinalIgnoreCase))
+            { applicationReport.Record(asset.Relative, "Skipped", "Built-in visual tweaks", "This texture is absent from the selected client version."); continue; }
+            if (!allModFiles.TryAdd(asset.Relative, (asset.Source, int.MinValue, "Built-in visual tweaks", new FileInfo(asset.Source))))
+                applicationReport.Record(asset.Relative, "Shadowed", "Built-in visual tweaks", "An enabled installed mod takes priority.");
         }
 
         if (Directory.Exists(Paths.Modifications))
@@ -3024,7 +2857,7 @@ internal partial class Bootstrapper : IDisposable
             foreach (string file in Directory.GetFiles(Paths.Modifications))
             {
                 string relativeFile = Path.GetFileName(file);
-                if (relativeFile == "README.txt" ||
+                if (!Services.ModFilePolicy.IsAllowed(relativeFile) || relativeFile == "README.txt" ||
                     relativeFile == "info.json" ||
                     relativeFile.EndsWith(".lock", StringComparison.Ordinal) ||
                     relativeFile.EndsWith(".dll", StringComparison.Ordinal) ||
@@ -3033,13 +2866,14 @@ internal partial class Bootstrapper : IDisposable
                     continue;
 
                 var info = new FileInfo(file);
+                if (allModFiles.TryGetValue(relativeFile, out var previous)) applicationReport.Record(relativeFile, "Shadowed", previous.ModName, "A base modification takes priority.");
                 allModFiles[relativeFile] = (file, int.MaxValue, "BaseModification", info);
             }
 
             foreach (string dir in Directory.GetDirectories(Paths.Modifications))
             {
                 string dirName = Path.GetFileName(dir);
-                if (allModFolderNames.Contains(dirName, StringComparer.OrdinalIgnoreCase))
+                if (dirName.StartsWith(".download-", StringComparison.OrdinalIgnoreCase) || allModFolderNames.Contains(dirName, StringComparer.OrdinalIgnoreCase))
                     continue;
 
                 if (!Directory.Exists(dir))
@@ -3051,7 +2885,7 @@ internal partial class Bootstrapper : IDisposable
                 foreach (string file in Directory.GetFiles(dir, "*.*", SearchOption.AllDirectories))
                 {
                     string relativeFile = Path.GetRelativePath(Paths.Modifications, file);
-                    if (relativeFile == "README.txt" ||
+                    if (!Services.ModFilePolicy.IsAllowed(relativeFile) || relativeFile == "README.txt" ||
                         relativeFile == "info.json" ||
                         relativeFile.EndsWith(".lock", StringComparison.Ordinal) ||
                         relativeFile.EndsWith(".dll", StringComparison.Ordinal) ||
@@ -3060,9 +2894,43 @@ internal partial class Bootstrapper : IDisposable
                         continue;
 
                     var info = new FileInfo(file);
+                    if (allModFiles.TryGetValue(relativeFile, out var previous)) applicationReport.Record(relativeFile, "Shadowed", previous.ModName, "A base modification takes priority.");
                     allModFiles[relativeFile] = (file, int.MaxValue, "BaseModification", info);
                 }
             }
+        }
+
+        if (App.Settings.Prop.ReplaceIndoorSky)
+        {
+            foreach (var entry in allModFiles.ToArray())
+            {
+                string? alias = Services.ModAssetPreparation.IndoorSkyAlias(entry.Key);
+                if (alias != null)
+                {
+                    if (File.Exists(Path.Combine(contentDirectory, alias))) allModFiles.TryAdd(alias, entry.Value);
+                    else applicationReport.Record(alias, "Skipped", entry.Value.ModName, "The indoor sky target is absent from this client version.");
+                }
+            }
+        }
+
+        var originalMods = new Services.ModBackupStore(contentDirectory);
+        foreach (var texture in Services.TextureResolutionBudget.Targets())
+        {
+            if (_cancelTokenSource.IsCancellationRequested) break;
+            bool selected = allModFiles.TryGetValue(texture.Relative, out var existing);
+            string? source = selected ? existing.SourcePath : originalMods.OriginalSource(texture.Relative, AppData.DistributionState.ModManifest.Contains(texture.Relative, StringComparer.OrdinalIgnoreCase));
+            if (source == null)
+            { applicationReport.Record(texture.Relative, "Skipped", "Texture resolution budget", "The selected client has no preserved source for this texture."); continue; }
+            try
+            {
+                string prepared = Services.DdsMipReducer.Prepare(source, texture.Levels);
+                string owner = selected ? existing.ModName : "Built-in texture";
+                allModFiles[texture.Relative] = (prepared, selected ? existing.Priority : int.MinValue, owner + (texture.Levels == 1 ? " · 50% dimensions" : " · 25% dimensions"), new FileInfo(prepared));
+            }
+            catch (InvalidDataException error)
+            { applicationReport.Record(texture.Relative, "Skipped", "Texture resolution budget", error.Message); }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            { applicationReport.Record(texture.Relative, "Failed", "Texture resolution budget", error.Message); success = false; }
         }
 
         var filesToDelete = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -3073,7 +2941,8 @@ internal partial class Bootstrapper : IDisposable
 
             foreach (string file in Directory.GetFiles(modSource, "*_Delete.*", SearchOption.AllDirectories))
             {
-                string relativeFile = Path.GetRelativePath(modSource, file);
+                if (Path.GetExtension(file).Equals(".dds", StringComparison.OrdinalIgnoreCase) || Path.GetExtension(file).Equals(".tex", StringComparison.OrdinalIgnoreCase)) continue;
+                string relativeFile = Path.GetRelativePath(Services.ModAssetPreparation.ContentRoot(modSource), file);
                 string actualFile = relativeFile;
                 string? fileNameWithoutExt = Path.GetFileNameWithoutExtension(relativeFile);
                 if (fileNameWithoutExt != null && fileNameWithoutExt.EndsWith("_Delete", StringComparison.Ordinal))
@@ -3082,20 +2951,22 @@ internal partial class Bootstrapper : IDisposable
                     string originalName = fileNameWithoutExt[..^7];
                     actualFile = Path.Combine(directory, originalName + Path.GetExtension(relativeFile));
                 }
-                filesToDelete.Add(actualFile);
+                if (Services.ModFilePolicy.IsAllowed(actualFile)) filesToDelete.Add(actualFile);
             }
         }
 
         foreach (string relPath in filesToDelete)
-            allModFiles.Remove(relPath);
+            if (allModFiles.Remove(relPath, out var previous)) applicationReport.Record(relPath, "Shadowed", previous.ModName, "An enabled deletion marker takes priority.");
 
         foreach (string relPath in filesToDelete)
         {
             string targetFile = Path.Combine(contentDirectory, relPath);
             if (File.Exists(targetFile))
             {
+                if (!AppData.DistributionState.ModManifest.Contains(relPath, StringComparer.OrdinalIgnoreCase)) originalMods.Capture(relPath);
                 Filesystem.AssertReadOnly(targetFile);
                 File.Delete(targetFile);
+                applicationReport.Record(relPath, "Removed", "Deletion marker", "Removed the selected content file after capturing its original.");
                 App.Logger.Info($"{relPath} deleted via _Delete flag");
 
                 string? parentDir = Path.GetDirectoryName(targetFile);
@@ -3120,7 +2991,7 @@ internal partial class Bootstrapper : IDisposable
 
         foreach (var entry in allModFiles)
         {
-            if (_cancelTokenSource.IsCancellationRequested) return true;
+            if (_cancelTokenSource.IsCancellationRequested) break;
 
             string relativeFile = entry.Key;
             var (sourceFile, priority, modName, sourceInfo) = entry.Value;
@@ -3131,6 +3002,7 @@ internal partial class Bootstrapper : IDisposable
                 await semaphore.WaitAsync();
                 try
                 {
+                    if (_cancelTokenSource.IsCancellationRequested) return false;
                     bool needsCopy = true;
 
                     if (File.Exists(fileVersionFolder))
@@ -3159,6 +3031,7 @@ internal partial class Bootstrapper : IDisposable
 
                     if (needsCopy)
                     {
+                        if (!AppData.DistributionState.ModManifest.Contains(relativeFile, StringComparer.OrdinalIgnoreCase) && !AppData.DistributionState.ModManifest.Contains(relativeFile + "_Delete", StringComparer.OrdinalIgnoreCase)) originalMods.Capture(relativeFile);
                         Directory.CreateDirectory(Path.GetDirectoryName(fileVersionFolder)!);
                         Filesystem.AssertReadOnly(fileVersionFolder);
                         File.Copy(sourceFile, fileVersionFolder, true);
@@ -3166,6 +3039,7 @@ internal partial class Bootstrapper : IDisposable
                         Filesystem.AssertReadOnly(fileVersionFolder);
                         App.Logger.Info($"{relativeFile} applied");
                     }
+                    applicationReport.Record(relativeFile, needsCopy ? "Applied" : "Current", modName, needsCopy ? "Copied into the selected client content folder." : "Already present according to the launcher's file comparison.");
 
                     lock (currentModManifest)
                     {
@@ -3182,6 +3056,7 @@ internal partial class Bootstrapper : IDisposable
                 catch (Exception ex)
                 {
                     App.Logger.Error($"Failed to apply ({relativeFile}) from mod '{modName}': {ex.Message}");
+                    applicationReport.Record(relativeFile, "Failed", modName, ex.Message);
                     return false;
                 }
                 finally { semaphore.Release(); }
@@ -3189,6 +3064,7 @@ internal partial class Bootstrapper : IDisposable
         }
 
         var fileResults = await Task.WhenAll(fileTasks);
+        if (_cancelTokenSource.IsCancellationRequested) return true;
         success = success && fileResults.All(r => r);
 
         if (App.Settings.Prop.UseFastFlagManager)
@@ -3200,7 +3076,9 @@ internal partial class Bootstrapper : IDisposable
 
             if (_joinData.PlaceId.HasValue && _joinData.PlaceId.Value > 0)
             {
-                profileApplied = await ApplyFastFlagsBasedOnPlaceId(_joinData.PlaceId.Value, clientSettingsBaseDirectory);
+                var profile = await Services.FlagProfileFiles.ApplyForPlaceAsync(_joinData.PlaceId.Value, dest, _cancelTokenSource.Token);
+                profileApplied = profile.Applied;
+                if (profile.Matched) applicationReport.Record(rel, profileApplied ? "Applied" : "Skipped", profile.Name, profile.Message);
                 if (profileApplied && File.Exists(dest))
                 {
                     var destInfo = new FileInfo(dest);
@@ -3233,7 +3111,16 @@ internal partial class Bootstrapper : IDisposable
                                     currentModManifest[rel] = new ModFileEntry { Size = info.Length, LastModified = info.LastWriteTime };
                             }
                         }
-                        catch (Exception ex) { App.Logger.Error(ex); }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+                        { App.Logger.Error(ex); applicationReport.Record(rel, "Failed", "Global flags", ex.Message); success = false; }
+                    }
+                    else
+                    {
+                        var defaults = new Dictionary<string, object>();
+                        Services.CuratedFlagRegistry.ApplySelectedOverrides(defaults);
+                        try { AtomicFile.WriteText(dest, JsonSerializer.Serialize(defaults)); }
+                        catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+                        { App.Logger.Error(error); applicationReport.Record(rel, "Failed", "Global flag defaults", error.Message); success = false; }
                     }
                 }
             }
@@ -3255,6 +3142,23 @@ internal partial class Bootstrapper : IDisposable
             }
         }
 
+        string finalFlags = Path.Combine(clientSettingsBaseDirectory, "ClientSettings", "ClientAppSettings.json");
+        Services.CuratedFlagRegistry.SanitizeFile(finalFlags);
+        if (File.Exists(finalFlags))
+        {
+            var info = new FileInfo(finalFlags);
+            currentModManifest[Path.Combine("ClientSettings", "ClientAppSettings.json")] = new ModFileEntry { Size = info.Length, LastModified = info.LastWriteTime };
+        }
+        if (!IsStudioLaunch && App.Settings.Prop.LockMaximumRenderDistance)
+        {
+            var launchSettings = new GBSEditor();
+            launchSettings.Load();
+            if (!launchSettings.Loaded || launchSettings.HasUnsavedChanges && !launchSettings.Save())
+            {
+                App.Logger.Error("Could not apply the maximum saved graphics slider before launch.");
+                return false;
+            }
+        }
         var fileRestoreMap = new Dictionary<string, List<string>>();
         foreach (string fileLocation in AppData.DistributionState.ModManifest)
         {
@@ -3262,6 +3166,23 @@ internal partial class Bootstrapper : IDisposable
                 continue;
 
             string actualFile = fileLocation;
+            if (actualFile.Contains("_Delete", StringComparison.Ordinal))
+                actualFile = actualFile.EndsWith("_Delete", StringComparison.Ordinal) ? actualFile[..^7] : actualFile;
+            if (currentModManifest.ContainsKey(actualFile)) continue;
+            if (!OperatingSystem.IsMacOS())
+            {
+                try
+                {
+                    if (originalMods.Restore(actualFile))
+                    { applicationReport.Record(actualFile, "Restored", "Original file backup", "Restored the original file or its original absence."); continue; }
+                }
+                catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+                {
+                    applicationReport.Record(actualFile, "Failed", "Original file backup", "Restore will be retried on the next launch: " + error.Message);
+                    currentModManifest[fileLocation] = new ModFileEntry();
+                    continue;
+                }
+            }
             string? fileNameWithoutExt = Path.GetFileNameWithoutExtension(fileLocation);
 
             if (fileNameWithoutExt != null && fileNameWithoutExt.EndsWith("_Delete", StringComparison.Ordinal) && OperatingSystem.IsLinux() && !IsStudioLaunch)
@@ -3280,6 +3201,7 @@ internal partial class Bootstrapper : IDisposable
                 {
                     Directory.CreateDirectory(Path.GetDirectoryName(destFile)!);
                     File.Copy(sourceFile, destFile, true);
+                    applicationReport.Record(actualFile, "Restored", "Client resources backup", "Restored the original resource file.");
                     App.Logger.Info($"Restored '{actualFile}' from backup");
                 }
                 else
@@ -3287,11 +3209,13 @@ internal partial class Bootstrapper : IDisposable
                     if (isClientSettingsFile && File.Exists(destFile))
                     {
                         File.Delete(destFile);
+                        applicationReport.Record(actualFile, "Removed", "Client settings cleanup", "Removed stale client settings.");
                         App.Logger.Info($"Deleted stale ClientSettings file '{actualFile}'");
                     }
                     else
                     {
                         App.Logger.Warn($"Backup file not found: {actualFile}");
+                        applicationReport.Record(actualFile, "Failed", "Client resources backup", "The original resource backup is missing.");
                     }
                 }
                 continue;
@@ -3317,6 +3241,7 @@ internal partial class Bootstrapper : IDisposable
                 {
                     Filesystem.AssertReadOnly(versionFileLocation);
                     File.Delete(versionFileLocation);
+                    applicationReport.Record(actualFile, "Removed", "Orphan cleanup", "Removed a stale mod file with no matching original or package.");
                     App.Logger.Info($"Deleted orphaned file {actualFile}");
                 }
                 continue;
@@ -3348,8 +3273,15 @@ internal partial class Bootstrapper : IDisposable
                     await DownloadPackage(package);
 
                     SetStatus(Strings.Bootstrapper_Status_ApplyingModifications);
-                    await ExtractPackage(package, entry.Value);
+                    bool extracted = await ExtractPackage(package, entry.Value);
+                    foreach (string restored in entry.Value)
+                    {
+                        string relative = Path.Combine(PackageDirectoryMap[entry.Key], restored);
+                        bool confirmed = extracted && _packageExtractionSuccess && !_cancelTokenSource.IsCancellationRequested && File.Exists(Path.Combine(contentDirectory, relative));
+                        applicationReport.Record(relative, confirmed ? "Restored" : "Failed", entry.Key, confirmed ? "Restored from the original client package." : "Could not confirm package restoration for this target.");
+                    }
                 }
+                else foreach (string missing in entry.Value) applicationReport.Record(missing, "Failed", entry.Key, "The original client package is unavailable.");
             }
         }
 
@@ -3359,7 +3291,10 @@ internal partial class Bootstrapper : IDisposable
             AppData.DistributionStateManager.Save();
         }
 
+        Services.ModAssetPreparation.PruneCache();
         App.Logger.Info("Finished checking file mods");
+        success &= !applicationReport.HasFailures;
+        applicationReport.Complete(success);
         return success;
     }
 
@@ -3416,61 +3351,6 @@ internal partial class Bootstrapper : IDisposable
         }
 
         App.Logger.Info("Mod folder initialization complete.");
-    }
-
-    private static async Task<bool> ApplyFastFlagsBasedOnPlaceId(long placeId, string clientSettingsBaseDirectory)
-    {
-        if (placeId <= 0 || !App.Settings.Prop.UseFastFlagManager)
-            return false;
-
-        App.Logger.Info($"Checking for FastFlag profile matching place ID: {placeId}");
-
-        foreach (var kvp in App.Settings.Prop.ProfilePlaceIds)
-        {
-            string profileName = kvp.Key;
-            List<string> placeIds = kvp.Value;
-
-            if (placeIds.Contains(placeId.ToString(CultureInfo.InvariantCulture)))
-            {
-                App.Logger.Info($"Found matching profile '{profileName}' for place ID {placeId}");
-
-                try
-                {
-                    string profilePath = Path.Combine(Paths.SavedFlagProfiles, profileName);
-
-                    if (!File.Exists(profilePath))
-                    {
-                        App.Logger.Warn($"Profile file '{profileName}' not found at {profilePath}");
-                        return false;
-                    }
-
-                    string profileJson = await File.ReadAllTextAsync(profilePath);
-                    var flags = JsonSerializer.Deserialize<Dictionary<string, object>>(profileJson);
-
-                    if (flags == null || flags.Count == 0)
-                    {
-                        App.Logger.Warn($"Profile '{profileName}' is empty or invalid");
-                        return false;
-                    }
-
-                    Directory.CreateDirectory(Path.Combine(clientSettingsBaseDirectory, "ClientSettings"));
-                    string destPath = Path.Combine(clientSettingsBaseDirectory, "ClientSettings", "ClientAppSettings.json");
-
-                    await File.WriteAllTextAsync(destPath, profileJson);
-
-                    App.Logger.Info($"Successfully applied FastFlag profile '{profileName}' for place ID {placeId} ({flags.Count} flags)");
-                    return true;
-                }
-                catch (Exception ex)
-                {
-                    App.Logger.Error($"Failed to apply FastFlag profile '{profileName}': {ex.Message}");
-                    return false;
-                }
-            }
-        }
-
-        App.Logger.Info($"No FastFlag profile found for place ID {placeId}");
-        return false;
     }
 
     private static bool IsClientSettingsRelativePath(string relativePath)

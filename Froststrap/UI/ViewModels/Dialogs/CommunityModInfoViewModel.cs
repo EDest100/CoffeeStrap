@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -50,10 +50,11 @@ namespace Froststrap.UI.ViewModels.Dialogs
         }
 
         public bool IsGradientMode => Mod.GradientStops?.Count >= 2;
+        public bool ShowGlyphPreview => Mod.IsColorMod && Mod.Id != Services.CoffeeCommunityMod.Id;
 
         public void Initialize()
         {
-            if (Mod.IsColorMod)
+            if (ShowGlyphPreview)
                 _ = InitializePreviewAsync();
         }
 
@@ -64,7 +65,7 @@ namespace Froststrap.UI.ViewModels.Dialogs
         {
             try
             {
-                var fontFamily = new AvaFontFamily("avares://Froststrap/Resources/Fonts#BuilderIcons-Regular");
+                var fontFamily = new AvaFontFamily("avares://CoffeeStrap/Resources/Fonts#BuilderIcons-Regular");
                 var typeface = new Typeface(fontFamily);
 
                 UpdateGlyphColors();

@@ -17,13 +17,13 @@ SPDX-License-Identifier: MPL-2.0
                          Width="600" Height="400"
                          CanResize="False"
                          WindowStartupLocation="CenterScreen"
-                         Title="Froststrap"
+                         Title="CoffeeStrap"
                          ExtendClientAreaToDecorationsHint="True"
                          Background="Transparent"
                          TransparencyLevelHint="Transparent">
 
     <Border CornerRadius="10"
-            BorderBrush="#33393B3D"
+            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
             Background="{Binding Background}"
             BorderThickness="{Binding DialogBorder}">
         <Grid>

@@ -1,0 +1,36 @@
+<!-- SPDX-FileCopyrightText: 2026 CoffeeStrap contributors
+     SPDX-License-Identifier: MPL-2.0 -->
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:Froststrap.UI.Elements.Controls">
+    <Style Selector="controls|OptionControl">
+        <Setter Property="MinHeight" Value="88" />
+        <Setter Property="Padding" Value="18,14" />
+    </Style>
+    <Style Selector="controls|OptionControl:compact"><Setter Property="MinHeight" Value="100" /></Style>
+    <Style Selector="controls|OptionControl /template/ controls|Card#PART_RootCard /template/ Border#PART_RootBorder">
+        <Setter Property="BoxShadow" Value="0 2 5 0 #12000000" />
+    </Style>
+    <Style Selector="controls|SettingsGroup">
+        <Setter Property="Template"><ControlTemplate>
+            <Border CornerRadius="24" Background="{DynamicResource CoffeeGroupBrush}" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1">
+                <StackPanel>
+                    <ContentPresenter Content="{TemplateBinding Master}" />
+                    <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" Padding="16,0,16,16" />
+                </StackPanel>
+            </Border>
+        </ControlTemplate></Setter>
+    </Style>
+    <Style Selector="controls|OptionControl.master">
+        <Setter Property="Background" Value="Transparent" /><Setter Property="BorderThickness" Value="0" />
+        <Setter Property="MinHeight" Value="104" /><Setter Property="Padding" Value="22,20" />
+    </Style>
+    <Style Selector="controls|OptionControl.master /template/ controls|Card#PART_RootCard /template/ Border#PART_RootBorder"><Setter Property="BoxShadow" Value="0 0 0 0 Transparent" /></Style>
+    <Style Selector="controls|OptionControl.master /template/ TextBlock#PART_Title"><Setter Property="FontSize" Value="17" /></Style>
+    <Style Selector="Button, controls|IconButton"><Setter Property="CornerRadius" Value="14" /></Style>
+    <Style Selector="ComboBox, TextBox, NumericUpDown"><Setter Property="CornerRadius" Value="12" /></Style>
+    <Style Selector="controls|IconButton.TitleBarButton"><Setter Property="CornerRadius" Value="12" /></Style>
+    <Style Selector="controls|IconButton.TitleBarButton.Close:pointerover /template/ Border#PART_LayoutRoot"><Setter Property="Background" Value="#B83C35" /></Style>
+    <Style Selector="controls|OptionControl.stacked /template/ StackPanel#PART_Header"><Setter Property="Grid.ColumnSpan" Value="2"/></Style>
+    <Style Selector="controls|OptionControl.stacked /template/ ContentPresenter#PART_Editor"><Setter Property="Grid.Column" Value="0"/><Setter Property="Grid.Row" Value="2"/><Setter Property="Grid.ColumnSpan" Value="2"/><Setter Property="HorizontalAlignment" Value="Stretch"/></Style>
+    <Style Selector="Button"><Setter Property="HorizontalContentAlignment" Value="Center"/><Setter Property="VerticalContentAlignment" Value="Center"/></Style>
+</Styles>

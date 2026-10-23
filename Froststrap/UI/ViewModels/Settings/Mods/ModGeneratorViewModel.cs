@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -251,7 +251,7 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
 
         public bool HasFolderNameValidationError => !string.IsNullOrEmpty(FolderNameValidationError);
 
-        private static string TempRoot => Path.Combine(Path.GetTempPath(), "Froststrap");
+        private static string TempRoot => Path.Combine(Path.GetTempPath(), App.ProjectName);
 
         private async Task LoadFontFilesAsync()
         {
@@ -298,8 +298,8 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
                     fontFamily = resource as Avalonia.Media.FontFamily;
 
                 fontFamily ??= string.Equals(fontVariant, "Filled", StringComparison.OrdinalIgnoreCase)
-                    ? new Avalonia.Media.FontFamily("avares://Froststrap/Resources/Fonts#BuilderIcons-Filled")
-                    : new Avalonia.Media.FontFamily("avares://Froststrap/Resources/Fonts#BuilderIcons-Regular");
+                    ? new Avalonia.Media.FontFamily("avares://CoffeeStrap/Resources/Fonts#BuilderIcons-Filled")
+                    : new Avalonia.Media.FontFamily("avares://CoffeeStrap/Resources/Fonts#BuilderIcons-Regular");
 
                 var typeface = new Typeface(fontFamily);
                 var characterCodes = Enumerable.Range(0xF101, 495).ToList();
@@ -642,8 +642,8 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
                             if (visualRoot == null) return;
                             var file = await visualRoot.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
                             {
-                                Title = "Save Froststrap Mod",
-                                SuggestedFileName = $"FroststrapMod_{SolidColorHex}.zip",
+                    Title = "Save CoffeeStrap Mod",
+                    SuggestedFileName = $"CoffeeStrapMod_{SolidColorHex}.zip",
                                 DefaultExtension = ".zip",
                                 FileTypeChoices = [new FilePickerFileType("Zip Archive") { Patterns = ["*.zip"] }]
                             });

@@ -4,11 +4,15 @@
 
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
+using Froststrap.Services;
 
 namespace Froststrap.UI.ViewModels.Dialogs
 {
-    internal class LaunchMenuViewModel : NotifyPropertyChangedViewModel
+    internal sealed class LaunchMenuViewModel : NotifyPropertyChangedViewModel, IDisposable
     {
+        private bool _disposed;
+        public PinnedGamesViewModel Pins { get; } = new();
+        public ICommand PlayPinnedGameCommand { get; }
         private LaunchMode _selectedLaunchMode = LaunchMode.Player;
         public LaunchMode SelectedLaunchMode
         {
@@ -70,8 +74,15 @@ namespace Froststrap.UI.ViewModels.Dialogs
 
         public event EventHandler<NextAction>? CloseWindowRequest;
 
-        public LaunchMenuViewModel()
+        public LaunchMenuViewModel() : this(GameLaunchService.Default) { }
+        internal LaunchMenuViewModel(GameLaunchService launches)
         {
+            PlayPinnedGameCommand = new RelayCommand<QuickPlayGameItem>(game =>
+            {
+                if (_disposed || game == null || !Pins.Games.Contains(game)) return;
+                launches.Launch(game.PlaceId, game.Name);
+                CloseWindowRequest?.Invoke(this, NextAction.Terminate);
+            });
             LaunchCommand = new RelayCommand(ExecuteLaunch);
             SetLaunchModeCommand = new RelayCommand<LaunchMode>(mode => SelectedLaunchMode = mode);
             LaunchSettingsCommand = new RelayCommand(() => CloseWindowRequest?.Invoke(this, NextAction.LaunchSettings));
@@ -84,5 +95,6 @@ namespace Froststrap.UI.ViewModels.Dialogs
         }
 
         public static string Version => string.Format(CultureInfo.InvariantCulture, Strings.Menu_About_Version, App.Version);
+        public void Dispose() { _disposed = true; Pins.Dispose(); }
     }
 }

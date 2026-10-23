@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -29,6 +29,9 @@ namespace Froststrap.Models.APIs.Config
 
         [JsonPropertyName("description")]
         public string Description { get; set; } = null!;
+        [JsonIgnore] public string ApplyHint => IsInstalled ?
+            ModType == ModType.SkyBox ? "Relaunch to apply; replaces Roblox's default sky only." :
+            "Applies on your next CoffeeStrap launch." : "";
 
         [JsonPropertyName("thumbnail")]
         public string ThumbnailUrl { get; set; } = null!;
@@ -36,13 +39,27 @@ namespace Froststrap.Models.APIs.Config
         [JsonPropertyName("modtype")]
         public ModType ModType { get; set; } = ModType.ColorMod;
 
+        private bool _installed;
+        private bool _enabled;
+        [JsonIgnore] public bool IsEnabled { get => _enabled; set { if (SetProperty(ref _enabled, value)) OnPropertyChanged(nameof(ToggleLabel)); } }
+        [JsonIgnore] public string ToggleLabel => IsEnabled ? "Disable" : "Enable";
+        [JsonIgnore] public object? ToggleCommand { get; set; }
+        [JsonIgnore] public object? PreviewCommand { get; set; }
+        [JsonIgnore] public object? UninstallCommand { get; set; }
+        private string _downloadError = "";
+        [JsonIgnore] public bool IsInstalled { get => _installed; set { if (SetProperty(ref _installed, value)) { NotifyDownloadState(); OnPropertyChanged(nameof(ApplyHint)); } } }
+        [JsonIgnore] public string DownloadError { get => _downloadError; set { if (SetProperty(ref _downloadError, value)) NotifyDownloadState(); } }
+        [JsonIgnore] public bool IsLocalOnly { get; set; }
+        [JsonIgnore] public bool CanDownload => !IsLocalOnly && !IsInstalled && !IsDownloading;
+        [JsonIgnore] public string DownloadLabel => IsInstalled ? "Installed" : IsDownloading ? "Downloading…" : string.IsNullOrEmpty(DownloadError) ? "Download" : "Retry";
+        private void NotifyDownloadState() { OnPropertyChanged(nameof(CanDownload)); OnPropertyChanged(nameof(DownloadLabel)); }
         private bool _isDownloading;
 
         [JsonIgnore]
         public bool IsDownloading
         {
             get => _isDownloading;
-            set => SetProperty(ref _isDownloading, value);
+            set { if (SetProperty(ref _isDownloading, value)) NotifyDownloadState(); }
         }
 
         private double _downloadProgress;
@@ -91,13 +108,20 @@ namespace Froststrap.Models.APIs.Config
         {
             string cacheDir = Path.Combine(Paths.Cache, "CommunityMods");
             Directory.CreateDirectory(cacheDir);
-            return Path.Combine(cacheDir, $"{Id}.png");
+            return Path.Combine(cacheDir, Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(Id ?? ThumbnailUrl))) + ".png");
         }
 
         public async Task LoadThumbnailAsync()
         {
             if (Thumbnail != null || string.IsNullOrEmpty(ThumbnailUrl))
                 return;
+
+            if (ThumbnailUrl == "avares://CoffeeStrap/Resources/CommunityMods/EspressoPreview.png")
+            {
+                using var stream = Avalonia.Platform.AssetLoader.Open(new Uri(ThumbnailUrl));
+                Thumbnail = Bitmap.DecodeToWidth(stream, 600);
+                return;
+            }
 
             string cachePath = GetCacheFilePath();
 

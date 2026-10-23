@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Reflection;
 using Avalonia.Controls;
 using FluentAvalonia.UI.Controls;
+using Froststrap.UI.Elements.Controls;
 using Froststrap.UI.ViewModels.About;
 
 namespace Froststrap.UI.Elements.About
@@ -23,6 +24,9 @@ namespace Froststrap.UI.Elements.About
             Closed += (_, _) => App.AboutOpen = false;
 
             InitializeComponent();
+            WindowDecorations = WindowDecorations.BorderOnly;
+            ExtendClientAreaToDecorationsHint = true;
+            ExtendClientAreaTitleBarHeightHint = 52;
 
             Loaded += (_, _) => NavView.IsPaneOpen = false;
 
@@ -115,12 +119,12 @@ namespace Froststrap.UI.Elements.About
 
         private void UpdateSelectedNavigationViewItem(string selectedTag)
         {
-            var navView = this.FindControl<FANavigationView>("NavView");
+            var navView = this.FindControl<CoffeeNavigationView>("NavView");
             if (navView == null) return;
 
             foreach (var item in navView.MenuItems)
             {
-                if (item is FANavigationViewItem navItem && navItem.Tag is string tag)
+                if (item is CoffeeNavigationItem navItem && navItem.Tag is string tag)
                 {
                     if (tag == selectedTag)
                     {
@@ -131,9 +135,9 @@ namespace Froststrap.UI.Elements.About
             }
         }
 
-        private void NavView_ItemInvoked(object? sender, FANavigationViewItemInvokedEventArgs e)
+        private void NavView_ItemInvoked(object? sender, CoffeeNavigationInvokedEventArgs e)
         {
-            if (e.InvokedItemContainer is FANavigationViewItem navItem && navItem.Tag is string tag)
+            if (e.InvokedItemContainer is CoffeeNavigationItem navItem && navItem.Tag is string tag)
             {
                 switch (tag)
                 {

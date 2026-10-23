@@ -16,6 +16,9 @@ namespace Froststrap.UI.Elements.Controls
     {
         public static readonly StyledProperty<string?> TitleProperty =
             AvaloniaProperty.Register<TitleBar, string?>(nameof(Title));
+        public static readonly StyledProperty<object?> CenterContentProperty =
+            AvaloniaProperty.Register<TitleBar, object?>(nameof(CenterContent));
+        public object? CenterContent { get => GetValue(CenterContentProperty); set => SetValue(CenterContentProperty, value); }
 
         public static readonly StyledProperty<bool> ShowMinimizeProperty =
             AvaloniaProperty.Register<TitleBar, bool>(nameof(ShowMinimize), true);
@@ -43,13 +46,12 @@ namespace Froststrap.UI.Elements.Controls
         private IconButton? _minBtn;
         private IconButton? _maxBtn;
         private IconButton? _closeBtn;
+        private bool _connected;
 
         protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
         {
+            Disconnect();
             base.OnApplyTemplate(e);
-
-            _window = TopLevel.GetTopLevel(this) as Window;
-            if (_window == null) return;
 
             foreach (var it in new[] { "PART_LeftPanel", "PART_RightPanel" })
             {
@@ -57,22 +59,20 @@ namespace Froststrap.UI.Elements.Controls
                 ctrl?.IsVisible = !OperatingSystem.IsMacOS();
             }
 
-            _window.PropertyChanged += OnWindowPropertyChanged;
-
             _minBtn = e.NameScope.Find<IconButton>("PART_MinimizeButton");
             _maxBtn = e.NameScope.Find<IconButton>("PART_MaximizeButton");
             _closeBtn = e.NameScope.Find<IconButton>("PART_CloseButton");
 
-            _minBtn?.Click += OnMinimizeClick;
-            _maxBtn?.Click += OnMaximizeClick;
-            _closeBtn?.Click += OnCloseClick;
+            Connect();
+            if (_minBtn != null) Avalonia.Automation.AutomationProperties.SetName(_minBtn, Strings.Coffee_Window_Minimize);
+            if (_closeBtn != null) Avalonia.Automation.AutomationProperties.SetName(_closeBtn, Strings.Common_Close);
 
             UpdateMaximizeIcon();
         }
 
         private void OnWindowPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
         {
-            if (e.Property.Name == nameof(Window.WindowState))
+            if (e.Property == Window.WindowStateProperty || e.Property == Window.CanResizeProperty || e.Property == Window.CanMaximizeProperty)
             {
                 SetValue(WindowStateProperty, _window!.WindowState);
                 UpdateMaximizeIcon();
@@ -86,6 +86,10 @@ namespace Froststrap.UI.Elements.Controls
                 _maxBtn.Icon = _window.WindowState == WindowState.Maximized
                     ? LucideIconNames.Minimize
                     : LucideIconNames.Maximize;
+                _maxBtn.IsEnabled = _window.CanMaximize;
+                var label = _window.WindowState == WindowState.Maximized ? Strings.Coffee_Window_Restore : Strings.Coffee_Window_Maximize;
+                Avalonia.Automation.AutomationProperties.SetName(_maxBtn, label);
+                ToolTip.SetTip(_maxBtn, label);
             }
         }
 
@@ -111,10 +115,29 @@ namespace Froststrap.UI.Elements.Controls
         {
             base.OnDetachedFromVisualTree(e);
 
+            Disconnect();
+        }
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+        { base.OnAttachedToVisualTree(e); Connect(); }
+        private void Connect()
+        {
+            if (_connected || TopLevel.GetTopLevel(this) is not Window window || _minBtn == null) return;
+            _window = window; _connected = true;
+            _window.PropertyChanged += OnWindowPropertyChanged;
+            _minBtn.Click += OnMinimizeClick;
+            _maxBtn?.Click += OnMaximizeClick;
+            _closeBtn?.Click += OnCloseClick;
+            ToolTip.SetTip(_minBtn, Strings.Coffee_Window_Minimize);
+            if (_closeBtn != null) ToolTip.SetTip(_closeBtn, Strings.Common_Close);
+            UpdateMaximizeIcon();
+        }
+        private void Disconnect()
+        {
             _window?.PropertyChanged -= OnWindowPropertyChanged;
             _minBtn?.Click -= OnMinimizeClick;
             _maxBtn?.Click -= OnMaximizeClick;
             _closeBtn?.Click -= OnCloseClick;
+            _connected = false;
         }
     }
 }

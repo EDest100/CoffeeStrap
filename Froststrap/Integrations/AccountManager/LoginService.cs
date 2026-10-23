@@ -6,7 +6,6 @@
 using Avalonia.Threading;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using PuppeteerSharp;
 using System.Diagnostics;
 using System.Net;
 using System.Runtime.InteropServices;
@@ -19,7 +18,7 @@ namespace Froststrap.Integrations.AccountManager
 {
     internal class LoginService
     {
-        private Browser? _browser;
+        private int _browserLogin;
 
         // https://devforum.roblox.com/t/how-to-generate-a-roblosecurity-token-from-quick-login/3147931
         public static async Task<AccountManagerAccount?> AddAccountByQuickSignInAsync(QuickSignCodeDialog dialog, CancellationToken cancellationToken)
@@ -162,132 +161,36 @@ namespace Froststrap.Integrations.AccountManager
 
         public async Task<AccountManagerAccount?> AddAccountByBrowserAsync(Func<string, Task<AccountManagerAccount?>> accountResolver)
         {
-            var completionSource = new TaskCompletionSource<string?>(TaskCreationOptions.RunContinuationsAsynchronously);
-
+            if (Interlocked.CompareExchange(ref _browserLogin, 1, 0) != 0) return null;
             try
             {
-                App.Logger.Info("Launching browser for account login...");
                 string? executablePath = GetSystemBrowserPath();
-
-                if (executablePath != null)
-                {
-                    MainWindow.ShowGlobalNotification(
-                        "Compatible browser found!",
-                        "Launching browser for login.",
-                        FAInfoBarSeverity.Success
-                    );
-                }
-
                 if (executablePath == null)
                 {
-                    var fetcher = new BrowserFetcher();
-                    var installed = fetcher.GetInstalledBrowsers().FirstOrDefault(b => b.Browser == SupportedBrowser.Chromium);
-                    if (installed != null) executablePath = installed.GetExecutablePath();
-
-                    if (executablePath == null)
-                    {
-                        App.Logger.Info("No browser found, downloading Chromium...");
-                        MainWindow.ShowGlobalNotification(
-                            "No compatible browser found",
-                            "Please wait while we download Chromium for login.",
-                            FAInfoBarSeverity.Warning
-                        );
-                        var browserInfo = await fetcher.DownloadAsync();
-                        executablePath = browserInfo.GetExecutablePath();
-                    }
+                    MainWindow.ShowGlobalNotification("Browser sign-in unavailable",
+                        "Install Chrome, Edge or another Chromium browser, or use Quick sign-in. CoffeeStrap does not download a browser.",
+                        FAInfoBarSeverity.Warning);
+                    return null;
                 }
-
-                _browser = (Browser)await Puppeteer.LaunchAsync(new LaunchOptions
-                {
-                    Headless = false,
-                    DefaultViewport = null,
-                    ExecutablePath = executablePath,
-                    Args = ["--disable-notifications", "--no-sandbox", "--disable-setuid-sandbox", "--disable-blink-features=AutomationControlled"],
-                    IgnoredDefaultArgs = ["--enable-automation"]
-                });
-
-                if (_browser == null) return null;
-
-                var mainPage = await _browser.NewPageAsync();
-                await mainPage.SetUserAgentAsync("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
-
-                var pages = await _browser.PagesAsync();
-                foreach (var p in pages) if (p != mainPage) await p.CloseAsync();
-
-                _browser.Disconnected += (s, e) => completionSource.TrySetResult(null);
-                mainPage.Close += (s, e) => completionSource.TrySetResult(null);
-                mainPage.Response += (_, e) => ObserveRedirectBody(e.Response);
-
-                _ = Task.Run(async () =>
-                {
-                    try
-                    {
-                        while (!completionSource.Task.IsCompleted)
-                        {
-                            if (mainPage == null || mainPage.IsClosed) break;
-
-                            var cookies = await mainPage.GetCookiesAsync("https://www.roblox.com/");
-                            var securityCookie = cookies.FirstOrDefault(c => c.Name == ".ROBLOSECURITY");
-
-                            if (securityCookie != null)
-                            {
-                                App.Logger.Info("Successfully captured cookie.");
-                                completionSource.TrySetResult(securityCookie.Value);
-                                break;
-                            }
-                            await Task.Delay(1000);
-                        }
-                    }
-                    catch { /* Page closed */ }
-                });
-
-                try
-                {
-                    await mainPage.GoToAsync("https://www.roblox.com/login", new NavigationOptions { WaitUntil = [WaitUntilNavigation.Networkidle2] });
-                }
-                catch (Exception ex)
-                {
-                    App.Logger.Error($"Initial nav failed ({ex.Message}), trying JS fallback...");
-                    try
-                    {
-                        if (!mainPage.IsClosed)
-                            await mainPage.EvaluateExpressionAsync("window.location.href = 'https://www.roblox.com/login'");
-                    }
-                    catch { }
-                }
-
-                var resultTask = await Task.WhenAny(completionSource.Task, Task.Delay(TimeSpan.FromMinutes(10)));
-                string? newCookie = resultTask == completionSource.Task ? await completionSource.Task : null;
-
-                if (string.IsNullOrEmpty(newCookie)) return null;
-
-                return await accountResolver(newCookie);
+                await using var browser = new BrowserLoginSession();
+                using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(10));
+                await browser.StartAsync(executablePath, timeout.Token);
+                string? cookie = await browser.WaitForLoginAsync(timeout.Token);
+                return cookie == null ? null : await accountResolver(cookie);
+            }
+            catch (OperationCanceledException)
+            {
+                MainWindow.ShowGlobalNotification("Browser sign-in timed out", "Try again or use Quick sign-in.", FAInfoBarSeverity.Warning);
+                return null;
             }
             catch (Exception ex)
             {
-                App.Logger.Error(ex);
+                App.Logger.Warn("Browser sign-in failed: " + ex.GetType().Name);
+                MainWindow.ShowGlobalNotification("Browser sign-in could not finish",
+                    "Close the sign-in window and try again, or use Quick sign-in.", FAInfoBarSeverity.Warning);
                 return null;
             }
-            finally
-            {
-                if (_browser != null && !_browser.IsClosed)
-                {
-                    await _browser.CloseAsync();
-                    _browser = null;
-                }
-            }
-        }
-
-        private static void ObserveRedirectBody(IResponse response)
-        {
-            if ((int)response.Status is < 300 or >= 400)
-                return;
-
-            _ = Task.Run(async () =>
-            {
-                try { await response.BufferAsync(); }
-                catch { /* expected: the body is unavailable for redirect responses */ }
-            });
+            finally { Volatile.Write(ref _browserLogin, 0); }
         }
 
         private static readonly string[] CompatibleBrowsers =
@@ -333,7 +236,28 @@ namespace Froststrap.Integrations.AccountManager
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
                 browserPath = GetMacOsBrowserPath();
 
-            return IsCompatibleBrowser(browserPath) ? browserPath : null;
+            if (IsCompatibleBrowser(browserPath)) return browserPath;
+            if (OperatingSystem.IsWindows())
+            {
+                foreach (string executable in new[] { "msedge.exe", "chrome.exe", "brave.exe", "vivaldi.exe" })
+                {
+                    foreach (var hive in new[] { Microsoft.Win32.Registry.CurrentUser, Microsoft.Win32.Registry.LocalMachine })
+                    {
+                        using var appPath = hive.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\App Paths\" + executable);
+                        string? candidate = appPath?.GetValue(null) as string;
+                        if (IsCompatibleBrowser(candidate)) return candidate;
+                    }
+                }
+                foreach (string root in new[] { Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), Paths.LocalAppData })
+                {
+                    foreach (string relative in new[] { @"Microsoft\Edge\Application\msedge.exe", @"Google\Chrome\Application\chrome.exe", @"BraveSoftware\Brave-Browser\Application\brave.exe" })
+                    {
+                        string candidate = Path.Combine(root, relative);
+                        if (IsCompatibleBrowser(candidate)) return candidate;
+                    }
+                }
+            }
+            return null;
         }
 
         private static string? GetWindowsBrowserPath()

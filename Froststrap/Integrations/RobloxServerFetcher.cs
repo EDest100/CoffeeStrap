@@ -1,9 +1,9 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Net.Http.Headers;
 
 namespace Froststrap.Integrations
 {
-    internal class RobloxServerFetcher : IDisposable
+    internal partial class RobloxServerFetcher : IDisposable
     {
         private readonly HttpClient _client;
         private Dictionary<int, string>? _datacenterIdToRegion;
@@ -13,7 +13,6 @@ namespace Froststrap.Integrations
         private IPInfoResponse? _ipinfoCache;
         private DateTime _ipinfoCachedAtUtc;
 
-        private const string DatacenterUrl = "https://apis.rovalra.com/v1/datacenters/list";
         private const string RegionServersUrl = "https://apis.rovalra.com/v1/servers/region";
         private const string IpInfoUrl = "https://ipinfo.io/json";
 
@@ -43,7 +42,13 @@ namespace Froststrap.Integrations
 
             _client = new HttpClient(handler);
             _client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            _client.DefaultRequestHeaders.UserAgent.ParseAdd("Roblox/Froststrap");
+            _client.DefaultRequestHeaders.UserAgent.ParseAdd("CoffeeStrap/" + App.Version);
+        }
+
+        internal RobloxServerFetcher(HttpMessageHandler handler)
+        {
+            _client = new HttpClient(handler) { Timeout = TimeSpan.FromSeconds(15) };
+            _client.DefaultRequestHeaders.UserAgent.ParseAdd("CoffeeStrap/" + App.Version);
         }
 
         private static string BuildRegionKey(string? city, string? country)
@@ -56,49 +61,16 @@ namespace Froststrap.Integrations
 
         public async Task<(List<string> regions, Dictionary<int, string> datacenterMap)?> GetDatacentersAsync(CancellationToken cancellationToken = default)
         {
-            if (_datacenterIdToRegion != null && _regionList != null)
-                return (_regionList, _datacenterIdToRegion);
-
+            if (!App.Settings.Prop.EnableRoValra) return null;
             try
             {
-                cancellationToken.ThrowIfCancellationRequested();
-
-                var json = await _client.GetStringAsync(new Uri(DatacenterUrl), cancellationToken);
-                var datacenterEntries = JsonSerializer.Deserialize<List<DatacenterEntry>>(json);
-
-                if (datacenterEntries == null) return null;
-
-                var map = new Dictionary<int, string>();
-                var regions = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-                foreach (var entry in datacenterEntries)
-                {
-                    string regionKey = BuildRegionKey(entry.Location?.City, entry.Location?.Country);
-                    regions.Add(regionKey);
-
-                    foreach (var id in entry.DataCenterIds)
-                    {
-                        map[id] = regionKey;
-                    }
-                }
-
-                _regionList = [.. regions.OrderBy(r => r, StringComparer.OrdinalIgnoreCase)];
-                _datacenterIdToRegion = map;
-                _datacenterEntries = datacenterEntries;
-
-                return (_regionList, _datacenterIdToRegion);
+                _regionList = [.. await GetPreferredRegionsAsync(cancellationToken)];
+                return (_regionList, _datacenterIdToRegion!);
             }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                App.Logger.Error("Unhandled exception:", ex);
-                return null;
-            }
+            catch (OperationCanceledException) { throw; }
+            catch (Exception error) when (error is HttpRequestException or JsonException or IOException)
+            { App.Logger.Warn(error, "RoValra datacenters unavailable."); return null; }
         }
-
         private static (string? city, string? country) ParseRegionString(string region)
         {
             if (string.IsNullOrEmpty(region))
@@ -122,6 +94,7 @@ namespace Froststrap.Integrations
             long placeId, string region, int? cursor = null, int limit = 100, CancellationToken cancellationToken = default)
         {
             var results = new List<ServerInstance>();
+            if (!App.Settings.Prop.EnableRoValra) return (results, null);
 
             try
             {
@@ -139,11 +112,7 @@ namespace Froststrap.Integrations
 
                 var url = new UriBuilder(RegionServersUrl) { Query = query }.Uri;
 
-                var response = await _client.GetAsync(url, cancellationToken);
-                if (!response.IsSuccessStatusCode) return (results, null);
-
-                var content = await response.Content.ReadAsStringAsync(cancellationToken);
-                var regionResponse = JsonSerializer.Deserialize<RoValraRegionResponse>(content);
+                var regionResponse = await ProviderAsync<RoValraRegionResponse>(url.PathAndQuery, TimeSpan.FromSeconds(60), cancellationToken);
 
                 if (regionResponse?.Servers == null) return (results, null);
 

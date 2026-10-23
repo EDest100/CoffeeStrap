@@ -1,0 +1,9 @@
+<!-- SPDX-FileCopyrightText: 2026 CoffeeStrap contributors
+     SPDX-License-Identifier: MPL-2.0 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs><linearGradient id="coffee" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e5c5a3"/><stop offset="1" stop-color="#825234"/></linearGradient></defs>
+  <path transform="translate(248 244) rotate(15)" fill="url(#coffee)" fill-rule="evenodd" d="M-163-163H163V163H-163Z M-53-53H53V53H-53Z"/>
+  <circle cx="400" cy="400" r="74" fill="#2c211b" stroke="#d7b491" stroke-width="5"/>
+  <g stroke="#fff3e3" stroke-width="9" fill="none" stroke-linecap="round"><path d="M416 378c29-9 27 32-2 30M360 437h66M385 363c-9-9 10-12 2-21M405 363c-8-9 10-12 2-21"/></g>
+  <path fill="#fff3e3" d="M365 377h53l-3 32c-2 23-45 23-47 0Z"/>
+</svg>

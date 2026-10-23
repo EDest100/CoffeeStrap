@@ -1,9 +1,8 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
 using System.Text.Json.Nodes;
-using System.Reflection;
 
 namespace Froststrap
 {
@@ -120,8 +119,11 @@ namespace Froststrap
         }
 
         public virtual bool Save()
+            => Save(true);
+
+        public virtual bool Save(bool alertFailure)
         {
-            if (!HasUnsavedChanges)
+            if (!HasUnsavedChanges && File.Exists(FileLocation))
             {
                 App.Logger.Info("No changes, skipping save.");
                 return false;
@@ -129,16 +131,14 @@ namespace Froststrap
 
             App.Logger.Info($"Saving to {FileLocation}...");
 
-            Directory.CreateDirectory(Path.GetDirectoryName(FileLocation)!);
-
             try
             {
                 string contents = JsonSerializer.Serialize(Prop, _jsonOptions);
-
-                File.WriteAllText(FileLocation, contents);
+                string savedHash = ComputeHash(Prop);
+                AtomicFile.WriteText(FileLocation, contents);
 
                 LastFileHash = FastHash.FromString(contents);
-                _savedHash = ComputeHash(Prop);
+                _savedHash = savedHash;
                 App.Logger.Info("Save complete!");
                 return true;
             }
@@ -148,23 +148,23 @@ namespace Froststrap
                 App.Logger.Error(ex);
 
                 string errorMessage = string.Format(CultureInfo.InvariantCulture, Strings.Bootstrapper_JsonManagerSaveFailed, ClassName, ex.Message);
-                _ = Frontend.ShowMessageBox(errorMessage, MessageBoxImage.Warning);
+                if (alertFailure) _ = Frontend.ShowMessageBox(errorMessage, MessageBoxImage.Warning);
 
                 return false;
             }
         }
 
         public virtual void SaveSetting(string SettingName)
+            => TrySaveSetting(SettingName);
+
+        public bool TrySaveSetting(string SettingName)
         {
             if (string.IsNullOrEmpty(SettingName))
             {
-                Save();
-                return;
+                return Save();
             }
 
             App.Logger.Info($"Saving setting '{SettingName}' to {FileLocation}");
-
-            Directory.CreateDirectory(Path.GetDirectoryName(FileLocation)!);
 
             try
             {
@@ -175,6 +175,7 @@ namespace Froststrap
                     if (!string.IsNullOrWhiteSpace(existingContent))
                     {
                         using var doc = JsonDocument.Parse(existingContent);
+                        if (doc.RootElement.ValueKind != JsonValueKind.Object) throw new JsonException("Settings must be a JSON object.");
                         existingJson = JsonSerializer.SerializeToNode(doc.RootElement)?.AsObject() ?? [];
                     }
                 }
@@ -190,19 +191,23 @@ namespace Froststrap
                 else
                 {
                     App.Logger.Error($"Setting '{SettingName}' not found – aborting save.");
-                    return;
+                    return false;
                 }
 
                 string contents = existingJson.ToJsonString(_jsonOptions);
-                File.WriteAllText(FileLocation, contents);
+                T savedState = JsonSerializer.Deserialize<T>(contents, _jsonOptions) ?? throw new JsonException("Saved settings are empty.");
+                string savedHash = ComputeHash(savedState);
+                AtomicFile.WriteText(FileLocation, contents);
                 LastFileHash = FastHash.FromString(contents);
-                _savedHash = ComputeHash(Prop);
+                _savedHash = savedHash;
                 App.Logger.Info("SaveSetting complete!");
+                return true;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
             {
                 App.Logger.Error("Failed to save Setting");
                 App.Logger.Error(ex);
+                return false;
             }
         }
 
@@ -228,163 +233,6 @@ namespace Froststrap
                 App.Logger.Error(ex);
 
                 // should we notify?
-            }
-        }
-
-        public async void SaveProfile(string name)
-        {
-            string BaseDir = Paths.SavedFlagProfiles;
-
-            try
-            {
-                if (string.IsNullOrEmpty(name))
-                    return;
-
-                string FileDirectory = Path.Combine(BaseDir, name);
-
-                if (!Directory.Exists(BaseDir))
-                    Directory.CreateDirectory(BaseDir);
-
-                App.Logger.Info($"Writing flag profile {name}");
-
-                if (!File.Exists(FileDirectory))
-                    File.Create(FileDirectory).Dispose();
-
-                string FastFlagsJson = JsonSerializer.Serialize(Prop, _jsonOptions);
-
-                File.WriteAllText(FileDirectory, FastFlagsJson);
-            }
-            catch (Exception ex)
-            {
-                await Frontend.ShowMessageBox(ex.Message, MessageBoxImage.Error);
-            }
-        }
-
-        public async void LoadProfile(string? name, bool? clearFlags)
-        {
-            string BaseDir = Paths.SavedFlagProfiles;
-
-            if (string.IsNullOrEmpty(name))
-                return;
-
-            try
-            {
-                if (!Directory.Exists(BaseDir))
-                    Directory.CreateDirectory(BaseDir);
-
-                string[] Files = Directory.GetFiles(BaseDir);
-                string FoundFile = Files.FirstOrDefault(f => Path.GetFileName(f) == name) ?? string.Empty;
-
-                if (string.IsNullOrEmpty(FoundFile))
-                    return;
-
-                string SavedClientSettings = File.ReadAllText(FoundFile);
-
-                App.Logger.Info($"Loading {SavedClientSettings}");
-
-                T settings = JsonSerializer.Deserialize<T>(SavedClientSettings)
-                    ?? throw new JsonException($"Failed to deserialize profile: {name}");
-
-                App.FastFlags.suspendUndoSnapshot = true;
-                App.FastFlags.SaveUndoSnapshot();
-
-                if (clearFlags == true)
-                {
-                    Prop = settings;
-                }
-                else
-                {
-                    if (settings is IDictionary<string, object> settingsDict && Prop is IDictionary<string, object> propDict)
-                    {
-                        foreach (var kvp in settingsDict)
-                        {
-                            if (kvp.Value != null)
-                                propDict[kvp.Key] = kvp.Value;
-                        }
-                    }
-                }
-
-                App.FastFlags.suspendUndoSnapshot = false;
-                App.FastFlags.Save();
-            }
-            catch (Exception ex)
-            {
-                await Frontend.ShowMessageBox(ex.Message, MessageBoxImage.Error);
-            }
-        }
-
-        public async void LoadPresetProfile(string? name, bool? clearFlags)
-        {
-            if (string.IsNullOrEmpty(name))
-                return;
-
-            try
-            {
-                string profileJson;
-                var assembly = Assembly.GetExecutingAssembly();
-                string resourcePrefix = "Froststrap.Resources.PresetFlags.";
-                string resourceFullName = resourcePrefix + name;
-
-                string? foundResource = assembly.GetManifestResourceNames()
-                    .FirstOrDefault(r => r.Equals(resourceFullName, StringComparison.OrdinalIgnoreCase));
-
-                if (foundResource != null)
-                {
-                    using Stream stream = assembly.GetManifestResourceStream(foundResource)!;
-                    using StreamReader reader = new(stream);
-                    profileJson = reader.ReadToEnd();
-
-                    App.Logger.Info($"Loading embedded preset profile {name}");
-                }
-                else
-                {
-                    // Load from disk (user profiles)
-                    string BaseDir = Paths.SavedFlagProfiles;
-
-                    if (!Directory.Exists(BaseDir))
-                        Directory.CreateDirectory(BaseDir);
-
-                    string[] Files = Directory.GetFiles(BaseDir);
-                    string FoundFile = Files.FirstOrDefault(f => Path.GetFileName(f) == name) ?? string.Empty;
-
-                    if (string.IsNullOrEmpty(FoundFile))
-                        throw new FileNotFoundException($"Profile file '{name}' not found.");
-
-                    profileJson = File.ReadAllText(FoundFile);
-
-                    App.Logger.Info($"Loading user profile from file {name}");
-                }
-
-                // Deserialize the profile JSON
-                T settings = JsonSerializer.Deserialize<T>(profileJson)
-                    ?? throw new ArgumentNullException(nameof(name), "Deserialization returned null");
-
-                App.FastFlags.suspendUndoSnapshot = true;
-                App.FastFlags.SaveUndoSnapshot();
-
-                if (clearFlags == true)
-                {
-                    Prop = settings;
-                }
-                else
-                {
-                    if (settings is IDictionary<string, object> settingsDict && Prop is IDictionary<string, object> propDict)
-                    {
-                        foreach (var kvp in settingsDict)
-                        {
-                            if (kvp.Value != null)
-                                propDict[kvp.Key] = kvp.Value;
-                        }
-                    }
-                }
-
-                App.FastFlags.suspendUndoSnapshot = false;
-
-                App.FastFlags.Save();
-            }
-            catch (Exception ex)
-            {
-                await Frontend.ShowMessageBox(ex.Message, MessageBoxImage.Error);
             }
         }
 

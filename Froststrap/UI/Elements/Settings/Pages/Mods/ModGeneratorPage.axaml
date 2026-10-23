@@ -21,7 +21,7 @@ SPDX-License-Identifier: MPL-2.0
              d:DesignWidth="1100"
              mc:Ignorable="d">
 
-    <ScrollViewer>
+    <controls:SmoothScrollViewer>
         <Grid Margin="14" RowDefinitions="Auto,Auto,*">
             <Grid Grid.Row="0" ColumnDefinitions="*,*,*">
                 <controls:CardAction Grid.Column="0" Margin="0,0,4,0"
@@ -70,7 +70,7 @@ SPDX-License-Identifier: MPL-2.0
                             </StackPanel>
                         </Grid>
 
-                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Height="250">
+                        <controls:SmoothScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Height="250">
                             <ItemsControl ItemsSource="{Binding GlyphItems}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -94,7 +94,7 @@ SPDX-License-Identifier: MPL-2.0
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                        </ScrollViewer>
+                        </controls:SmoothScrollViewer>
                     </Grid>
                 </Border>
 
@@ -244,5 +244,5 @@ SPDX-License-Identifier: MPL-2.0
                 </Border>
             </StackPanel>
         </Grid>
-    </ScrollViewer>
+    </controls:SmoothScrollViewer>
 </UserControl>

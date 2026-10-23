@@ -11,7 +11,7 @@ namespace Froststrap.UI.Converters
         public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             if (value is not Enum enumVal)
-                return value?.ToString() ?? "Unknown";
+                return (value?.ToString() ?? "Unknown").Replace("Froststrap", "CoffeeStrap", StringComparison.OrdinalIgnoreCase);
 
             var stringVal = enumVal.ToString();
             var type = enumVal.GetType();

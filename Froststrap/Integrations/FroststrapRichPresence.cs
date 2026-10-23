@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -111,7 +111,7 @@ namespace Froststrap.Integrations
                 Assets = new Assets
                 {
                     LargeImageKey = "froststrap",
-                    LargeImageText = "Froststrap",
+                    LargeImageText = "CoffeeStrap",
                     SmallImageKey = "checkmark",
                     SmallImageText = $"{App.Version}"
                 },

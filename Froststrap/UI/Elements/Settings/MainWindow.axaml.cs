@@ -1,3 +1,4 @@
+#pragma warning disable CA1001 // Avalonia owns window lifetime; disposable search state is released in OnClosed.
 // SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
@@ -35,6 +36,9 @@ namespace Froststrap.UI.Elements.Settings
         private readonly HashSet<string> _indexedPageTags = [];
         private readonly SearchIndexBuilder _searchIndexBuilder = new();
         private bool _isIndexingAllPagesStarted;
+        private readonly CancellationTokenSource _indexLifetime = new();
+        private Task _indexTask = Task.CompletedTask;
+        private bool _closed;
 
         private const double NotificationHeight = 80;
         private const double NotificationSpacing = 15;
@@ -46,56 +50,45 @@ namespace Froststrap.UI.Elements.Settings
             public required Border Element { get; init; }
             public required TranslateTransform Transform { get; init; }
             public CancellationTokenSource? TimeoutCts { get; set; }
+            public bool SaveNotice { get; init; }
         }
 
         public MainWindow()
         {
             Instance = this;
             InitializeComponent();
+            foreach (var route in NavigationRegistry.Pages.Where(route => route.Sidebar))
+                this.FindControl<CoffeeNavigationView>("NavView")!.MenuItems.Add(new CoffeeNavigationItem { Content = route.Title, Tag = route.Tag, Icon = new LucideAvalonia.Lucide { Icon = route.Icon } });
+            WindowDecorations = WindowDecorations.BorderOnly;
+            AddHandler(KeyDownEvent, (_, e) =>
+            {
+                if (e.Key == Key.K && e.KeyModifiers is KeyModifiers.Control or KeyModifiers.Meta)
+                { this.FindControl<InlineSettingsSearch>("SettingsSearch")?.FocusSearch(); e.Handled = true; }
+            }, Avalonia.Interactivity.RoutingStrategies.Tunnel);
+            ExtendClientAreaToDecorationsHint = true;
+            ExtendClientAreaTitleBarHeightHint = 52;
         }
 
         public MainWindow(bool showAlreadyRunningWarning) : this()
         {
             _viewModel = new MainWindowViewModel();
             DataContext = _viewModel;
+            Activated += (_, _) => { if (_viewModel.CurrentPage is HomeViewModel home) home.RefreshLastPlace(); };
 
             _viewModel.RequestSaveNoticeEvent += (_, _) => ShowSaveNotification();
             _viewModel.RequestCloseWindowEvent += (_, _) => Close();
             _viewModel.SearchBar.SearchResultSelected += (_, item) => OnSearchResultSelected(item);
 
-            var overlay = this.FindControl<SearchDialog>("SearchOverlay");
-            if (overlay != null)
-            {
-                overlay.Subscribe(_viewModel.SearchBar);
-                overlay.Dismissed += (_, _) => overlay.Hide();
-            }
+            var search = this.FindControl<InlineSettingsSearch>("SettingsSearch");
+            if (search != null) search.IndexRequested += (_, _) => StartIndexingAllPagesIfNeeded();
 
             App.Logger.Debug("Initializing settings window");
 
             if (showAlreadyRunningWarning)
                 ShowAlreadyRunningNotification();
 
-            gbs.Opacity = _viewModel.GBSEnabled ? 1 : 0.5;
-            gbs.IsEnabled = _viewModel.GBSEnabled;
-
             LoadState();
 
-
-            App.RemoteData.Subscribe((_, _) => Dispatcher.UIThread.Post(() =>
-            {
-                var data = App.RemoteData.Prop;
-                if (data is null) return;
-
-                bool show = data.AlertEnabled && !string.IsNullOrWhiteSpace(data.AlertContent);
-
-                AlertBar.IsOpen = show;
-
-                if (show)
-                {
-                    AlertBar.Message = data.AlertContent;
-                    AlertBar.Severity = data.AlertSeverity;
-                }
-            }));
 
             _viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
@@ -108,6 +101,17 @@ namespace Froststrap.UI.Elements.Settings
             {
                 UpdateSelectedNavigationViewItem(_viewModel.SelectedPage);
             }, DispatcherPriority.Loaded);
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _closed = true; _indexLifetime.Cancel(); _indexLifetime.Dispose();
+            foreach (var entry in _notifications) entry.TimeoutCts?.Cancel();
+            _notifications.Clear(); this.FindControl<Panel>("NotificationPanel")?.Children.Clear();
+            if (_viewModel != null) _viewModel.SearchBar.IsIndexing = false;
+            _searchRevealCancellation?.Cancel(); _searchRevealCancellation?.Dispose();
+            (_viewModel?.CurrentPage as IDisposable)?.Dispose(); _viewModel?.SearchBar.Dispose();
+            base.OnClosed(e);
         }
 
         protected override async void OnOpened(EventArgs e)
@@ -123,10 +127,12 @@ namespace Froststrap.UI.Elements.Settings
 
         public void StartIndexingAllPagesIfNeeded()
         {
-            if (_isIndexingAllPagesStarted) return;
+            if (_closed || _isIndexingAllPagesStarted) return;
             _isIndexingAllPagesStarted = true;
-            _ = IndexMissingPagesAsync();
+            if (_viewModel != null) _viewModel.SearchBar.IndexingIncomplete = false;
+            _indexTask = IndexMissingPagesAsync(_indexLifetime.Token);
         }
+        internal Task SearchIndexingTask => _indexTask;
 
         private void TitleBarGrid_PointerPressed(object sender, PointerPressedEventArgs e)
         {
@@ -143,11 +149,14 @@ namespace Froststrap.UI.Elements.Settings
             if (e.PropertyName == nameof(MainWindowViewModel.CurrentPage))
             {
                 UpdatePageView(_viewModel.CurrentPage);
+                UpdateSelectedNavigationViewItem(_viewModel.BreadcrumbItems.FirstOrDefault()?.Tag ?? _viewModel.SelectedPage);
             }
             else if (e.PropertyName == nameof(MainWindowViewModel.SelectedPage))
             {
                 UpdateSelectedNavigationViewItem(_viewModel.SelectedPage);
             }
+            else if (e.PropertyName == nameof(MainWindowViewModel.HasSaveError) && _viewModel.HasSaveError)
+                ClearSaveNotifications();
         }
 
         private SearchBarItem? _pendingSearchScrollItem;
@@ -167,41 +176,16 @@ namespace Froststrap.UI.Elements.Settings
             }
             else
             {
+                _pendingSearchScrollItem = null;
                 ScrollToSearchItem(item);
             }
         }
 
-        private Action? GetNavigationAction(string pageTag)
-        {
-            return pageTag switch
-            {
-                "integrations" => () => _viewModel?.NavigateToIntegrationsCommand.Execute(null),
-                "behaviour" => () => _viewModel?.NavigateToBehaviourCommand.Execute(null),
-                "linuxsettings" => () => _viewModel?.NavigateToLinuxSettingsCommand.Execute(null),
-                "mods" => () => _viewModel?.NavigateToPresetModsCommand.Execute(null),
-                "fastflags" => () => _viewModel?.NavigateToFastFlagsCommand.Execute(null),
-                "appearance" => () => _viewModel?.NavigateToAppearanceCommand.Execute(null),
-                "regionselector" => () => _viewModel?.NavigateToRegionSelectorCommand.Execute(null),
-                "globalsettings" => () => _viewModel?.NavigateToGlobalSettingsCommand.Execute(null),
-                "shortcuts" => () => _viewModel?.NavigateToShortcutsCommand.Execute(null),
-                "quickplay" => () => _viewModel?.NavigateToQuickPlayCommand.Execute(null),
-                "channels" => () => _viewModel?.NavigateToChannelsCommand.Execute(null),
-                _ => null
-            };
-        }
+        private Action? GetNavigationAction(string pageTag) => NavigationRegistry.Find(pageTag) != null
+            ? () => _viewModel?.NavigateRegistered(pageTag) : null;
 
-        private readonly Dictionary<string, (string Title, LucideIconNames Icon)> _pageInfo = new()
-        {
-            ["integrations"] = (Strings.Menu_Integrations_Title, LucideIconNames.Plus),
-            ["behaviour"] = (Strings.Menu_Behaviour_Title, LucideIconNames.Play),
-            ["linuxsettings"] = (Strings.Menu_LinuxSettings_Title, LucideIconNames.Settings),
-            ["mods"] = (Strings.Menu_PresetMods_Title, LucideIconNames.BookOpen),
-            ["fastflags"] = (Strings.Menu_FastFlags_Title, LucideIconNames.Flag),
-            ["appearance"] = (Strings.Menu_Appearance_Title, LucideIconNames.Palette),
-            ["globalsettings"] = (Strings.Menu_GlobalSettings_Title, LucideIconNames.PenLine),
-            ["shortcuts"] = (Strings.Common_Shortcuts, LucideIconNames.Link2),
-            ["channels"] = (Strings.Common_Deployment, LucideIconNames.HardDriveUpload)
-        };
+        private readonly Dictionary<string, (string Title, LucideIconNames Icon)> _pageInfo =
+            NavigationRegistry.Pages.ToDictionary(page => page.Tag, page => (page.Title, page.Icon));
 
         private void UpdatePageView(object? viewModel)
         {
@@ -221,27 +205,27 @@ namespace Froststrap.UI.Elements.Settings
 
             Dispatcher.UIThread.Post(() =>
             {
+                if (_closed) return;
                 if (!string.IsNullOrEmpty(pageTag) && _pageInfo.TryGetValue(pageTag, out var info)
                     && !_indexedPageTags.Contains(pageTag))
                 {
-                    IndexPage(view, pageTag, info.Title, info.Icon);
-                    _indexedPageTags.Add(pageTag);
+                    if (IndexPage(view, pageTag, info.Title, info.Icon)) _indexedPageTags.Add(pageTag);
                 }
 
-                if (_pendingSearchScrollItem != null)
+                if (_pendingSearchScrollItem is { } pending && _viewModel?.SelectedPage == pending.PageTag)
                 {
+                    _pendingSearchScrollItem = null;
                     Dispatcher.UIThread.Post(() =>
                     {
-                        ScrollToSearchItem(_pendingSearchScrollItem);
-                        _pendingSearchScrollItem = null;
+                        if (ReferenceEquals(pageControl.Content, view)) ScrollToSearchItem(pending);
                     }, DispatcherPriority.Render);
                 }
             }, DispatcherPriority.Background);
         }
 
-        private void NavView_ItemInvoked(object? sender, FANavigationViewItemInvokedEventArgs e)
+        private void NavView_ItemInvoked(object? sender, CoffeeNavigationInvokedEventArgs e)
         {
-            if (e.InvokedItemContainer is FANavigationViewItem navItem && navItem.Tag is string tag)
+            if (e.InvokedItemContainer is CoffeeNavigationItem navItem && navItem.Tag is string tag)
             {
                 if (tag == "about")
                 {
@@ -272,12 +256,12 @@ namespace Froststrap.UI.Elements.Settings
 
         private void UpdateSelectedNavigationViewItem(string selectedPage)
         {
-            var navView = this.FindControl<FANavigationView>("NavView");
+            var navView = this.FindControl<CoffeeNavigationView>("NavView");
             if (navView == null) return;
 
             foreach (var item in navView.MenuItems)
             {
-                if (item is FANavigationViewItem navItem && navItem.Tag is string tag)
+                if (item is CoffeeNavigationItem navItem && navItem.Tag is string tag)
                 {
                     if (tag == selectedPage)
                     {
@@ -288,7 +272,7 @@ namespace Froststrap.UI.Elements.Settings
             }
             foreach (var item in navView.FooterMenuItems)
             {
-                if (item is FANavigationViewItem navItem && navItem.Tag is string tag)
+                if (item is CoffeeNavigationItem navItem && navItem.Tag is string tag)
                 {
                     if (tag == selectedPage)
                     {
@@ -299,59 +283,7 @@ namespace Froststrap.UI.Elements.Settings
             }
         }
 
-        private static readonly Dictionary<string, Type> ViewTypeCache = new();
-
-        private static Control? ResolveViewForViewModel(object viewModel)
-        {
-            var viewModelName = viewModel.GetType().Name;
-            var viewName = viewModelName.Replace("ViewModel", "", StringComparison.Ordinal);
-
-            if (ViewTypeCache.TryGetValue(viewModelName, out var cachedViewType))
-            {
-                try
-                {
-                    return Activator.CreateInstance(cachedViewType) as Control;
-                }
-                catch (Exception ex)
-                {
-                    App.Logger.Error($"Failed to create view {cachedViewType.Name}: {ex.Message}");
-                    return null;
-                }
-            }
-
-            var viewTypeNames = new[]
-            {
-                $"Froststrap.UI.Elements.Settings.Pages.GlobalSettings.{viewName}",
-                $"Froststrap.UI.Elements.Settings.Pages.FastFlags.{viewName}",
-                $"Froststrap.UI.Elements.Settings.Pages.Mods.{viewName}Page",
-                $"Froststrap.UI.Elements.Settings.Pages.{viewName}Page",
-                $"Froststrap.UI.Elements.Settings.Pages.{viewName}",
-                $"Froststrap.UI.Elements.Settings.{viewName}Page",
-                $"Froststrap.UI.Elements.Settings.{viewName}"
-            };
-
-            foreach (var viewTypeName in viewTypeNames)
-            {
-                var viewType = Type.GetType(viewTypeName) ??
-                               System.Reflection.Assembly.GetExecutingAssembly().GetType(viewTypeName);
-
-                if (viewType != null && typeof(Control).IsAssignableFrom(viewType))
-                {
-                    ViewTypeCache[viewModelName] = viewType;
-
-                    try
-                    {
-                        return Activator.CreateInstance(viewType) as Control;
-                    }
-                    catch (Exception ex)
-                    {
-                        App.Logger.Error($"Failed to create view {viewTypeName}: {ex.Message}");
-                    }
-                }
-            }
-
-            return null;
-        }
+        private static Control? ResolveViewForViewModel(object viewModel) => NavigationRegistry.CreateView(viewModel);
 
         public void LoadState()
         {
@@ -374,11 +306,22 @@ namespace Froststrap.UI.Elements.Settings
 
         private void ShowSaveNotification()
         {
+            ClearSaveNotifications();
             ShowNotification(
                 Strings.Menu_SettingsSaved_Title,
                 Strings.Menu_SettingsSaved_Message,
                 FAInfoBarSeverity.Success,
-                3000);
+                3000, saveNotice: true);
+        }
+
+        private void ClearSaveNotifications()
+        {
+            var panel = this.FindControl<Panel>("NotificationPanel");
+            foreach (var entry in _notifications.Where(item => item.SaveNotice).ToArray())
+            {
+                entry.TimeoutCts?.Cancel(); _notifications.Remove(entry); panel?.Children.Remove(entry.Element);
+            }
+            RepositionNotifications();
         }
 
         private async void ShowAlreadyRunningNotification()
@@ -396,8 +339,9 @@ namespace Froststrap.UI.Elements.Settings
             Dispatcher.UIThread.Post(() => Instance?.ShowNotification(title, subtitle, type, timeout, icon));
         }
 
-        public void ShowNotification(string title, string subtitle, FAInfoBarSeverity type, int timeout, LucideIconNames? customIcon = null)
+        public void ShowNotification(string title, string subtitle, FAInfoBarSeverity type, int timeout, LucideIconNames? customIcon = null, bool saveNotice = false)
         {
+            if (_closed) return;
             var notificationPanel = this.FindControl<Panel>("NotificationPanel");
             if (notificationPanel == null) return;
 
@@ -476,7 +420,7 @@ namespace Froststrap.UI.Elements.Settings
             };
             notification.Bind(Border.BackgroundProperty, new DynamicResourceExtension("NotificationBackgroundColor"));
 
-            var entry = new NotificationEntry { Element = notification, Transform = transform };
+            var entry = new NotificationEntry { Element = notification, Transform = transform, SaveNotice = saveNotice };
 
             void Dismiss() => DismissNotification(entry);
 
@@ -497,7 +441,7 @@ namespace Froststrap.UI.Elements.Settings
             Dispatcher.UIThread.InvokeAsync(async () =>
             {
                 await Task.Delay(50);
-                if (cts.IsCancellationRequested) return;
+                if (_closed || cts.IsCancellationRequested) return;
                 transform.X = 0;
 
                 await Task.Delay(timeout);
@@ -515,6 +459,7 @@ namespace Froststrap.UI.Elements.Settings
 
             entry.Transform.X = NotificationSlideDistance;
             await Task.Delay(350);
+            if (_closed) return;
 
             var notificationPanel = this.FindControl<Panel>("NotificationPanel");
             if (notificationPanel != null && notificationPanel.Children.Contains(entry.Element))
@@ -545,106 +490,93 @@ namespace Froststrap.UI.Elements.Settings
             loadingOverlay?.IsVisible = false;
         }
 
-        private async Task IndexMissingPagesAsync()
+        private async Task IndexMissingPagesAsync(CancellationToken cancellation)
         {
             if (_viewModel == null) return;
 
-            var allPageTags = new List<string>
-            {
-                "integrations",
-                "behaviour",
-                "channels",
-                "mods",
-                "appearance",
-                "fastflags",
-                "globalsettings",
-                "shortcuts"
-            };
-
-            if (OperatingSystem.IsLinux())
-                allPageTags.Add("linuxsettings");
-
-            if (!_viewModel.GBSEnabled)
-                allPageTags.Remove("globalsettings");
+            var allPageTags = NavigationRegistry.Pages.Where(page => page.Searchable && (page.Tag != "globalsettings" || _viewModel.GBSEnabled)).Select(page => page.Tag).ToList();
 
             var pagesToIndex = allPageTags.Where(tag => !_indexedPageTags.Contains(tag)).ToList();
             if (pagesToIndex.Count == 0) return;
 
-            Dispatcher.UIThread.Post(() => _viewModel.SearchBar.IsIndexing = true);
+            _viewModel.SearchBar.IsIndexing = true;
 
             var stagingArea = this.FindControl<Border>("OffscreenIndexingCanvas");
             if (stagingArea == null)
             {
                 App.Logger.Error("OffscreenIndexingCanvas not found");
-                Dispatcher.UIThread.Post(() => _viewModel.SearchBar.IsIndexing = false);
+                _viewModel.SearchBar.IsIndexing = false;
+                _viewModel.SearchBar.IndexingIncomplete = true; _isIndexingAllPagesStarted = false;
                 return;
             }
 
             stagingArea.IsVisible = true;
+            bool failed = false;
 
             try
             {
                 foreach (var pageTag in pagesToIndex)
                 {
+                    cancellation.ThrowIfCancellationRequested();
+                    object? vm = null;
+                    Control? view = null;
+                    Border? container = null;
                     try
                     {
-                        object? vm = pageTag switch
-                        {
-                            "integrations" => new IntegrationsViewModel(),
-                            "behaviour" => new BehaviourViewModel(),
-                            "linuxsettings" => new LinuxSettingsViewModel(),
-                            "mods" => new ModsPresetsViewModel(),
-                            "fastflags" => new FastFlagsViewModel(),
-                            "appearance" => new AppearanceViewModel(),
-                            "globalsettings" => new GlobalSettingsViewModel(),
-                            "shortcuts" => new ShortcutsViewModel(),
-                            "channels" => new ChannelViewModel(),
-                            _ => null
-                        };
+                        vm = NavigationRegistry.Find(pageTag)?.CreateModel(_viewModel);
 
                         if (vm == null) continue;
 
-                        var view = ResolveViewForViewModel(vm);
+                        view = ResolveViewForViewModel(vm);
                         if (view == null) continue;
 
                         view.DataContext = vm;
 
-                        var container = new Border { Child = view };
+                        container = new Border { Child = view };
                         stagingArea.Child = container;
 
-                        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render);
-                        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background);
+                        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Render, cancellation);
+                        await Dispatcher.UIThread.InvokeAsync(() => { }, DispatcherPriority.Background, cancellation);
+                        cancellation.ThrowIfCancellationRequested();
 
                         var (title, icon) = _pageInfo[pageTag];
-                        IndexPage(view, pageTag, title, icon);
-                        _indexedPageTags.Add(pageTag);
+                        if (IndexPage(view, pageTag, title, icon)) _indexedPageTags.Add(pageTag);
+                        else failed = true;
 
-                        container.Child = null;
-                        stagingArea.Child = null;
-                        view.DataContext = null;
-                        stagingArea.UpdateLayout();
-                        await Task.Delay(30);
                     }
+                    catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { throw; }
                     catch (Exception ex)
                     {
+                        failed = true;
                         App.Logger.Error($"Error indexing {pageTag}: {ex.Message}");
+                    }
+                    finally
+                    {
+                        if (container != null) container.Child = null;
+                        stagingArea.Child = null;
+                        if (view != null) view.DataContext = null;
+                        if (vm is IDisposable disposable) disposable.Dispose();
                     }
                 }
             }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+            catch (Exception error) { failed = true; App.Logger.Error(error, "Search indexing could not finish."); }
             finally
             {
                 stagingArea.IsVisible = false;
-                Dispatcher.UIThread.Post(() =>
+                if (!_closed)
                 {
+                    _isIndexingAllPagesStarted = !failed;
+                    _viewModel.SearchBar.IndexingIncomplete = failed;
                     _viewModel.SearchBar.IsIndexing = false;
                     _viewModel.SearchBar.RefreshSearchResults();
-                });
+                }
             }
         }
 
-        private void IndexPage(Control pageView, string pageTag, string pageTitle, LucideIconNames pageIcon)
+        private bool IndexPage(Control pageView, string pageTag, string pageTitle, LucideIconNames pageIcon)
         {
-            if (_viewModel == null) return;
+            if (_viewModel == null || _closed) return false;
 
             try
             {
@@ -661,87 +593,61 @@ namespace Froststrap.UI.Elements.Settings
                             item.NavigateAction = navAction;
                     }
 
-                    var hiddenControlHeaders = pageView.GetVisualDescendants()
-                        .Where(c => !c.IsVisible)
-                        .Select(c =>
-                        {
-                            if (c is OptionControl oc) return oc.Header?.ToString();
-                            if (c is CardExpander ce) return ce.Header?.ToString();
-                            if (c is CardAction ca) return ca.Header?.ToString();
-                            if (c is TextBlock tb) return tb.Text;
-                            return null;
-                        })
-                        .Where(name => !string.IsNullOrEmpty(name))
-                        .ToHashSet();
-
-                    var filteredItems = addedItems
-                        .Where(item => !hiddenControlHeaders.Contains(item.DisplayName))
-                        .ToList();
-
-                    if (filteredItems.Count > 0)
-                    {
-                        var currentIndex = _viewModel.SearchBar.GetSearchIndex();
-                        currentIndex.AddRange(filteredItems);
-                    }
+                    _viewModel.SearchBar.AddSearchItems(addedItems);
                 }
+                return true;
             }
             catch (Exception ex)
             {
                 App.Logger.Error($"Failed to scan page {pageTag}: {ex.Message}");
+                _searchIndexBuilder.InvalidatePageCache(pageTag);
+                return false;
             }
         }
 
-        private void ScrollToSearchItem(SearchBarItem item)
+        private CancellationTokenSource? _searchRevealCancellation;
+        internal Control? LastSearchFocusTarget { get; private set; }
+        private async void ScrollToSearchItem(SearchBarItem item)
         {
+            if (_closed) return;
+            _searchRevealCancellation?.Cancel();
+            _searchRevealCancellation?.Dispose();
+            var cancellation = _searchRevealCancellation = new CancellationTokenSource();
             try
             {
-                var pageControl = this.FindControl<TransitioningContentControl>("PageContentControl");
-                if (pageControl?.Content is not Control pageView) return;
-
-                if (!string.IsNullOrWhiteSpace(item.ParentSectionName))
+                var page = this.FindControl<TransitioningContentControl>("PageContentControl")?.Content as Control;
+                if (page == null) return;
+                bool Matches(Control control)
                 {
-                    var parentExpander = pageView.GetVisualDescendants()
-                        .OfType<CardExpander>()
-                        .FirstOrDefault(ce => (ce.Header as string) == item.ParentSectionName);
-
-                    parentExpander?.IsExpanded = true;
+                    bool title = control switch
+                    {
+                        OptionControl option => item.Category == "Setting" && option.Header == item.DisplayName,
+                        CardExpander group => item.Category == "Section" && Equals(group.Header, item.DisplayName),
+                        CardAction action => item.Category == "Action" && (action.Header == item.DisplayName || Equals(action.Content, item.DisplayName)),
+                        SquareCard card => item.Category == "Card" && Equals(card.Header, item.DisplayName),
+                        _ => false
+                    };
+                    return title && (item.ParentSectionName == null || Equals(control.GetVisualAncestors().OfType<CardExpander>().FirstOrDefault()?.Header, item.ParentSectionName));
                 }
-
-                Control? targetControl = null;
-
-                switch (item.Category)
-                {
-                    case "Section":
-                        targetControl = pageView.GetVisualDescendants()
-                            .OfType<CardExpander>()
-                            .FirstOrDefault(ce => (ce.Header as string) == item.DisplayName);
-                        break;
-
-                    case "Setting":
-                        targetControl = pageView.GetVisualDescendants()
-                            .OfType<OptionControl>()
-                            .FirstOrDefault(oc => oc.Header == item.DisplayName);
-                        break;
-
-                    case "Action":
-                        targetControl = pageView.GetVisualDescendants()
-                            .OfType<CardAction>()
-                            .FirstOrDefault(ca => (ca.Content as string) == item.DisplayName);
-                        break;
-
-                    case "Label":
-                        targetControl = pageView.GetVisualDescendants()
-                            .OfType<TextBlock>()
-                            .FirstOrDefault(tb => tb.Text == item.DisplayName);
-                        break;
-                }
-
-                targetControl?.BringIntoView();
+                Control? target = page.GetVisualDescendants().OfType<Control>().FirstOrDefault(Matches);
+                if (target == null) return;
+                if (target is CardExpander section) section.SetCurrentValue(CardExpander.IsExpandedProperty, true);
+                foreach (var group in target.GetVisualAncestors().OfType<CardExpander>()) group.SetCurrentValue(CardExpander.IsExpandedProperty, true);
+                if (CoffeeMotion.Enabled) await Task.Delay(250, cancellation.Token);
+                if (cancellation.IsCancellationRequested || !ReferenceEquals(page, this.FindControl<TransitioningContentControl>("PageContentControl")?.Content)) return;
+                target.BringIntoView();
+                Control? focus = target;
+                if (target is OptionControl option)
+                    focus = option.Toggle != null ? option : OptionControl.GetEditorControls(option.InnerContent)
+                        .FirstOrDefault(control => control.Focusable && control.IsEffectivelyEnabled);
+                else if (!target.Focusable)
+                    focus = target.GetVisualDescendants().OfType<Control>().FirstOrDefault(control => control.Focusable && control.IsEffectivelyEnabled);
+                focus ??= target; focus.Focusable = true;
+                focus.Focus(NavigationMethod.Tab);
+                LastSearchFocusTarget = focus;
             }
-            catch (Exception ex)
-            {
-                App.Logger.Error($"Failed scrolling to item: {ex.Message}");
-            }
+            catch (OperationCanceledException) { }
+            catch (Exception error) { App.Logger.Error(error, "Could not reveal a settings search result."); }
         }
 
         private void SaveCurrentPage()
@@ -766,9 +672,7 @@ namespace Froststrap.UI.Elements.Settings
                     MessageBoxButton.YesNoCancel
                 );
 
-                if (result == MessageBoxResult.Yes)
-                    _viewModel?.SaveSettings();
-                else if (result == MessageBoxResult.Cancel)
+                if (_viewModel?.CanCloseAfterPrompt(result) != true)
                     return;
 
                 this.Closing -= MainWindow_Closing;

@@ -1,0 +1,13 @@
+<linker>
+  <assembly fullname="BouncyCastle.Cryptography">
+    <type fullname="Org.BouncyCastle.Crypto.Parameters.Ed25519PublicKeyParameters" preserve="nothing">
+      <method signature="System.Void .ctor(System.Byte[],System.Int32)" />
+    </type>
+    <type fullname="Org.BouncyCastle.Crypto.Signers.Ed25519Signer" preserve="nothing">
+      <method signature="System.Void .ctor()" />
+      <method name="Init" />
+      <method name="BlockUpdate" />
+      <method name="VerifySignature" />
+    </type>
+  </assembly>
+</linker>

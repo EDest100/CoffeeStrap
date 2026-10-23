@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MPL-2.0
 
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Froststrap.UI.ViewModels.Settings;
 
 namespace Froststrap.UI.Elements.Settings.Pages
@@ -27,6 +28,12 @@ namespace Froststrap.UI.Elements.Settings.Pages
         {
             InitializeComponent();
             App.FrostRPC?.SetPage("FastFlags Settings");
+        }
+        private async void ManageExperienceProfiles_Click(object? sender, RoutedEventArgs e)
+        {
+            if (TopLevel.GetTopLevel(this) is not Window owner) return;
+            var dialog = new Dialogs.FlagProfilesDialog(true);
+            await dialog.ShowDialog(owner);
         }
     }
 }

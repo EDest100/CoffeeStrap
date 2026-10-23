@@ -40,12 +40,12 @@ internal partial class App : Application
     private const string MockReleaseTagEnvironmentVariable = "MOCK_RELEASE_TAG";
     private const string MockCurrentVersionEnvironmentVariable = "MOCK_CURRENT_VERSION";
 
-    public const string ProjectName = "Froststrap";
+    public const string ProjectName = "CoffeeStrap";
     public const string ProjectOwner = "Froststrap";
-    public const string ProjectRepository = "Froststrap/Froststrap";
-    public const string ProjectDownloadLink = "https://github.com/Froststrap/Froststrap/releases";
+    public const string ProjectRepository = "EDest100/CoffeeStrap";
+    public const string ProjectDownloadLink = "https://github.com/EDest100/CoffeeStrap/releases";
     public const string ProjectHelpLink = "https://github.com/bloxstraplabs/bloxstrap/wiki";
-    public const string ProjectSupportLink = "https://github.com/Froststrap/Froststrap/issues/new";
+    public const string ProjectSupportLink = "https://github.com/EDest100/CoffeeStrap/issues/new";
     public const string ProjectRemoteDataLink = "https://raw.githubusercontent.com/Froststrap/config/refs/heads/main/Data.json";
 
     public static string RobloxPlayerAppName => OperatingSystem.IsMacOS() ? "RobloxPlayer.app" : "RobloxPlayerBeta.exe";
@@ -346,18 +346,18 @@ internal partial class App : Application
         if (!OperatingSystem.IsWindows()) return;
         Logger.Debug("Verifying AUMID creation");
 
-        string iconPath = ExtractIcon("IconFroststrap.ico", "Froststrap.ico");
+        string iconPath = ExtractIcon("IconCoffeeStrap.ico", "CoffeeStrap.ico");
 
-        const string aumidKeyPath = @"Software\Classes\AppUserModelId\xyz.froststrap.desktop";
+        const string aumidKeyPath = @"Software\Classes\AppUserModelId\local.coffeestrap.desktop";
         using var baseKey = Registry.CurrentUser;
 
         bool keyExists = baseKey.GetSubKeyNames().Contains("AppUserModelId") &&
-                         baseKey.OpenSubKey("AppUserModelId")?.GetSubKeyNames().Contains("xyz.froststrap.desktop") == true;
+                         baseKey.OpenSubKey("AppUserModelId")?.GetSubKeyNames().Contains("local.coffeestrap.desktop") == true;
 
         if (!keyExists)
         {
             using var aumidKey = baseKey.CreateSubKey(aumidKeyPath);
-            aumidKey.SetValue("DisplayName", "Froststrap");
+            aumidKey.SetValue("DisplayName", ProjectName);
             aumidKey.SetValue("IconBackgroundColor", "FFDDDDDD");
             aumidKey.SetValue("IconUri", iconPath);
             Logger.Info("Created AUMID registry key.");
@@ -553,6 +553,7 @@ internal partial class App : Application
         NLog.GlobalDiagnosticsContext.Set("startTime", DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss", CultureInfo.InvariantCulture));
 
         Logger.Debug($"Starting {ProjectName} {Version} ({Paths.Process})");
+        _ = Task.Run(Services.AppLogRetention.ArchiveExpired);
         Logger.Debug($"OS Description: {RuntimeInformation.OSDescription}");
         Logger.Debug($"Built for RID: {RuntimeInformation.RuntimeIdentifier}");
 
@@ -599,7 +600,10 @@ internal partial class App : Application
         {
             try
             {
-                UriHandler.EnsureRegistered();
+                // Inspecting an uninstalled source build must not claim Roblox URLs.
+                // Installed builds retain the upstream handler repair behavior.
+                if (new UpdaterManager().IsInstalled)
+                    UriHandler.EnsureRegistered();
                 _ = Integrations.AccountManager.AccountManager.Shared;
 
                 FastFlags.Load();

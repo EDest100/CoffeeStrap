@@ -1,99 +1,29 @@
-﻿<!--
-SPDX-FileCopyrightText: 2026 Froststrap
-
-SPDX-License-Identifier: MPL-2.0
--->
-
-<base:AvaloniaWindow x:Class="Froststrap.UI.Elements.Dialogs.LaunchMenuDialog"
-                     xmlns="https://github.com/avaloniaui"
-                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                     xmlns:base="clr-namespace:Froststrap.UI.Elements.Base"
-                     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                     xmlns:controls="clr-namespace:Froststrap.UI.Elements.Controls"
-                     xmlns:resources="clr-namespace:Froststrap.Resources"
-                     xmlns:models="clr-namespace:Froststrap.UI.ViewModels"
-                     xmlns:vm="clr-namespace:Froststrap.UI.ViewModels.Dialogs"
-                     xmlns:ic="clr-namespace:LucideAvalonia;assembly=LucideAvalonia"
-                     xmlns:lucideEnums="clr-namespace:LucideAvalonia.Enum;assembly=LucideAvalonia"
-                     xmlns:enums="clr-namespace:Froststrap.Enums"
-                     x:DataType="vm:LaunchMenuViewModel"
-                     Title="Froststrap"
-                     Width="420"
-                     SizeToContent="Height"
-                     CanResize="False"
-                     WindowStartupLocation="CenterScreen"
-                     mc:Ignorable="d">
-
-    <Grid>
-        <StackPanel Margin="32,0,32,32">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="16" Margin="0,8,0,24">
-                <Image Width="64" Height="64" Source="avares://Froststrap/Froststrap.png"
-                       RenderOptions.BitmapInterpolationMode="HighQuality"/>
-                <StackPanel VerticalAlignment="Center">
-                    <TextBlock Name="LaunchTitle" Text="Froststrap" FontSize="28" FontWeight="Bold" />
-                    <TextBlock Text="{Binding Version}"
-                               FontSize="13"
-                               Foreground="{DynamicResource TextFillColorTertiaryBrush}" />
-                </StackPanel>
-            </StackPanel>
-
-            <controls:IconButton Classes="DropDownButton"
-                                 Margin="0,0,0,8"
-                                 HorizontalAlignment="Stretch"
-                                 Height="52"
-                                 CornerRadius="8"
-                                 FontWeight="SemiBold"
-                                 FontSize="14"
-                                 Command="{Binding LaunchCommand}"
-                                 IconSize="24"
-                                 Icon="{Binding LaunchButtonIcon}"
-                                 Content="{Binding LaunchButtonText}"
-                                 Padding="16,0">
-                <controls:IconButton.Flyout>
-                    <MenuFlyout Placement="BottomEdgeAlignedRight">
-                        <MenuItem Header="{Binding PlayerMenuItemText}"
-                                  Command="{Binding SetLaunchModeCommand}"
-                                  CommandParameter="{x:Static enums:LaunchMode.Player}">
-                            <MenuItem.Icon>
-                                <ic:Lucide Icon="Gamepad2" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                        <MenuItem Header="{x:Static resources:Strings.Common_Studio}"
-                                  Command="{Binding SetLaunchModeCommand}"
-                                  CommandParameter="{x:Static enums:LaunchMode.Studio}">
-                            <MenuItem.Icon>
-                                <ic:Lucide Icon="Wrench" />
-                            </MenuItem.Icon>
-                        </MenuItem>
-                    </MenuFlyout>
-                </controls:IconButton.Flyout>
-            </controls:IconButton>
-
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
-                <controls:IconButton
-                    Grid.Column="0"
-                    Icon="Settings"
-                    Content="{x:Static resources:Strings.Common_Settings}"
-                    CornerRadius="8"
-                    BorderThickness="0"
-                    Height="56"
-                    Command="{Binding LaunchSettingsCommand}"
-                    IconSize="24"
-                    Padding="12,10" />
-
-                <controls:IconButton
-                    Grid.Column="1"
-                    Icon="MessageCircleMore"
-                    Content="Discord"
-                    CornerRadius="8"
-                    Height="56"
-                    BorderThickness="0"
-                    IconSize="24"
-                    Command="{x:Static models:GlobalViewModel.OpenWebpageCommand}"
-                    CommandParameter="https://discord.gg/KdR9vpRcUN"
-                    Padding="12,10" />
+<!-- SPDX-FileCopyrightText: 2026 Froststrap; 2026 CoffeeStrap contributors
+     SPDX-License-Identifier: MPL-2.0 -->
+<base:AvaloniaWindow xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:base="using:Froststrap.UI.Elements.Base" xmlns:controls="using:Froststrap.UI.Elements.Controls" xmlns:vm="using:Froststrap.UI.ViewModels.Dialogs" xmlns:models="using:Froststrap.Models"
+    x:Class="Froststrap.UI.Elements.Dialogs.LaunchMenuDialog" x:DataType="vm:LaunchMenuViewModel"
+    Title="CoffeeStrap" Width="390" Height="520" MinWidth="390" MinHeight="520" CanResize="False" WindowStartupLocation="CenterScreen">
+    <Grid RowDefinitions="44,*" Background="{DynamicResource CoffeeChromeBrush}">
+        <controls:TitleBar Height="44" Title="CoffeeStrap" Icon="avares://CoffeeStrap/CoffeeStrap.png" ShowMaximize="False"/>
+        <Grid Grid.Row="1" Margin="28,16,28,18" RowDefinitions="Auto,Auto,Auto,Auto,*,Auto" RowSpacing="14">
+            <Image Source="avares://CoffeeStrap/CoffeeStrap.png" Width="56" Height="56" HorizontalAlignment="Center" RenderOptions.BitmapInterpolationMode="HighQuality"/>
+            <Grid Grid.Row="1"><Border x:Name="PlayGlow" Background="{DynamicResource AccentFillColorDefaultBrush}" CornerRadius="18" BoxShadow="0 0 20 2 #60D7AD84" Opacity="0" IsHitTestVisible="False"/>
+                <Button x:Name="PlayButton" Content="Play" Classes="accent" FontSize="17" FontWeight="SemiBold" Height="58" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Command="{Binding LaunchCommand}"/>
             </Grid>
-        </StackPanel>
+            <Button Grid.Row="2" Content="Settings" Height="46" HorizontalAlignment="Stretch" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Command="{Binding LaunchSettingsCommand}"/>
+            <Grid Grid.Row="3" ColumnDefinitions="Auto,*" VerticalAlignment="Bottom"><controls:DiscordButton Width="36" Height="36" Padding="8"/><TextBlock Grid.Column="1" Text="{Binding Version}" HorizontalAlignment="Right" VerticalAlignment="Center" FontSize="11" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/></Grid>
+            <StackPanel Grid.Row="5" Spacing="10" VerticalAlignment="Bottom">
+                <TextBox x:Name="PinnedSearch" Text="{Binding Pins.SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Search pinned games" Height="32" MinHeight="0" Padding="12,0" HorizontalAlignment="Stretch" VerticalContentAlignment="Center" AutomationProperties.Name="Search pinned games"/>
+                <Grid Height="118">
+                    <TextBlock x:Name="PinsEmptyMessage" Text="{Binding Pins.EmptyMessage}" IsVisible="{Binding Pins.IsEmpty}" TextWrapping="Wrap" TextAlignment="Center" VerticalAlignment="Center" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Margin="12,0"/>
+                    <controls:ArtworkScrollViewer x:Name="CompactPinnedScroller" IsVisible="{Binding !Pins.IsEmpty}" HorizontalAlignment="Stretch" VerticalAlignment="Top" MaxHeight="118">
+                        <ItemsControl ItemsSource="{Binding Pins.Games}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="10"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate><DataTemplate x:DataType="models:QuickPlayGameItem"><controls:GameArtworkCard Game="{Binding}" Width="104" Height="104" PlayCommand="{Binding $parent[Window].((vm:LaunchMenuViewModel)DataContext).PlayPinnedGameCommand}"/></DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </controls:ArtworkScrollViewer>
+                </Grid>
+            </StackPanel>
+        </Grid>
     </Grid>
 </base:AvaloniaWindow>

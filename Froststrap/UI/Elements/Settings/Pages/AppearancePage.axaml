@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 SPDX-FileCopyrightText: 2026 Froststrap
 
 SPDX-License-Identifier: MPL-2.0
@@ -24,22 +24,13 @@ SPDX-License-Identifier: MPL-2.0
     VerticalAlignment="Stretch">
 
     <Grid>
-        <ScrollViewer VerticalScrollBarVisibility="Auto"
+        <controls:SmoothScrollViewer VerticalScrollBarVisibility="Auto"
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalAlignment="Stretch"
                       HorizontalAlignment="Stretch">
-            <StackPanel Margin="14">
-                <TextBlock
-                    FontSize="20"
-                    FontWeight="Bold"
-                    Text="Froststrap" />
+            <controls:SettingsCardPanel Margin="{DynamicResource CoffeePageMargin}">
 
-                <controls:MarkdownTextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                            MarkdownText="{x:Static resources:Strings.Menu_Appearance_Froststrap_Description}"
-                                            Margin="0,4,0,10"
-                                            TextWrapping="Wrap" />
-
-                <controls:CardExpander Classes="NoUserExpansion" Header="{x:Static resources:Strings.Menu_Appearance_Custom_Theme_Title}" Description="{x:Static resources:Strings.Menu_Appearance_Custom_Theme_Description}" IsExpanded="{Binding CustomThemeExpanded, Mode=OneWay}">
+                <controls:CardExpander Classes="NoUserExpansion" Header="{x:Static resources:Strings.Menu_Appearance_Custom_Theme_Title}" IsExpanded="{Binding CustomThemeExpanded, Mode=OneWay}">
                     <controls:CardExpander.HeaderContent>
                         <ComboBox
                             MinWidth="200"
@@ -188,7 +179,7 @@ SPDX-License-Identifier: MPL-2.0
                         ItemsSource="{Binding BackdropOptions}"
                         SelectedItem="{Binding SelectedBackdrop, Mode=TwoWay}"/>
                 </controls:OptionControl>
-				
+
                 <controls:OptionControl Description="{x:Static resources:Strings.Menu_Appearance_Language_Description}" Header="{x:Static resources:Strings.Menu_Appearance_Language_Title}">
                     <ComboBox
                         MinWidth="200"
@@ -215,7 +206,7 @@ SPDX-License-Identifier: MPL-2.0
                     Classes="NoUserExpansion"
                     IsExpanded="{Binding WindowManipulationEnabled, Mode=OneWay}"
                     Header="Window Manipulation"
-                    Description="Allow Froststrap to customize the Roblox window (title, icon, etc.)."
+                    Description="Allow CoffeeStrap to customize the Roblox window (title, icon, etc.)."
                     IsVisible="{x:Static gv:GlobalViewModel.IsWindows}">
                     <controls:CardExpander.HeaderContent>
                         <StackPanel Orientation="Horizontal" Spacing="8">
@@ -228,7 +219,7 @@ SPDX-License-Identifier: MPL-2.0
                         </StackPanel>
                     </controls:CardExpander.HeaderContent>
 
-                    <StackPanel IsEnabled="{Binding WindowManipulationEnabled}">
+                    <controls:SettingsCardPanel IsEnabled="{Binding WindowManipulationEnabled}">
 
                         <controls:OptionControl
                             Header="{x:Static resources:Strings.Menu_Appearance_RobloxTitle_Title}"
@@ -304,7 +295,7 @@ SPDX-License-Identifier: MPL-2.0
                             Description="{x:Static resources:Strings.Menu_Integrations_IconChange_Description}">
                             <ToggleSwitch IsChecked="{Binding AutoChangeIcon, Mode=TwoWay}" />
                         </controls:OptionControl>
-                    </StackPanel>
+                    </controls:SettingsCardPanel>
                 </controls:CardExpander>
 
                 <Separator Margin="0,12" />
@@ -329,7 +320,6 @@ SPDX-License-Identifier: MPL-2.0
                         Command="{Binding PreviewBootstrapperCommand}"
                         Content="{x:Static resources:Strings.Menu_Appearance_Preview}" />
                 </Grid>
-
 
                 <controls:CardExpander Classes="NoUserExpansion"
                                        IsExpanded="{Binding CustomThemesExpanded, Mode=OneWay}"
@@ -494,9 +484,9 @@ SPDX-License-Identifier: MPL-2.0
                 </controls:OptionControl>
 
                 <controls:OptionControl Header="{x:Static resources:Strings.Menu_Appearance_CustomisationTitle_Title}" Description="{x:Static resources:Strings.Menu_Appearance_CustomisationTitle_Description}">
-                    <TextBox PlaceholderText="Froststrap" Width="200" Text="{Binding Title, Mode=TwoWay}" />
+                    <TextBox PlaceholderText="CoffeeStrap" Width="200" Text="{Binding Title, Mode=TwoWay}" />
                 </controls:OptionControl>
-            </StackPanel>
-        </ScrollViewer>
+            </controls:SettingsCardPanel>
+        </controls:SmoothScrollViewer>
     </Grid>
 </UserControl>

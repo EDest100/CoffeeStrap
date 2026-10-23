@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 SPDX-FileCopyrightText: 2026 Froststrap
 
 SPDX-License-Identifier: MPL-2.0
@@ -20,8 +20,8 @@ SPDX-License-Identifier: MPL-2.0
     d:DesignWidth="1200"
     x:DataType="vm:LinuxSettingsViewModel"
     mc:Ignorable="d">
-    <ScrollViewer>
-        <StackPanel Margin="14">
+    <controls:SmoothScrollViewer>
+        <controls:SettingsCardPanel Margin="{DynamicResource CoffeePageMargin}">
 
             <TextBlock Margin="0,8,0,0"
                        FontSize="20"
@@ -143,6 +143,6 @@ SPDX-License-Identifier: MPL-2.0
                             Margin="0,4,0,0" />
                 </StackPanel>
             </controls:OptionControl>
-        </StackPanel>
-    </ScrollViewer>
+        </controls:SettingsCardPanel>
+    </controls:SmoothScrollViewer>
 </UserControl>

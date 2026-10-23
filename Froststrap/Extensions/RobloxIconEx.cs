@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -54,7 +54,7 @@ namespace Froststrap.Extensions
                     }
                 }
 
-                var result = customIcon ?? LoadFromResource("IconFroststrap");
+                var result = customIcon ?? LoadFromResource("IconCoffeeStrap");
                 _cache[icon] = result;
                 return result;
             }
@@ -68,7 +68,7 @@ namespace Froststrap.Extensions
                 RobloxIcon.Icon2017 => LoadFromResource("Icon2017"),
                 RobloxIcon.Icon2019 => LoadFromResource("Icon2019"),
                 RobloxIcon.Icon2022 => LoadFromResource("Icon2022"),
-                RobloxIcon.IconFroststrap => LoadFromResource("IconFroststrap"),
+                RobloxIcon.IconFroststrap => LoadFromResource("IconCoffeeStrap"),
                 _ => LoadFromResource("Icon2025")
             };
 
@@ -92,7 +92,7 @@ namespace Froststrap.Extensions
 
         private static Bitmap LoadFromResource(string name)
         {
-            var uri = new Uri($"avares://Froststrap/Resources/{name}.ico");
+            var uri = new Uri($"avares://CoffeeStrap/Resources/{name}.ico");
             using var stream = AssetLoader.Open(uri);
             return new Bitmap(stream);
         }
@@ -114,7 +114,7 @@ namespace Froststrap.Extensions
                     catch (Exception ex) { App.Logger.Error($"Failed to read custom icon! {ex}"); }
                 }
 
-                return LoadResourceBytes("IconFroststrap");
+                return LoadResourceBytes("IconCoffeeStrap");
             }
 
             string name = icon switch
@@ -126,7 +126,7 @@ namespace Froststrap.Extensions
                 RobloxIcon.Icon2017 => "Icon2017",
                 RobloxIcon.Icon2019 => "Icon2019",
                 RobloxIcon.Icon2022 => "Icon2022",
-                RobloxIcon.IconFroststrap => "IconFroststrap",
+                RobloxIcon.IconFroststrap => "IconCoffeeStrap",
                 _ => "Icon2025"
             };
 
@@ -135,7 +135,7 @@ namespace Froststrap.Extensions
 
         private static byte[] LoadResourceBytes(string name)
         {
-            var uri = new Uri($"avares://Froststrap/Resources/{name}.ico");
+            var uri = new Uri($"avares://CoffeeStrap/Resources/{name}.ico");
             using var stream = AssetLoader.Open(uri);
             using var ms = new MemoryStream();
             stream.CopyTo(ms);

@@ -21,6 +21,7 @@ namespace Froststrap.UI.Elements.Bootstrapper
 
             string version = Froststrap.Utility.Versioning.GetRobloxVersionStr(Bootstrapper?.IsStudioLaunch ?? false);
             _viewModel = new ByfronDialogViewModel(this, version);
+            ApplyByfronStyles();
             DataContext = _viewModel;
 
             SetupDialog();
@@ -29,7 +30,6 @@ namespace Froststrap.UI.Elements.Bootstrapper
             if (iconImage is Bitmap bitmap)
                 Icon = new WindowIcon(bitmap);
 
-            ApplyByfronStyles();
         }
 
         private void ApplyByfronStyles()
@@ -42,7 +42,7 @@ namespace Froststrap.UI.Elements.Bootstrapper
                 _viewModel.IconColor = new SolidColorBrush(Color.FromRgb(57, 59, 61));
                 _viewModel.ProgressBarBackground = new SolidColorBrush(Color.FromRgb(189, 190, 190));
 
-                var uri = new Uri("avares://Froststrap/Resources/BootstrapperStyles/ByfronDialog/ByfronLogoLight.jpg");
+                var uri = new Uri("avares://CoffeeStrap/Resources/BootstrapperStyles/ByfronDialog/ByfronLogoLight.jpg");
                 _viewModel.ByfronLogoLocation = new Bitmap(Avalonia.Platform.AssetLoader.Open(uri));
             }
         }

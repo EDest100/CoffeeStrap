@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 SPDX-FileCopyrightText: 2026 Froststrap
 
 SPDX-License-Identifier: MPL-2.0
@@ -15,25 +15,30 @@ SPDX-License-Identifier: MPL-2.0
                      xmlns:ui="using:FluentAvalonia.UI.Controls"
                      x:Class="Froststrap.UI.Elements.Dialogs.FlagProfilesDialog"
                      Title="{x:Static resources:Strings.Menu_FlagProfiles_Title}"
-                     Width="540"
-                     SizeToContent="Height"
-                     CanResize="False"
+                     Width="640" Height="640" MinWidth="480" MinHeight="480"
+                     CanResize="True"
                      WindowStartupLocation="CenterScreen"
                      mc:Ignorable="d">
 
-    <Grid RowDefinitions="Auto,*">
-        <Border Grid.Row="0"
+    <Grid RowDefinitions="48,Auto,*,Auto,Auto,Auto" Background="{DynamicResource CoffeeChromeBrush}">
+        <controls:TitleBar Title="{Binding $parent[Window].Title}" Icon="avares://CoffeeStrap/CoffeeStrap.png" ShowMinimize="False" ShowMaximize="False"/>
+        <StackPanel Grid.Row="1" Margin="20,8,20,0" Spacing="6">
+            <TextBlock x:Name="ProfileIntro" Text="Saved flag profiles" TextWrapping="Wrap" FontSize="13"/>
+            <TextBlock x:Name="ProfileLibraryStatus" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+        </StackPanel>
+        <Border Grid.Row="2"
                 Margin="16"
                 CornerRadius="8"
                 BorderThickness="1"
                 BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                 Background="{DynamicResource ControlFillColorDefaultBrush}">
+            <controls:SmoothScrollViewer HorizontalScrollBarVisibility="Disabled">
             <TabControl x:Name="Tabs"
                         Background="Transparent">
 
                 <TabControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <UniformGrid Columns="2" />
+                        <UniformGrid Columns="{DynamicResource ProfileTabColumns}" />
                     </ItemsPanelTemplate>
                 </TabControl.ItemsPanel>
 
@@ -41,11 +46,11 @@ SPDX-License-Identifier: MPL-2.0
                     <Style Selector="TabItem">
                         <Setter Property="HorizontalAlignment" Value="Stretch" />
                         <Setter Property="HorizontalContentAlignment" Value="Center" />
-                        <Setter Property="FontSize" Value="18" />
+                        <Setter Property="FontSize" Value="14" />
                     </Style>
                 </TabControl.Styles>
 
-                <TabItem Header="{x:Static resources:Strings.Common_PresetFlagLists}">
+                <TabItem x:Name="PresetsTab" Header="{x:Static resources:Strings.Common_PresetFlagLists}">
                     <ui:TabItemHelper.Icon>
                         <ic:Lucide Icon="BookOpenText" />
                     </ui:TabItemHelper.Icon>
@@ -54,14 +59,14 @@ SPDX-License-Identifier: MPL-2.0
                     </StackPanel>
                 </TabItem>
 
-                <TabItem Header="{x:Static resources:Strings.Menu_FlagProfiles_PlaceIdsTab}">
+                <TabItem x:Name="AssignmentsTab" Header="{x:Static resources:Strings.Menu_FlagProfiles_PlaceIdsTab}">
                     <ui:TabItemHelper.Icon>
                         <ic:Lucide Icon="Gamepad2" />
                     </ui:TabItemHelper.Icon>
                     <StackPanel Spacing="12" Margin="0,0,0,8">
-                        <Grid x:Name="PlaceProfileGrid" ColumnDefinitions="Auto,*" ColumnSpacing="8" IsVisible="False">
-                            <TextBlock Text="{x:Static resources:Strings.Menu_FlagProfiles_SelectProfileLabel}" VerticalAlignment="Center" />
-                            <ComboBox x:Name="PlaceProfile" Grid.Column="1" HorizontalAlignment="Stretch" SelectionChanged="PlaceProfile_SelectionChanged" />
+                        <Grid x:Name="PlaceProfileGrid" RowDefinitions="Auto,Auto" RowSpacing="6" IsVisible="False">
+                            <TextBlock Text="Saved profile" VerticalAlignment="Center" />
+                            <ComboBox x:Name="PlaceProfile" Grid.Row="1" HorizontalAlignment="Stretch" MaxDropDownHeight="240" ToolTip.Tip="{Binding $self.SelectedItem}" SelectionChanged="PlaceProfile_SelectionChanged" />
                         </Grid>
 
                         <TextBlock x:Name="PlaceProfileEmptyMessage"
@@ -71,56 +76,89 @@ SPDX-License-Identifier: MPL-2.0
                                    HorizontalAlignment="Center"
                                    IsVisible="False" />
 
+                        <TextBlock x:Name="AssignmentLimitsText" TextWrapping="Wrap" FontSize="12" IsVisible="False"/>
                         <StackPanel x:Name="PlaceIdsContent" Spacing="8" IsVisible="False">
                             <TextBlock Text="{x:Static resources:Strings.Menu_FlagProfiles_AddPlaceId}" FontSize="12" FontWeight="Medium" />
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                                <TextBox x:Name="NewPlaceIdTextBox" PlaceholderText="{x:Static resources:Strings.Menu_FlagProfiles_PlaceIdWatermark}" />
+                                <TextBox x:Name="NewPlaceIdTextBox" MaxLength="19" PlaceholderText="{x:Static resources:Strings.Menu_FlagProfiles_PlaceIdWatermark}" />
                                 <Button x:Name="AddPlaceButton" Grid.Column="1" Content="{x:Static resources:Strings.Common_Add}" Click="AddPlaceButton_Click" MinWidth="80" />
                             </Grid>
 
                             <TextBlock Text="{x:Static resources:Strings.Menu_FlagProfiles_CurrentPlaceIds}" FontSize="12" FontWeight="Medium" />
-                            <ListBox x:Name="PlaceIdsListBox" Height="120" SelectionChanged="PlaceIdsListBox_SelectionChanged" />
-                            <TextBlock x:Name="PlaceIdInfoText" Text="{x:Static resources:Strings.Menu_FlagProfiles_SelectProfile}" Foreground="{DynamicResource SystemFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center" IsVisible="False" Margin="0,0,0,-8" />
+                            <Grid><ListBox x:Name="PlaceIdsListBox" Height="120" SelectionChanged="PlaceIdsListBox_SelectionChanged" />
+                                <TextBlock x:Name="PlaceIdsEmpty" Text="No assigned experiences. Enter a place ID to use this snapshot." Margin="16" VerticalAlignment="Center" HorizontalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" IsHitTestVisible="False"/>
+                            </Grid>
+                            <Grid x:Name="IdPager" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" IsVisible="False">
+                                <Button x:Name="IdPreviousButton" Content="Previous" Click="IdPreviousButton_Click"/>
+                                <TextBlock x:Name="IdPageStatus" Grid.Column="1" FontSize="12" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                <Button x:Name="IdNextButton" Grid.Column="2" Content="Next" Click="IdNextButton_Click"/>
+                            </Grid>
+                            <TextBlock x:Name="PlaceIdInfoText" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="12" TextWrapping="Wrap" IsVisible="False" />
                         </StackPanel>
+                        <WrapPanel>
+                            <Button x:Name="ClearProfileAssignments" Content="Clear profile IDs" Click="ClearProfileAssignments_Click" Margin="0,0,8,8" IsVisible="False"/>
+                            <Button x:Name="ResetAllAssignments" Content="Reset all assignments" Click="ResetAllAssignments_Click" Margin="0,0,8,8" IsVisible="False"/>
+                            <Button x:Name="UndoAssignments" Content="Undo assignment change" Click="UndoAssignments_Click" Margin="0,0,8,8" IsVisible="False"/>
+                        </WrapPanel>
+
                     </StackPanel>
                 </TabItem>
 
-                <TabItem Header="{x:Static resources:Strings.Menu_Save}">
+                <TabItem x:Name="SaveTab" Header="{x:Static resources:Strings.Menu_Save}">
                     <ui:TabItemHelper.Icon>
                         <ic:Lucide Icon="Plus" />
                     </ui:TabItemHelper.Icon>
                     <StackPanel Spacing="12" Margin="0,0,0,8">
-                        <TextBox x:Name="SaveProfile" PlaceholderText="Profile Name" />
+                        <TextBlock Text="Save the current supported flags, including unsaved Game Tweaks, as a named snapshot. A new name preserves your existing profiles. This does not save native Roblox preferences, file mods or session scheduling." TextWrapping="Wrap" FontSize="12"/>
+                        <TextBox x:Name="SaveProfile" MaxLength="100" PlaceholderText="Profile name" />
                     </StackPanel>
                 </TabItem>
 
-                <TabItem Header="{x:Static resources:Strings.Menu_Load}">
+                <TabItem x:Name="LoadTab" Header="{x:Static resources:Strings.Menu_Load}">
                     <ui:TabItemHelper.Icon>
                         <ic:Lucide Icon="List" />
                     </ui:TabItemHelper.Icon>
                     <StackPanel Spacing="12" Margin="0,0,0,8">
                         <StackPanel Spacing="12">
-                            <Grid x:Name="RenamePanel" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="8">
-                                <TextBox Grid.Column="0" x:Name="RenameTextBox" PlaceholderText="Rename Profile" />
-                                <Button Grid.Column="1" Content="{x:Static resources:Strings.Common_Rename}" Click="RenameButton_Click" MinWidth="80" />
-                                <Button Grid.Column="2" Content="{x:Static resources:Strings.Common_Copy}" Click="CopyButton_Click" MinWidth="80" />
-                                <Button Grid.Column="3" Content="{x:Static resources:Strings.Common_Update}" Click="UpdateButton_Click" MinWidth="80" />
-                            </Grid>
+                            <StackPanel x:Name="RenamePanel" Spacing="8">
+                                <TextBlock Text="Selected profile name" FontSize="12"/>
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                                <TextBox Grid.Column="0" x:Name="RenameTextBox" MaxLength="100" PlaceholderText="Rename profile" />
+                                <Button x:Name="RenameProfileButton" Grid.Column="1" Content="{x:Static resources:Strings.Common_Rename}" Click="RenameButton_Click" MinWidth="80" />
+                                </Grid>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button x:Name="CopyProfileButton" Content="{x:Static resources:Strings.Common_Copy}" Click="CopyButton_Click" MinWidth="80" />
+                                <Button x:Name="UpdateProfileButton" Content="Replace snapshot" Click="UpdateButton_Click" MinWidth="80" ToolTip.Tip="Replace this snapshot with current supported flags, including pending edits" />
+                                </StackPanel>
+                            </StackPanel>
 
                             <Grid>
                                 <ListBox x:Name="LoadProfile" Height="200" SelectionChanged="LoadProfile_SelectionChanged" />
-                                <TextBlock x:Name="LoadProfileEmptyText" Text="{x:Static resources:Strings.Menu_FlagProfiles_NoProfileFound}" Foreground="{DynamicResource SystemFillColorSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" IsVisible="False" />
+                                <TextBlock x:Name="LoadProfileEmptyText" Text="{x:Static resources:Strings.Menu_FlagProfiles_NoProfileFound}" Foreground="{DynamicResource SystemFillColorSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="16" TextWrapping="Wrap" IsVisible="False" />
                             </Grid>
                         </StackPanel>
                     </StackPanel>
                 </TabItem>
             </TabControl>
+            </controls:SmoothScrollViewer>
         </Border>
 
-        <Border Grid.Row="1"
+                        <controls:AnimatedReveal x:Name="AssignmentConfirmation" Grid.Row="3" Margin="20,0,20,12">
+                            <Border Padding="12" CornerRadius="8" BorderThickness="1" BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}" Background="{DynamicResource ControlFillColorDefaultBrush}"><StackPanel Spacing="8">
+                                <TextBlock x:Name="AssignmentConfirmationText" TextWrapping="Wrap" FontSize="12"/>
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <Button x:Name="ConfirmAssignmentClear" Classes="Danger" Content="Clear assignments" Click="ConfirmAssignmentClear_Click"/>
+                                    <Button x:Name="CancelAssignmentClear" Content="Keep assignments" Click="CancelAssignmentClear_Click"/>
+                                </StackPanel>
+                            </StackPanel></Border>
+                        </controls:AnimatedReveal>
+        <controls:AnimatedReveal x:Name="ProfileFeedbackReveal" Grid.Row="4" IsExpanded="{Binding #ProfileFeedback.Text, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock x:Name="ProfileFeedback" Margin="20,0,20,12" TextWrapping="Wrap" FontSize="12"/>
+        </controls:AnimatedReveal>
+        <Border Grid.Row="5"
                 Padding="15"
                 Background="{DynamicResource ControlFillColorDefaultBrush}">
-            <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+            <Grid x:Name="ProfileFooter" RowDefinitions="Auto,Auto" RowSpacing="8">
                 <controls:IconButton x:Name="RemovePlaceButton"
                                      Grid.Column="0"
                                      Classes="Danger"
@@ -135,27 +173,27 @@ SPDX-License-Identifier: MPL-2.0
                           Grid.Column="0"
                           HorizontalAlignment="Left"
                           VerticalAlignment="Center"
-                          Content="{x:Static resources:Strings.Menu_FlagProfiles_ClearFlags}"
+                          Content="Replace other flag values"
                           IsVisible="False" />
 
-                <StackPanel Grid.Column="1"
+                <StackPanel x:Name="ProfileFooterActions" Grid.Row="1"
                             Orientation="Horizontal"
                             Spacing="12"
                             HorizontalAlignment="Right">
                     <controls:IconButton x:Name="DeleteButton"
                                          Icon="Trash"
                                          Classes="Danger"
-                                         Content="{x:Static resources:Strings.Menu_FlagProfiles_DeleteSelected}"
+                                         Content="Delete profile"
                                          Click="DeleteButton_Click"
                                          IsVisible="False" />
 
                     <Button x:Name="OkButton"
                             Content="{x:Static resources:Strings.Common_OK}"
                             Click="OKButton_Click"
-                            Width="100"
+                            MinWidth="100"
                             IsEnabled="False" />
 
-                    <Button Content="{x:Static resources:Strings.Common_Cancel}"
+                    <Button x:Name="CancelProfileButton" Content="{x:Static resources:Strings.Common_Cancel}"
                             Click="CancelButton_Click"
                             Width="100" />
                 </StackPanel>

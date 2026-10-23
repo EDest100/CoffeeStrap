@@ -1,15 +1,11 @@
-name: Publish to Winget
-
+name: Upstream Winget workflow (disabled in CoffeeStrap)
 on:
-  release:
-    types: [released]
-
+  workflow_dispatch:
+permissions:
+  contents: read
 jobs:
-  publish:
+  upstream-only:
+    if: github.repository == 'Froststrap/Froststrap'
     runs-on: ubuntu-latest
     steps:
-      - uses: vedantmgoyal9/winget-releaser@a8fff44b123f115ce4c21543edf8b677376fc7e0
-        with:
-          identifier: Froststrap.Froststrap
-          installers-regex: '\.msi$'
-          token: ${{ secrets.WINGET_TOKEN }}
+      - run: echo 'CoffeeStrap does not publish the Froststrap Winget package.'

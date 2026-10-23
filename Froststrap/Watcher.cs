@@ -86,11 +86,12 @@ namespace Froststrap
                 if (_watcherData.LaunchMode == LaunchMode.Player)
                     IntegrationWatcher = new IntegrationWatcher(ActivityWatcher, WindowManipulation);
 
-                if (_watcherData.LaunchMode == LaunchMode.Player && App.Settings.Prop.SoftKeyEnabled)
-                    Softkey = new Softkey(_watcherData.ProcessId);
-
                 _notifyIcon = new(this);
             }
+
+            // Soft Key is independent of the retired activity/RPC integration.
+            if (_watcherData.LaunchMode == LaunchMode.Player && App.Settings.Prop.SoftKeyEnabled)
+                Softkey = new Softkey(_watcherData.ProcessId);
 
             if (_watcherData.LaunchMode == LaunchMode.Player)
             {
@@ -287,11 +288,15 @@ namespace Froststrap
 
             ActivityWatcher?.Start();
             WindowManipulation?.Start();
+            var session = _watcherData.LaunchMode == LaunchMode.Player ? new Services.RobloxSession(_watcherData) : null;
+            var lastPlaceTask = session?.ObserveAsync(_cancellationTokenSource.Token) ?? Task.CompletedTask;
+            bool reconnect = false;
 
             try
             {
                 while (!_cancellationTokenSource.Token.IsCancellationRequested)
                 {
+                    if (session != null && await session.ReconnectIfRequestedAsync(_cancellationTokenSource.Token)) { reconnect = true; break; }
                     var processExists = Utility.Processes.GetProcessesSafe().Any(x => x.Id == _watcherData.ProcessId);
 
                     if (!processExists && _watcherData.LaunchMode == LaunchMode.Player)
@@ -310,13 +315,15 @@ namespace Froststrap
                     await Task.Delay(1000, _cancellationTokenSource.Token);
                 }
             }
-            catch (OperationCanceledException) { return; }
+            catch (OperationCanceledException) { }
 
             if (_gameModeHandle > 0)
             {
                 await UnregisterGameModeWithDbusSendAsync(_gameModeHandle);
             }
 
+            await _cancellationTokenSource.CancelAsync();
+            await lastPlaceTask;
             AppStorageManager.Apply();
 
             if (_watcherData.AutoclosePids is not null)
@@ -327,6 +334,7 @@ namespace Froststrap
 
             if (App.LaunchSettings.TestModeFlag.Active)
                 Process.Start(Paths.Process, "--settings --test-mode");
+            if (reconnect && session != null) { _lock.Dispose(); session.LaunchReconnect(); }
         }
 
         public void Dispose()

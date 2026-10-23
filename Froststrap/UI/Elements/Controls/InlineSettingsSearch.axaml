@@ -1,0 +1,42 @@
+<!-- SPDX-FileCopyrightText: 2026 CoffeeStrap contributors
+     SPDX-License-Identifier: MPL-2.0 -->
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:vm="using:Froststrap.UI.ViewModels" xmlns:models="using:Froststrap.Models" xmlns:ic="clr-namespace:LucideAvalonia;assembly=LucideAvalonia"
+    xmlns:controls="using:Froststrap.UI.Elements.Controls"
+    x:Class="Froststrap.UI.Elements.Controls.InlineSettingsSearch" x:DataType="vm:SearchBarViewModel"
+    ToolTip.Tip="Search settings (Ctrl+K)"
+    Classes.expanded="{Binding IsPaneOpen, RelativeSource={RelativeSource AncestorType=controls:CoffeeNavigationView}}">
+    <UserControl.Styles>
+        <Style Selector="controls|InlineSettingsSearch:not(.expanded) TextBox#SearchField"><Setter Property="Opacity" Value="0" /></Style>
+        <Style Selector="controls|InlineSettingsSearch:not(.expanded) controls|IconButton#ClearButton"><Setter Property="IsVisible" Value="False" /></Style>
+    </UserControl.Styles>
+    <Grid Width="212" Height="32" HorizontalAlignment="Left">
+        <TextBox Name="SearchField" Text="{Binding SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" PlaceholderText="Search settings"
+                 Height="32" MinHeight="0" Padding="34,0,32,0" MaxLength="256" VerticalContentAlignment="Center" CornerRadius="12" AutomationProperties.Name="Search settings" />
+        <ic:Lucide Icon="Search" Width="16" Height="16" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="14,0" IsHitTestVisible="False" />
+        <controls:IconButton Name="ClearButton" Icon="X" IconSize="12" Width="24" Height="24" MinHeight="0" Padding="0" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,4,0"
+                             IsVisible="{Binding HasQuery}" Background="Transparent" BorderThickness="0" Click="Clear_Click" AutomationProperties.Name="Clear settings search" ToolTip.Tip="Clear search"/>
+        <Popup Name="ResultsPopup" PlacementTarget="{Binding #SearchField}" Placement="BottomEdgeAlignedLeft" IsLightDismissEnabled="True"
+               IsOpen="{Binding IsDropDownOpen, Mode=TwoWay}">
+            <Border Background="{DynamicResource SolidBackgroundFillColorBaseBrush}" BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" BorderThickness="1"
+                    CornerRadius="14" Width="390" Margin="0,8,0,0" Padding="8" BoxShadow="0 4 12 0 #24000000">
+                <StackPanel Spacing="6">
+                <Grid ColumnDefinitions="*,Auto"><TextBlock Text="{Binding ResultsCountText}" Margin="10,6,10,4" MaxLines="2" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                    <controls:IconButton Name="PopupClearButton" Grid.Column="1" Icon="X" IconSize="12" Width="28" Height="28" MinHeight="0" Padding="0" Background="Transparent" BorderThickness="0" Click="Clear_Click" AutomationProperties.Name="Clear settings search" ToolTip.Tip="Clear search"/>
+                </Grid>
+                <TextBlock Text="Try a setting name, effect or texture description." IsVisible="{Binding ShowNoResults}" Margin="10,4,10,12" FontSize="12" TextWrapping="Wrap"/>
+                <Grid ColumnDefinitions="*,Auto" IsVisible="{Binding IndexingIncomplete}" Margin="10,0,4,6"><TextBlock Text="Some settings weren't indexed." TextWrapping="Wrap" VerticalAlignment="Center" FontSize="12"/><Button Name="RetryButton" Grid.Column="1" Content="Retry" Click="Retry_Click" Padding="10,4" MinHeight="0"/></Grid>
+                <ListBox Name="ResultsList" ItemsSource="{Binding FilteredSearchResults}" IsVisible="{Binding ShowResults}" MaxHeight="360" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled" AutomationProperties.Name="Settings search results">
+                    <ListBox.Styles><Style Selector="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch"/><Setter Property="Padding" Value="0"/></Style></ListBox.Styles>
+                    <ListBox.ItemTemplate><DataTemplate x:DataType="models:SearchBarItem">
+                        <StackPanel Spacing="4" Margin="12,10"><TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" TextWrapping="Wrap"/>
+                            <TextBlock Text="{Binding DisplayContext}" FontSize="11" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                            <TextBlock Text="{Binding Description}" MaxLines="2" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                        </StackPanel>
+                    </DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
+                </StackPanel>
+            </Border>
+        </Popup>
+    </Grid>
+</UserControl>

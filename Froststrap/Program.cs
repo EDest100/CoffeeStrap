@@ -124,7 +124,11 @@ sealed class Program
     public static AppBuilder BuildAvaloniaApp()
     {
         var builder = AppBuilder.Configure<App>()
+#if WINDOWS
+            .UseHarfBuzz().UseWin32().UseSkia()
+#else
             .UsePlatformDetect()
+#endif
 #if DEBUG
             .WithDeveloperTools()
 #endif
@@ -138,6 +142,7 @@ sealed class Program
             });
         }
 
+#if !WINDOWS
         if (OperatingSystem.IsLinux() &&
             !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("FROSTSTRAP_FORCE_WAYLAND")))
         {
@@ -149,6 +154,7 @@ sealed class Program
                     UseDmabufSwapchain = true
                 });
         }
+#endif
 
         return builder;
     }

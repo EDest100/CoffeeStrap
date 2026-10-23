@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -8,6 +8,7 @@ namespace Froststrap.Models
 {
     internal class ModConfig : NotifyPropertyChangedViewModel
     {
+        public string? CommunityModId { get; set; }
         private string _folderName = "";
         private int _priority;
         private ModTarget _target = ModTarget.Both;

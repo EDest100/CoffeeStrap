@@ -113,8 +113,8 @@ SPDX-License-Identifier: MPL-2.0
                MaxHeight="450">
             <Border MinWidth="260"
                     MaxHeight="420"
-                    Background="#2D2D2D"
-                    BorderBrush="{DynamicResource FrostBorderDefault}"
+                    Background="{DynamicResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                     BorderThickness="1"
                     CornerRadius="6"
                     BoxShadow="0 8 32 0 #20000000">

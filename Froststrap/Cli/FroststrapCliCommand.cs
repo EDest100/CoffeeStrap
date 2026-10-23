@@ -7,12 +7,12 @@ using DotMake.CommandLine;
 namespace Froststrap.Cli;
 
 [CliCommand(
-    Name = "froststrap",
-    Description = "Froststrap - A Fishstrap fork\n\n" +
+    Name = "coffeestrap",
+    Description = "CoffeeStrap - Roblox desktop launcher\n\n" +
         "Examples:\n" +
-        "  froststrap --player \"roblox-player:1+launchmode:play+channel:zcontrol\"\n" +
-        "  froststrap --studio \"place.rbxl\"\n" +
-        "  froststrap --settings --console",
+        "  coffeestrap --player \"roblox-player:1+launchmode:play+channel:zcontrol\"\n" +
+        "  coffeestrap --studio \"place.rbxl\"\n" +
+        "  coffeestrap --settings --console",
     ShortFormAutoGenerate = CliNameAutoGenerate.None)]
 internal class FroststrapCliCommand
 {

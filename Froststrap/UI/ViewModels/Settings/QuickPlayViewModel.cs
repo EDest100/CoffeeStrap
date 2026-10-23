@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -30,7 +30,6 @@ internal class QuickPlayViewModel : NotifyPropertyChangedViewModel, IDisposable
     private bool _isLoading;
     private bool _isLoadingSubplaces;
     private UniverseDetails? _selectedUniverseDetails;
-    private readonly string _cachePath = Path.Combine(Paths.Cache, "GameHistory.json");
     private static readonly JsonSerializerOptions HistoryLoadOptions = new() { PropertyNameCaseInsensitive = true };
     private List<GameHistoryEntry> _allHistory = [];
 
@@ -300,9 +299,10 @@ internal class QuickPlayViewModel : NotifyPropertyChangedViewModel, IDisposable
 
     public QuickPlayViewModel()
     {
+        Services.GameLaunchService.PinsChanged += OnPinsChanged;
         JoinGameCommand = new RelayCommand<QuickPlayGameItem>(item =>
         {
-            if (item != null) LaunchRoblox(item.PlaceId);
+            if (item != null) Services.GameLaunchService.Default.Launch(item.PlaceId, item.Name);
         });
 
         RejoinLastServerCommand = new RelayCommand<QuickPlayGameItem>(item =>
@@ -465,7 +465,7 @@ internal class QuickPlayViewModel : NotifyPropertyChangedViewModel, IDisposable
 
     private async Task Initialize()
     {
-        _allHistory = await Task.Run(() => LoadLocalHistory(_cachePath));
+        _allHistory = []; // Activity tracking is retired; no history log is collected or loaded here.
         _recentGamesLoaded = false;
         if (SelectedTab == QuickPlayTab.Continue)
         {
@@ -990,6 +990,8 @@ internal class QuickPlayViewModel : NotifyPropertyChangedViewModel, IDisposable
                 apiGames = await FetchRecentlyVisitedFromApiAsync();
             }
 
+            if (App.State.Prop.LastPlaceId > 0 && !localGames.Any(game => game.PlaceId == App.State.Prop.LastPlaceId))
+                localGames.Insert(0, new QuickPlayGameItem { PlaceId = App.State.Prop.LastPlaceId, Name = App.State.Prop.LastGameName ?? "Last launched place" });
             await SetRecentGamesFromSources(localGames, apiGames);
             _recentGamesLoaded = true;
         }
@@ -1180,37 +1182,8 @@ internal class QuickPlayViewModel : NotifyPropertyChangedViewModel, IDisposable
             await FetchThumbnailsForGames(needThumb);
     }
 
-    private static async Task FetchThumbnailsForGames(List<QuickPlayGameItem> games)
-    {
-        var eligibleGames = games.Where(item => item.UniverseId != 0).ToList();
-        if (eligibleGames.Count == 0) return;
+    private static Task FetchThumbnailsForGames(List<QuickPlayGameItem> games) => Services.GameArtworkService.LoadAsync(games);
 
-        var thumbRequests = eligibleGames
-            .Select(item => new ThumbnailRequest
-            {
-                TargetId = (ulong)item.UniverseId,
-                Type = ThumbnailType.GameIcon,
-                Size = ThumbnailSize.Detailed,
-                Format = ThumbnailFormat.Png
-            }).ToList();
-
-        try
-        {
-            var urls = await Thumbnails.GetThumbnailUrlsAsync(thumbRequests, CancellationToken.None);
-
-            var downloadTasks = eligibleGames.Select(async (game, i) =>
-            {
-                string? url = urls.ElementAtOrDefault(i);
-                if (string.IsNullOrEmpty(url)) return;
-
-                game.ThumbnailUrl = url;
-                game.ThumbnailBitmap = await UrlToBitmapConverter.GetBitmapFromCacheOrDownloadAsync(url);
-            });
-
-            await Task.WhenAll(downloadTasks);
-        }
-        catch (Exception ex) { App.Logger.Error($"Thumbnail fetch failed: {ex.Message}"); }
-    }
 
     private async Task SetRecentGamesFromSources(List<QuickPlayGameItem> localGames, List<QuickPlayGameItem> apiGames)
     {
@@ -1267,7 +1240,7 @@ internal class QuickPlayViewModel : NotifyPropertyChangedViewModel, IDisposable
                 OnPropertyChanged(nameof(ShowRecentEmpty));
                 OnPropertyChanged(nameof(ShowRecommendedEmpty));
 
-                _allHistory = await Task.Run(() => LoadLocalHistory(_cachePath));
+                _allHistory = []; // Activity tracking is retired; no history log is collected or loaded here.
 
                 if (account != null)
                 {
@@ -1377,6 +1350,12 @@ internal class QuickPlayViewModel : NotifyPropertyChangedViewModel, IDisposable
             });
         }
         return games;
+    }
+
+    internal Task LoadHomeRecommendationsAsync()
+    {
+        if (_recommendationsLoaded || IsRecommendedLoading || _disposed) return Task.CompletedTask;
+        IsRecommendedLoading = true; return LoadRecommendedGamesAsync();
     }
 
     private async Task LoadRecommendedGamesAsync()
@@ -1498,17 +1477,8 @@ internal class QuickPlayViewModel : NotifyPropertyChangedViewModel, IDisposable
 
     private static void LaunchRoblox(long placeId, string? jobId = null, string? accessCode = null, string? linkCode = null)
     {
-        if (placeId == 0) return;
-        string deeplink = $"roblox://experiences/start?placeId={placeId}";
-
-        if (!string.IsNullOrEmpty(accessCode))
-            deeplink += "&accessCode=" + Uri.EscapeDataString(accessCode);
-        else if (IsValidJobId(jobId))
-            deeplink += "&gameInstanceId=" + Uri.EscapeDataString(jobId!.Trim());
-        else if (!string.IsNullOrEmpty(linkCode))
-            deeplink += "&linkCode=" + Uri.EscapeDataString(linkCode);
-
-        Process.Start(new ProcessStartInfo(deeplink) { UseShellExecute = true });
+        if (placeId <= 0) return;
+        Froststrap.Services.GameLaunchService.Default.Launch(placeId, jobId: jobId, accessCode: accessCode, linkCode: linkCode);
     }
 
     private void SwapSearchResults(ObservableCollection<OmniSearchContent> next)
@@ -1525,8 +1495,14 @@ internal class QuickPlayViewModel : NotifyPropertyChangedViewModel, IDisposable
             item.ThumbnailBitmap?.Dispose();
     }
 
+    private void OnPinsChanged(object? sender, EventArgs e)
+    {
+        foreach (var game in RecentGames.Concat(FavoriteGames).Concat(RecommendedGames).Distinct()) game.RefreshPinState();
+    }
+
     public void Dispose()
     {
+        Services.GameLaunchService.PinsChanged -= OnPinsChanged;
         Dispose(true);
         GC.SuppressFinalize(this);
     }

@@ -1,4 +1,4 @@
-﻿<!--
+<!--
 SPDX-FileCopyrightText: 2026 Froststrap
 
 SPDX-License-Identifier: MPL-2.0
@@ -49,7 +49,7 @@ SPDX-License-Identifier: MPL-2.0
                     SelectedItem="{Binding SelectedBackdrop, Mode=TwoWay}"/>
             </controls:OptionControl>
 
-            <controls:CardExpander Classes="NoUserExpansion" Header="{x:Static resources:Strings.Menu_Appearance_Custom_Theme_Title}" Description="{x:Static resources:Strings.Menu_Appearance_Custom_Theme_Description}" IsExpanded="{Binding CustomThemeExpanded, Mode=OneWay}">
+            <controls:CardExpander Classes="NoUserExpansion" Header="{x:Static resources:Strings.Menu_Appearance_Custom_Theme_Title}" IsExpanded="{Binding CustomThemeExpanded, Mode=OneWay}">
                 <controls:CardExpander.HeaderContent>
                     <ComboBox
                         Grid.Column="1"

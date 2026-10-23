@@ -1,16 +1,11 @@
-name: Feature Request
-title: "[REQ] "
-description: Suggest a feature that should be added
+name: Feature request
+title: '[IDEA] '
+description: Suggest something useful for CoffeeStrap.
 body:
-  - type: markdown
-    attributes:
-      value: |
-        ### **Preliminary instructions**
-        - Please first check to see if your idea has already been suggested. You can check by [searching all previous issues](https://github.com/RealMeddsam/Froststrap/issues?q=is%3Aissue).
-        - If your feature suggestion is to do with Roblox itself, please consider that what's possible is heavily constrained by what [FastFlags](https://github.com/pizzaboxer/bloxstrap/wiki/A-guide-to-FastFlags) are available.
   - type: textarea
-    id: what-happened
+    id: idea
     attributes:
-      label: What idea do you have?
+      label: What would you like to add?
+      description: Tell me what it would change and how you'd use it. Examples or references help.
     validations:
       required: true

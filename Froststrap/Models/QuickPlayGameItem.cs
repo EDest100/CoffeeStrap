@@ -6,7 +6,7 @@ using Avalonia.Media.Imaging;
 
 namespace Froststrap.Models
 {
-    internal class QuickPlayGameItem
+    internal class QuickPlayGameItem : Froststrap.UI.ViewModels.NotifyPropertyChangedViewModel
     {
         public long UniverseId { get; set; }
         public long PlaceId { get; set; }
@@ -14,7 +14,8 @@ namespace Froststrap.Models
         public string Creator { get; set; } = string.Empty;
         public bool IsVerified { get; set; }
         public string ThumbnailUrl { get; set; } = string.Empty;
-        public Bitmap? ThumbnailBitmap { get; set; }
+        private Bitmap? _thumbnailBitmap;
+        public Bitmap? ThumbnailBitmap { get => _thumbnailBitmap; set => SetProperty(ref _thumbnailBitmap, value); }
         public long Playing { get; set; }
         public long Visits { get; set; }
         public int ServerCount { get; set; }
@@ -22,5 +23,12 @@ namespace Froststrap.Models
         public UniverseDetails? OriginalDetails { get; set; }
         public GameSource Source { get; set; }
         public long LastPlayedTicks { get; set; }
+        [JsonIgnore]
+        public bool IsPinned
+        {
+            get => App.State.Prop.QuickLaunchPins.Any(pin => pin.PlaceId == PlaceId);
+            set { if (value == IsPinned) return; Froststrap.Services.GameLaunchService.SetPinned(this, value); OnPropertyChanged(nameof(IsPinned)); }
+        }
+        internal void RefreshPinState() => OnPropertyChanged(nameof(IsPinned));
     }
 }

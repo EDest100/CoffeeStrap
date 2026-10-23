@@ -20,6 +20,10 @@ namespace Froststrap.Enums
         From2013,
 
         [EnumSort(Order = 5)]
-        From2006
+        From2006,
+
+        [EnumSort(Order = 6)]
+        [EnumName(StaticName = "Custom image")]
+        Custom
     }
 }

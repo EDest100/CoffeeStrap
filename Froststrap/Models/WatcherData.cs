@@ -7,6 +7,8 @@ namespace Froststrap.Models
     internal class WatcherData
     {
         public int ProcessId { get; set; }
+        public long PlaceId { get; set; }
+        public string? GameName { get; set; }
 
         public string? LogFile { get; set; }
 
@@ -15,5 +17,6 @@ namespace Froststrap.Models
         public LaunchMode LaunchMode { get; set; } = LaunchMode.Player;
 
         public string? AccessCode { get; set; }
+        public bool PublicJoin { get; set; }
     }
 }

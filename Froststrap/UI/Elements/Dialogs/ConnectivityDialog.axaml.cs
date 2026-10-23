@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -45,7 +45,7 @@ namespace Froststrap.UI.Elements.Dialogs
             }
             else
             {
-                var uri = new Uri($"avares://Froststrap/Resources/MessageBox/{iconFilename}.png");
+                var uri = new Uri($"avares://CoffeeStrap/Resources/MessageBox/{iconFilename}.png");
                 using var stream = AssetLoader.Open(uri);
                 IconImage.Source = new Bitmap(stream);
             }

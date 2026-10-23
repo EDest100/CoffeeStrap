@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -169,7 +169,7 @@ namespace Froststrap.UI.ViewModels.Settings
                     ? string.Join(", ", activeSettings.Take(activeSettings.Count - 1)) + " and " + activeSettings.Last()
                     : activeSettings[0];
 
-                return $"Read-only must be enabled for {settingsList} to not be forgotten";
+                return $"Roblox may overwrite {settingsList} while Prevent Override is off.";
             }
         }
 
@@ -221,9 +221,100 @@ namespace Froststrap.UI.ViewModels.Settings
                 NumberStyles.Integer, CultureInfo.InvariantCulture, out var v) ? v : 1;
             set
             {
-                App.GlobalSettings.SetPreset("Audio.MasterVolumeStudio",
-                    value.ToString(CultureInfo.InvariantCulture));
+                App.GlobalSettings.SetPreset("Rendering.SavedQualityLevel",
+                    (LockMaximumRenderDistance ? 10 : Math.Clamp(value, 0, 10)).ToString(CultureInfo.InvariantCulture));
                 OnPropertyChanged(nameof(GraphicsQuality));
+                GraphicsChanged?.Invoke();
+            }
+        }
+
+        public bool RenderDistanceOverride
+        {
+            get => App.FastFlags.GetValue("DFIntDebugFRMQualityLevelOverride") != null;
+            set
+            {
+                if (!value && LockMaximumRenderDistance) LockMaximumRenderDistance = false;
+                App.FastFlags.SetValue("DFIntDebugFRMQualityLevelOverride", value ? RenderDistance.ToString(CultureInfo.InvariantCulture) : null);
+                OnPropertyChanged(); OnPropertyChanged(nameof(RenderDistance));
+                GraphicsChanged?.Invoke();
+            }
+        }
+
+        public void RefreshGraphics()
+        {
+            OnPropertyChanged(nameof(LockMaximumRenderDistance));
+            OnPropertyChanged(nameof(RenderDistanceOverride)); OnPropertyChanged(nameof(RenderDistance));
+            OnPropertyChanged(nameof(TextureQualityOverride)); OnPropertyChanged(nameof(TextureQuality)); OnPropertyChanged(nameof(GraphicsQuality));
+            OnPropertyChanged(nameof(MaxQualityEnabled)); OnPropertyChanged(nameof(VignetteEnabled));
+        }
+
+        public event Action? GraphicsChanged;
+        public bool LockMaximumRenderDistance
+        {
+            get => App.Settings.Prop.LockMaximumRenderDistance;
+            set
+            {
+                App.Settings.Prop.LockMaximumRenderDistance = value;
+                App.Settings.SaveSetting(nameof(App.Settings.Prop.LockMaximumRenderDistance));
+                if (value && App.FastFlags.GetValue("DFIntDebugFRMQualityLevelOverride") == null)
+                    App.FastFlags.SetValue("DFIntDebugFRMQualityLevelOverride", "1");
+                App.GlobalSettings.ApplyDrawDistancePreference();
+                RefreshGraphics(); GraphicsChanged?.Invoke();
+            }
+        }
+        public bool TextureQualityOverride
+        {
+            get => App.FastFlags.GetValue("DFFlagTextureQualityOverrideEnabled") == "True";
+            set
+            {
+                App.FastFlags.SetValue("DFFlagTextureQualityOverrideEnabled", value ? "True" : null);
+                App.FastFlags.SetValue("DFIntTextureQualityOverride", value ? TextureQuality.ToString(CultureInfo.InvariantCulture) : null);
+                RefreshGraphics(); GraphicsChanged?.Invoke();
+            }
+        }
+        public int TextureQuality
+        {
+            get => int.TryParse(App.FastFlags.GetValue("DFIntTextureQualityOverride"), out int level) ? Math.Clamp(level, 0, 3) : 3;
+            set
+            {
+                App.FastFlags.SetValue("DFFlagTextureQualityOverrideEnabled", "True");
+                App.FastFlags.SetValue("DFIntTextureQualityOverride", Math.Clamp(value, 0, 3).ToString(CultureInfo.InvariantCulture));
+                RefreshGraphics(); GraphicsChanged?.Invoke();
+            }
+        }
+        public ICommand PlasticMaximumCommand => new RelayCommand(() =>
+        {
+            MaximumDistanceLowEffectsCommand.Execute(null); TextureQuality = 3;
+            MaxQualityEnabled = false; VignetteEnabled = false;
+            App.Settings.Prop.SmoothPlastic = true;
+            App.Settings.SaveSetting(nameof(App.Settings.Prop.SmoothPlastic));
+            App.FastFlags.SetValue("DFFlagDebugPauseVoxelizer", null);
+            RefreshGraphics(); GraphicsChanged?.Invoke();
+        });
+
+        public ICommand MaximumDistanceLowEffectsCommand => new RelayCommand(() =>
+        {
+            LockMaximumRenderDistance = true; RenderDistance = 1;
+            MaxQualityEnabled = false;
+            RefreshGraphics(); GraphicsChanged?.Invoke();
+        });
+
+        public ICommand TextureCompatibilityCommand => new RelayCommand(() =>
+        {
+            App.FastFlags.SetPresetEnum("Rendering.Mode", "D3D11", "True");
+            App.FastFlags.SetValue("DFFlagDebugPauseVoxelizer", null);
+            TextureQuality = 3;
+            RefreshGraphics(); GraphicsChanged?.Invoke();
+        });
+
+        public int RenderDistance
+        {
+            get => int.TryParse(App.FastFlags.GetValue("DFIntDebugFRMQualityLevelOverride"), out int value) ? Math.Clamp(value, 1, 21) : 1;
+            set
+            {
+                App.FastFlags.SetValue("DFIntDebugFRMQualityLevelOverride", Math.Clamp(value, 1, 21).ToString(CultureInfo.InvariantCulture));
+                OnPropertyChanged(); OnPropertyChanged(nameof(RenderDistanceOverride));
+                GraphicsChanged?.Invoke();
             }
         }
 
@@ -246,6 +337,7 @@ namespace Froststrap.UI.ViewModels.Settings
                 App.GlobalSettings.SetPreset("Rendering.MaxQualityEnabled", value);
                 OnPropertyChanged(nameof(MaxQualityEnabled));
                 UpdateWarningState();
+                GraphicsChanged?.Invoke();
             }
         }
 

@@ -27,26 +27,6 @@ namespace Froststrap.UI.ViewModels.Settings
         private bool _isNotLinux = !OperatingSystem.IsLinux();
         public bool IsNotLinux { get => _isNotLinux; }
 
-        private static readonly Dictionary<string, LucideIconNames> _pageIconMap = new()
-        {
-            ["integrations"] = LucideIconNames.Plus,
-            ["behaviour"] = LucideIconNames.Play,
-            ["linuxsettings"] = LucideIconNames.Settings,
-            ["mods"] = LucideIconNames.BookOpen,
-            ["fastflags"] = LucideIconNames.Flag,
-            ["appearance"] = LucideIconNames.Palette,
-            ["regionselector"] = LucideIconNames.Globe,
-            ["globalsettings"] = LucideIconNames.PenLine,
-            ["shortcuts"] = LucideIconNames.Link2,
-            ["quickplay"] = LucideIconNames.Gamepad2,
-            ["channels"] = LucideIconNames.HardDriveUpload,
-            ["globalsettingseditor"] = LucideIconNames.FilePenLine,
-            ["fastflageditor"] = LucideIconNames.FilePenLine,
-            ["communitymods"] = LucideIconNames.House,
-            ["custommods"] = LucideIconNames.List,
-            ["modgenerator"] = LucideIconNames.PaintbrushVertical,
-        };
-
         private object? _currentPage;
         public object? CurrentPage
         {
@@ -72,7 +52,8 @@ namespace Froststrap.UI.ViewModels.Settings
         private LaunchMode _selectedLaunchMode = LaunchMode.Player;
 
         private string _selectedPage = "integrations";
-        public string SelectedPage { get => _selectedPage; set => SetProperty(ref _selectedPage, value); }
+        public string SelectedPage { get => _selectedPage; set { if (SetProperty(ref _selectedPage, value)) OnPropertyChanged(nameof(IsHome)); } }
+        public bool IsHome => SelectedPage == "home";
 
         private string _currentPageTitle = Strings.Menu_Integrations_Title;
         public string CurrentPageTitle { get => _currentPageTitle; set => SetProperty(ref _currentPageTitle, value); }
@@ -136,6 +117,13 @@ namespace Froststrap.UI.ViewModels.Settings
         public ICommand BreadcrumbItemClickedCommand { get; }
 
         public EventHandler? RequestSaveNoticeEvent;
+        private string _saveError = "";
+        public string SaveError
+        {
+            get => _saveError;
+            private set { if (SetProperty(ref _saveError, value)) OnPropertyChanged(nameof(HasSaveError)); }
+        }
+        public bool HasSaveError => SaveError.Length > 0;
         public EventHandler? RequestCloseWindowEvent;
         public bool GBSEnabled = App.GlobalSettings.Loaded;
 
@@ -148,83 +136,32 @@ namespace Froststrap.UI.ViewModels.Settings
             SetLaunchModeCommand = new RelayCommand<LaunchMode>(mode => SelectedLaunchMode = mode);
 
             OpenAboutCommand = new RelayCommand(OpenAbout);
-            SaveSettingsCommand = new RelayCommand(SaveSettings);
+            SaveSettingsCommand = new RelayCommand(() => SaveSettings());
             SaveAndLaunchSettingsCommand = new RelayCommand(SaveAndLaunchSettings);
             RestartAppCommand = new RelayCommand(RestartApp);
             CloseWindowCommand = new RelayCommand(CloseWindow);
             BreadcrumbItemClickedCommand = new RelayCommand<BreadcrumbItemModel>(HandleBreadcrumbItemClicked);
             SearchBar = new();
+            SearchBar.SetSearchIndex(Froststrap.UI.Utility.NavigationRegistry.Pages.Where(page => page.Sidebar && (page.Tag != "globalsettings" || GBSEnabled))
+                .Select(page => new SearchBarItem { DisplayName = page.Title, PageName = page.Title, PageTag = page.Tag, Category = "Navigation" }).ToList());
 
-            NavigateToIntegrationsCommand = new RelayCommand(() => Navigate("integrations", Strings.Menu_Integrations_Title, Strings.Menu_Integrations_Description, new IntegrationsViewModel()));
-            NavigateToBehaviourCommand = new RelayCommand(() => Navigate("behaviour", Strings.Menu_Behaviour_Title, Strings.Menu_Behaviour_Description, new BehaviourViewModel()));
-            NavigateToLinuxSettingsCommand = new RelayCommand(() => Navigate("linuxsettings", Strings.Menu_LinuxSettings_Title, null!, new LinuxSettingsViewModel()));
-            NavigateToPresetModsCommand = new RelayCommand(() => Navigate("mods", Strings.Menu_PresetMods_Title, Strings.Menu_PresetMods_Description, new ModsPresetsViewModel()));
-            NavigateToFastFlagsCommand = new RelayCommand(() =>
-            {
-                var dialogService = new FastFlagsDialogService(this);
-                var viewModel = new FastFlagsViewModel(
-                    new DefaultFastFlagsService(),
-                    new DefaultSettingsService(),
-                    dialogService
-                );
-                Navigate("fastflags", Strings.Menu_FastFlags_Title, Strings.Menu_FastFlags_Description, viewModel);
-            });
-            NavigateToAppearanceCommand = new RelayCommand(() => Navigate("appearance", Strings.Menu_Appearance_Title, Strings.Menu_Appearance_Description, new AppearanceViewModel()));
-            NavigateToRegionSelectorCommand = new RelayCommand(() => Navigate("regionselector", Strings.Menu_RegionSelector_Title, Strings.Menu_RegionSelector_Description, new RegionSelectorViewModel()));
-            NavigateToGlobalSettingsCommand = new RelayCommand(() => Navigate("globalsettings", Strings.Menu_GlobalSettings_Title, Strings.Menu_GBSEditor_Description, new GlobalSettingsViewModel()));
-            NavigateToShortcutsCommand = new RelayCommand(() => Navigate("shortcuts", Strings.Common_Shortcuts, Strings.Menu_Shortcuts_Description, new ShortcutsViewModel()));
-            NavigateToQuickPlayCommand = new RelayCommand(() => Navigate("quickplay", Strings.Menu_QuickPlay_Title, Strings.Menu_QuickPlay_Description, new QuickPlayViewModel()));
-            NavigateToChannelsCommand = new RelayCommand(() => Navigate("channels", Strings.Common_Deployment, Strings.Menu_Channel_Description, new ChannelViewModel()));
-
-            NavigateToGlobalSettingsEditorCommand = new RelayCommand(() =>
-            {
-                ObservableCollection<BreadcrumbItemModel> crumbs = [
-                    new() { Content = Strings.Menu_GlobalSettings_Title, Tag = "globalsettings" },
-                    new() { Content = Strings.Common_Editor, Tag = null, IsLast = true }
-                ];
-                Navigate("globalsettingseditor", Strings.Common_Editor, Strings.Menu_GlobalSettingsEditor_Description, new GlobalSettingsEditorViewModel(this), crumbs);
-            });
-
-            NavigateToFastFlagEditorCommand = new RelayCommand(() =>
-            {
-                ObservableCollection<BreadcrumbItemModel> crumbs = [
-                    new() { Content = Strings.Menu_FastFlags_Title, Tag = "fastflags" },
-                    new() { Content = Strings.Common_Editor, Tag = null, IsLast = true }
-                ];
-                Navigate("fastflageditor", Strings.Common_Editor, Strings.Menu_FastFlagEditor_Description, new FastFlagEditorViewModel(this), crumbs);
-            });
-
-            NavigateToCommunityModsCommand = new RelayCommand(() =>
-            {
-                ObservableCollection<BreadcrumbItemModel> crumbs = [
-                    new() { Content = Strings.Menu_PresetMods_Title, Tag = "mods" },
-                    new() { Content = Strings.Menu_CommunityMods_Title, Tag = null, IsLast = true }
-                ];
-                Navigate("communitymods", Strings.Menu_CommunityMods_Title, Strings.Menu_CommunityMods_Description, new CommunityModsViewModel(), crumbs);
-            });
-
-            NavigateToModGeneratorCommand = new RelayCommand(() =>
-            {
-                Navigate("modgenerator", Strings.Menu_ModGenerator_Title, Strings.Menu_ModGenerator_Description, new ModGeneratorViewModel(), [
-                    new() { Content = Strings.Menu_PresetMods_Title, Tag = "mods" },
-                    new() { Content = Strings.Menu_ModGenerator_Title, Tag = null, IsLast = true }
-                ]);
-            });
-
-            NavigateToMyModsCommand = new RelayCommand(() =>
-            {
-                ObservableCollection<BreadcrumbItemModel> crumbs = [
-                    new() { Content = Strings.Menu_PresetMods_Title, Tag = "mods" },
-                    new() { Content = Strings.Menu_Mods_Title, Tag = null, IsLast = true }
-                ];
-                Navigate("custommods", Strings.Menu_Mods_Title, Strings.Menu_Mods_InfoBar, new ModsViewModel(), crumbs);
-            });
-
-            var lastPageName = App.State.Prop.LastPage;
-            if (lastPageName != null)
-                NavigateToLastPage(lastPageName);
-            else
-                NavigateToIntegrationsCommand.Execute(null);
+            NavigateToIntegrationsCommand = new RelayCommand(() => NavigateRegistered("home"));
+            NavigateToBehaviourCommand = new RelayCommand(() => NavigateRegistered("behaviour"));
+            NavigateToLinuxSettingsCommand = new RelayCommand(() => NavigateRegistered("shortcuts"));
+            NavigateToPresetModsCommand = new RelayCommand(() => NavigateRegistered("mods"));
+            NavigateToFastFlagsCommand = new RelayCommand(() => NavigateRegistered("fastflags"));
+            NavigateToAppearanceCommand = new RelayCommand(() => NavigateRegistered("shortcuts"));
+            NavigateToRegionSelectorCommand = new RelayCommand(() => NavigateRegistered("home"));
+            NavigateToGlobalSettingsCommand = new RelayCommand(() => NavigateRegistered("fastflags"));
+            NavigateToShortcutsCommand = new RelayCommand(() => NavigateRegistered("shortcuts"));
+            NavigateToQuickPlayCommand = new RelayCommand(() => NavigateRegistered("quickplay"));
+            NavigateToChannelsCommand = new RelayCommand(() => NavigateRegistered("shortcuts"));
+            NavigateToGlobalSettingsEditorCommand = new RelayCommand(() => NavigateRegistered("globalsettingseditor"));
+            NavigateToFastFlagEditorCommand = new RelayCommand(() => NavigateRegistered("fastflags"));
+            NavigateToCommunityModsCommand = new RelayCommand(() => NavigateRegistered("mods"));
+            NavigateToModGeneratorCommand = new RelayCommand(() => NavigateRegistered("modgenerator"));
+            NavigateToMyModsCommand = new RelayCommand(() => NavigateRegistered("custommods"));
+            NavigateRegistered("home");
 
             SelectedLaunchMode = App.State.Prop.LastLaunchMode;
         }
@@ -236,7 +173,7 @@ namespace Froststrap.UI.ViewModels.Settings
                 SelectedPage = pageId;
                 CurrentPageTitle = title;
                 CurrentPageDescription = description;
-                CurrentPageIcon = _pageIconMap.TryGetValue(pageId, out var icon) ? icon : LucideIconNames.CircleQuestionMark;
+                CurrentPageIcon = Froststrap.UI.Utility.NavigationRegistry.Find(pageId)?.Icon ?? LucideIconNames.CircleQuestionMark;
                 BreadcrumbItems = customBreadcrumbs ?? [];
                 CurrentPage = viewModel;
             }
@@ -246,65 +183,19 @@ namespace Froststrap.UI.ViewModels.Settings
             }
         }
 
-        private void NavigateToLastPage(string pageTypeName)
+        public void NavigateRegistered(string tag)
         {
-            switch (pageTypeName)
+            var route = Froststrap.UI.Utility.NavigationRegistry.Find(tag);
+            if (route == null) return;
+            var model = route.CreateModel(this);
+            if (model is ModsPresetsViewModel mods)
             {
-                case "Froststrap.UI.ViewModels.Settings.IntegrationsViewModel":
-                    NavigateToIntegrationsCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.BehaviourViewModel":
-                    NavigateToBehaviourCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.LinuxSettingsViewModel":
-                    if (OperatingSystem.IsLinux())
-                        NavigateToLinuxSettingsCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.Mods.ModsViewModel":
-                    NavigateToMyModsCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.FastFlagsViewModel":
-                    NavigateToFastFlagsCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.AppearanceViewModel":
-                    NavigateToAppearanceCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.GlobalSettingsViewModel":
-                    if (GBSEnabled)
-                        NavigateToGlobalSettingsCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.ShortcutsViewModel":
-                    NavigateToShortcutsCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.QuickPlayViewModel":
-                    NavigateToQuickPlayCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.ChannelViewModel":
-                    NavigateToChannelsCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.Mods.CommunityModsViewModel":
-                    NavigateToCommunityModsCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.ModsPresetsViewModel":
-                    NavigateToPresetModsCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.Mods.ModGeneratorViewModel":
-                    NavigateToModGeneratorCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.RegionSelectorViewModel":
-                    NavigateToRegionSelectorCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.FastFlags.FastFlagEditorViewModel":
-                    NavigateToFastFlagEditorCommand.Execute(null);
-                    break;
-                case "Froststrap.UI.ViewModels.Settings.GlobalSettings.GlobalSettingsEditorViewModel":
-                    if (GBSEnabled)
-                        NavigateToGlobalSettingsEditorCommand.Execute(null);
-                    break;
-                default:
-                    NavigateToIntegrationsCommand.Execute(null);
-                    break;
+                mods.OpenModsEvent += (_, _) => NavigateRegistered("custommods");
+                mods.OpenModGeneratorEvent += (_, _) => NavigateRegistered("modgenerator");
             }
+            var old = CurrentPage;
+            Navigate(route.Tag, route.Title, "", model);
+            if (old is IDisposable disposable) disposable.Dispose();
         }
 
         private void OpenAbout()
@@ -320,39 +211,69 @@ namespace Froststrap.UI.ViewModels.Settings
 
         private void CloseWindow() => RequestCloseWindowEvent?.Invoke(this, EventArgs.Empty);
 
-        public void SaveSettings()
+        public bool SaveSettings()
         {
             if (CurrentPage != null)
             {
                 App.State.Prop.LastPage = CurrentPage.GetType().FullName;
             }
 
-            App.Settings.Save();
-            App.State.Save();
-            App.FastFlags.Save();
-            App.GlobalSettings.Save();
-
-            if (OperatingSystem.IsLinux())
-                App.SoberSettings.Save();
-
-            foreach (var pair in App.PendingSettingTasks)
+            var failed = new List<string>();
+            void SaveJson<T>(JsonManager<T> manager, string label) where T : class, new()
             {
-                var task = pair.Value;
-
-                if (task.Changed)
+                try
                 {
-                    App.Logger.Info($"Executing pending task '{task}'");
-                    task.Execute();
+                    if (!manager.Save(false) && (manager.HasUnsavedChanges || !manager.IsSaved)) failed.Add(label);
+                }
+                catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+                {
+                    App.Logger.Warn(error, "Could not prepare settings for saving."); failed.Add(label);
                 }
             }
+            SaveJson(App.Settings, "CoffeeStrap preferences");
+            SaveJson(App.State, "launcher state");
+            SaveJson(App.FastFlags, "Game Tweaks");
+            if (!App.GlobalSettings.Save() && (App.GlobalSettings.HasUnsavedChanges || (App.GlobalSettings.Loaded && !File.Exists(GBSEditor.FileLocation))))
+                failed.Add("Roblox saved settings");
 
-            App.PendingSettingTasks.Clear();
+            if (OperatingSystem.IsLinux())
+                SaveJson(App.SoberSettings, "Sober settings");
+
+            if (failed.Count > 0)
+            {
+                SaveError = "Could not save " + string.Join(", ", failed) + ". Other files may already be saved. Remaining edits are kept. Check file access and choose Retry save.";
+                return false;
+            }
+            try
+            {
+                Services.RetiredPresets.RemoveAvatarBackground();
+                foreach (var pair in App.PendingSettingTasks.ToArray())
+                {
+                    var task = pair.Value;
+                    if (task.Changed)
+                    {
+                        App.Logger.Info($"Executing pending task '{task}'");
+                        task.Execute();
+                    }
+                    App.PendingSettingTasks.Remove(pair.Key);
+                }
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException or System.ComponentModel.Win32Exception or System.Runtime.InteropServices.COMException)
+            {
+                App.Logger.Warn(error, "Could not complete pending settings file changes.");
+                SaveError = "Settings files were saved, but a file change could not finish. Remaining changes are kept. Check file access and choose Retry save. " + error.Message;
+                return false;
+            }
+            SaveError = "";
             RequestSaveNoticeEvent?.Invoke(this, EventArgs.Empty);
+            return true;
         }
+
+        internal bool CanCloseAfterPrompt(MessageBoxResult result) => result == MessageBoxResult.No || (result == MessageBoxResult.Yes && SaveSettings());
 
         public void SaveAndLaunchSettings()
         {
-            SaveSettings();
+            if (!SaveSettings()) return;
 
             if (!App.LaunchSettings.TestModeFlag.Active)
             {
@@ -415,7 +336,7 @@ namespace Froststrap.UI.ViewModels.Settings
 
         public void RestartApp()
         {
-            SaveSettings();
+            if (!SaveSettings()) return;
 
             CloseAction = NextAction.LaunchSettings;
             CloseWindow();

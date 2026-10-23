@@ -1,10 +1,11 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
 using Avalonia.Controls;
 using Avalonia.Media;
 using Froststrap.RobloxInterfaces;
+using Froststrap.UI.Utility;
 
 namespace Froststrap.UI.ViewModels.Bootstrapper
 {
@@ -25,21 +26,11 @@ namespace Froststrap.UI.ViewModels.Bootstrapper
 
             var isLight = App.Settings.Prop.Theme.GetFinal() == Theme.Light;
 
-            if (aero)
-            {
-                byte alpha = 135;
-                var color = isLight
-                    ? Color.FromArgb(alpha, 225, 225, 225)
-                    : Color.FromArgb(alpha, 30, 30, 30);
-                BackgroundColourBrush = new SolidColorBrush(color);
-            }
-            else
-            {
-                var color = isLight
-                    ? Color.FromRgb(240, 240, 240)
-                    : Color.FromRgb(30, 30, 30);
-                BackgroundColourBrush = new SolidColorBrush(color);
-            }
+            var background = ThemePalette.GetColor("SolidBackgroundFillColorBase",
+                isLight ? Color.Parse("#FAF6F0") : Color.Parse("#211C18"));
+            BackgroundColourBrush = new SolidColorBrush(aero
+                ? Color.FromArgb(220, background.R, background.G, background.B)
+                : background);
 
             VersionText = $"Version: V{ExtractMajorVersion(version)}";
             ChannelText = $"Channel: {Deployment.Channel}";

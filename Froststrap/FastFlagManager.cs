@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -193,11 +193,18 @@ namespace Froststrap
         public static bool IsPreset(string flag) => PresetFlags.Values.Any(v => string.Equals(v, flag, StringComparison.OrdinalIgnoreCase));
 
         public override bool Save()
+            => Save(true);
+
+        public override bool Save(bool alertFailure)
         {
+            ApplyGraphicsDefaults();
+            var accepted = Services.CuratedFlagRegistry.Filter(Prop, out var held);
+            Services.CuratedFlagRegistry.PreserveHeld(held);
+            Prop = accepted;
             foreach (var key in Prop.Keys.ToList())
                 Prop[key] = Prop[key].ToString()!;
 
-            bool saved = base.Save();
+            bool saved = base.Save(alertFailure);
 
             if (saved)
             {
@@ -244,32 +251,34 @@ namespace Froststrap
         public override bool Load(bool alertFailure = true)
         {
             bool result = base.Load(alertFailure);
-            OriginalProp = new(Prop);
+            OriginalProp = Prop.ToDictionary(pair => pair.Key, pair => (object)(pair.Value?.ToString() ?? ""));
 
-            if (GetPreset("Rendering.ManualFullscreen") != "False")
-                SetPreset("Rendering.ManualFullscreen", "False");
+            var accepted = Services.CuratedFlagRegistry.Filter(Prop, out var held);
+            Services.CuratedFlagRegistry.PreserveHeld(held);
+            Prop = accepted;
 
+            ApplyGraphicsDefaults();
+            if (App.Settings.Prop.LockMaximumRenderDistance && !OriginalProp.ContainsKey("DFIntDebugFRMQualityLevelOverride"))
+                OriginalProp["DFIntDebugFRMQualityLevelOverride"] = "1";
             return result;
         }
 
-        public static async Task DeleteProfile(string profile)
+        private void ApplyGraphicsDefaults()
         {
-            try
-            {
-                string profilesDirectory = Paths.SavedFlagProfiles;
+            if (App.Settings.Prop.LockMaximumRenderDistance) Prop.TryAdd("DFIntDebugFRMQualityLevelOverride", "1");
+        }
 
-                if (!Directory.Exists(profilesDirectory))
-                    Directory.CreateDirectory(profilesDirectory);
-
-                if (string.IsNullOrEmpty(profile))
-                    return;
-
-                File.Delete(Path.Combine(profilesDirectory, profile));
-            }
-            catch (Exception ex)
-            {
-                await Frontend.ShowMessageBox(ex.Message, MessageBoxImage.Error);
-            }
+        internal (int Accepted, int Excluded) ApplyProfile(IReadOnlyDictionary<string, object> source, bool replace)
+        {
+            var accepted = Services.CuratedFlagRegistry.Filter(source, out var held);
+            if (accepted.Count == 0) throw new InvalidDataException("This profile contains no supported Game Tweaks.");
+            int count = accepted.Count;
+            Services.CuratedFlagRegistry.ApplySelectedOverrides(accepted);
+            var next = replace ? accepted : Prop.ToDictionary(pair => pair.Key, pair => pair.Value);
+            if (!replace) foreach (var pair in accepted) next[pair.Key] = pair.Value;
+            SaveUndoSnapshot();
+            Prop = next;
+            return (count, held.Count);
         }
 
         public IEnumerable<FastFlag> GetAllFlags()

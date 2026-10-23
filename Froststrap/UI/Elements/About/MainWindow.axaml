@@ -19,54 +19,47 @@ SPDX-License-Identifier: MPL-2.0
                      x:Class="Froststrap.UI.Elements.About.MainWindow"
                      x:DataType="vm:MainWindowViewModel"
                      Title="{x:Static resources:Strings.About_Title}"
-                     MinWidth="740" Width="740" Height="440"
+                     MinWidth="740" Width="800" Height="560" MinHeight="440"
                      WindowStartupLocation="CenterScreen" CanResize="True">
 
-    <Grid RowDefinitions="Auto,*">
-        <Border Background="{DynamicResource ControlFillColorDefaultBrush}" Height="40" IsHitTestVisible="False"/>
+    <Grid RowDefinitions="52,*" Background="{DynamicResource CoffeeChromeBrush}">
+        <controls:TitleBar Title="CoffeeStrap" Icon="avares://CoffeeStrap/CoffeeStrap.png" Height="52" />
 
         <Grid Grid.Row="1" Name="MainGrid">
-            <ui:FANavigationView Name="NavView"
-                                 Background="{DynamicResource ControlFillColorDefaultBrush}"
-                                 PaneDisplayMode="Left"
-                                 IsSettingsVisible="False"
-                                 OpenPaneLength="160"
+            <controls:CoffeeNavigationView Name="NavView"
+                                 Background="{DynamicResource CoffeeChromeBrush}"
+                                 OpenPaneLength="200"
                                  ItemInvoked="NavView_ItemInvoked">
-                <ui:FANavigationView.Styles>
-                    <Style Selector="ui|FANavigationView /template/ ScrollViewer#MenuItemsScrollViewer">
-                        <Setter Property="VerticalScrollBarVisibility" Value="Hidden"/>
-                    </Style>
-                </ui:FANavigationView.Styles>
-                <ui:FANavigationView.MenuItems>
-                    <ui:FANavigationViewItem Tag="about" Content="{x:Static resources:Strings.Menu_About_Title}">
-                        <ui:FANavigationViewItem.Icon>
+                <controls:CoffeeNavigationView.MenuItems>
+                    <controls:CoffeeNavigationItem Tag="about" Content="{x:Static resources:Strings.Menu_About_Title}">
+                        <controls:CoffeeNavigationItem.Icon>
                             <ic:Lucide Icon="CircleAlert" Width="20" Height="20" />
-                        </ui:FANavigationViewItem.Icon>
-                    </ui:FANavigationViewItem>
+                        </controls:CoffeeNavigationItem.Icon>
+                    </controls:CoffeeNavigationItem>
 
-                    <ui:FANavigationViewItem Tag="licenses" Content="{x:Static resources:Strings.About_Licenses_Title}">
-                        <ui:FANavigationViewItem.Icon>
+                    <controls:CoffeeNavigationItem Tag="licenses" Content="{x:Static resources:Strings.About_Licenses_Title}">
+                        <controls:CoffeeNavigationItem.Icon>
                             <ic:Lucide Icon="Copyright" Width="20" Height="20" />
-                        </ui:FANavigationViewItem.Icon>
-                    </ui:FANavigationViewItem>
-                </ui:FANavigationView.MenuItems>
+                        </controls:CoffeeNavigationItem.Icon>
+                    </controls:CoffeeNavigationItem>
+                </controls:CoffeeNavigationView.MenuItems>
 
-                <ui:FANavigationView.FooterMenuItems>
-                    <ui:FANavigationViewItem Tag="onboarding" Content="{x:Static resources:Strings.About_Onboarding_Title}">
-                        <ui:FANavigationViewItem.Icon>
+                <controls:CoffeeNavigationView.FooterMenuItems>
+                    <controls:CoffeeNavigationItem Tag="onboarding" Content="{x:Static resources:Strings.About_Onboarding_Title}">
+                        <controls:CoffeeNavigationItem.Icon>
                             <ic:Lucide Icon="Rocket" Width="20" Height="20" />
-                        </ui:FANavigationViewItem.Icon>
-                    </ui:FANavigationViewItem>
-                </ui:FANavigationView.FooterMenuItems>
+                        </controls:CoffeeNavigationItem.Icon>
+                    </controls:CoffeeNavigationItem>
+                </controls:CoffeeNavigationView.FooterMenuItems>
 
-                <ui:FANavigationView.Content>
+                <controls:CoffeeNavigationView.Content>
                     <TransitioningContentControl
                         x:Name="PageContentControl"
                         HorizontalAlignment="Stretch"
                         VerticalAlignment="Stretch"
                         Background="{DynamicResource LayerFillColorDefaultBrush}" />
-                </ui:FANavigationView.Content>
-            </ui:FANavigationView>
+                </controls:CoffeeNavigationView.Content>
+            </controls:CoffeeNavigationView>
         </Grid>
     </Grid>
 </base:AvaloniaWindow>

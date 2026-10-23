@@ -20,6 +20,14 @@ namespace Froststrap.Models.Persistable
         public WindowState SettingsWindow { get; set; } = new();
 
         public LaunchMode LastLaunchMode { get; set; } = LaunchMode.Player;
+        public bool HasSeededJjsPin { get; set; }
+        public long LastPlaceId { get; set; }
+        public string? LastGameName { get; set; }
+        public string LastSchedulingResult { get; set; } = "No scheduling request has been made. Options apply to the next CoffeeStrap-launched player.";
+        public string LastWindowSizeResult { get; set; } = "No window size requested. Applies once to the next windowed player launched through CoffeeStrap.";
+        public int AutoReconnectAttempts { get; set; }
+        public DateTime AutoReconnectWindowUtc { get; set; }
+        public List<QuickLaunchPin> QuickLaunchPins { get; set; } = [];
 
         public string? LastMigratedVersion { get; set; }
 

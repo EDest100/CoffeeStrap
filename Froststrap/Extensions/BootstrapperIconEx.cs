@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -11,7 +11,7 @@ namespace Froststrap.Extensions
     {
         public static IReadOnlyCollection<BootstrapperIcon> Selections =>
         [
-            BootstrapperIcon.IconFroststrap,
+            BootstrapperIcon.IconCoffeeStrap,
             BootstrapperIcon.Icon2025,
             BootstrapperIcon.Icon2022,
             BootstrapperIcon.Icon2019,
@@ -20,7 +20,6 @@ namespace Froststrap.Extensions
             BootstrapperIcon.IconEarly2015,
             BootstrapperIcon.Icon2011,
             BootstrapperIcon.Icon2008,
-            BootstrapperIcon.IconFroststrapClassic,
             BootstrapperIcon.IconCustom
         ];
 
@@ -52,14 +51,15 @@ namespace Froststrap.Extensions
                     }
                 }
 
-                var result = customIcon ?? LoadFromResource("IconFroststrap");
+                var result = customIcon ?? LoadFromResource("IconCoffeeStrap");
                 _cache[icon] = result;
                 return result;
             }
 
             var bitmap = icon switch
             {
-                BootstrapperIcon.IconFroststrap => LoadFromResource("IconFroststrap"),
+                BootstrapperIcon.IconCoffeeStrap => LoadFromResource("IconCoffeeStrap"),
+                BootstrapperIcon.IconFroststrap => LoadFromResource("IconCoffeeStrap"),
                 BootstrapperIcon.Icon2008 => LoadFromResource("Icon2008"),
                 BootstrapperIcon.Icon2011 => LoadFromResource("Icon2011"),
                 BootstrapperIcon.IconEarly2015 => LoadFromResource("IconEarly2015"),
@@ -68,8 +68,8 @@ namespace Froststrap.Extensions
                 BootstrapperIcon.Icon2019 => LoadFromResource("Icon2019"),
                 BootstrapperIcon.Icon2022 => LoadFromResource("Icon2022"),
                 BootstrapperIcon.Icon2025 => LoadFromResource("Icon2025"),
-                BootstrapperIcon.IconFroststrapClassic => LoadFromResource("IconFroststrapClassic"),
-                _ => LoadFromResource("IconFroststrap")
+                BootstrapperIcon.IconFroststrapClassic => LoadFromResource("IconCoffeeStrap"),
+                _ => LoadFromResource("IconCoffeeStrap")
             };
 
             _cache[icon] = bitmap;
@@ -79,7 +79,7 @@ namespace Froststrap.Extensions
         private static Bitmap LoadFromResource(string name)
         {
             // Load the ICO file
-            var uri = new Uri($"avares://Froststrap/Resources/{name}.ico");
+            var uri = new Uri($"avares://CoffeeStrap/Resources/{name}.ico");
             using var stream = AssetLoader.Open(uri);
             return LoadBestIconFromIcoStream(stream);
         }

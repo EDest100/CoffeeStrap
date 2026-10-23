@@ -15,23 +15,24 @@ SPDX-License-Identifier: MPL-2.0
         <Setter Property="Template">
             <ControlTemplate>
                 <Grid ColumnDefinitions="Auto, *, Auto"
+                      WindowDecorationProperties.ElementRole="TitleBar"
                       Height="{TemplateBinding Height}"
                       Background="{TemplateBinding Background}">
 
-                    <StackPanel Grid.Column="0" Name="PART_LeftPanel" Margin="0,4,0,0" Orientation="Horizontal" IsHitTestVisible="True" VerticalAlignment="Top">
+                    <StackPanel Grid.Column="0" Name="PART_LeftPanel" Margin="16,0,0,0" Orientation="Horizontal" IsHitTestVisible="False" VerticalAlignment="Center">
                         <Image Source="{TemplateBinding Icon}"
                                IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
-                               Width="16" Height="16"
-                               Margin="8,4,0,0"
+                               Width="24" Height="24"
+                               Margin="0"
                                VerticalAlignment="Center"
                                RenderOptions.BitmapInterpolationMode="HighQuality"
                                IsHitTestVisible="False" />
 
                         <TextBlock Text="{TemplateBinding Title}"
                                    VerticalAlignment="Center"
-                                   FontSize="12"
-                                   Margin="4,0,0,0"
-                                   FontWeight="Normal"
+                                   FontSize="14"
+                                   Margin="8,0,0,0"
+                                   FontWeight="SemiBold"
                                    Foreground="{DynamicResource TextFillColorPrimaryBrush}"
                                    IsHitTestVisible="False" />
                     </StackPanel>
@@ -41,21 +42,27 @@ SPDX-License-Identifier: MPL-2.0
                            WindowDecorationProperties.ElementRole="TitleBar"
                            Background="Transparent"
                            VerticalAlignment="Stretch"
-                           HorizontalAlignment="Stretch" />
+                           HorizontalAlignment="Stretch">
+                        <ContentPresenter Content="{TemplateBinding CenterContent}" Margin="20,0"
+                                          WindowDecorationProperties.ElementRole="User" VerticalAlignment="Center" />
+                    </Panel>
 
-                    <StackPanel Grid.Column="2" Name="PART_RightPanel" Orientation="Horizontal" VerticalAlignment="Stretch">
+                    <StackPanel Grid.Column="2" Name="PART_RightPanel" Margin="0,0,12,0" Spacing="4" Orientation="Horizontal" VerticalAlignment="Center">
                         <controls:IconButton Name="PART_MinimizeButton"
                                              Classes="TitleBarButton"
+                                             WindowDecorationProperties.ElementRole="MinimizeButton"
                                              Icon="Minus"
                                              IsVisible="{TemplateBinding ShowMinimize}"/>
 
                         <controls:IconButton Name="PART_MaximizeButton"
                                              Classes="TitleBarButton"
+                                             WindowDecorationProperties.ElementRole="MaximizeButton"
                                              IsVisible="{TemplateBinding ShowMaximize}"
                                              Icon="Maximize"/>
 
                         <controls:IconButton Name="PART_CloseButton"
                                              Classes="TitleBarButton Close"
+                                             WindowDecorationProperties.ElementRole="CloseButton"
                                              Icon="X"
                                              IsVisible="{TemplateBinding ShowClose}"/>
                     </StackPanel>
@@ -65,13 +72,13 @@ SPDX-License-Identifier: MPL-2.0
     </Style>
 
     <Style Selector="controls|IconButton.TitleBarButton">
-        <Setter Property="Width" Value="46" />
+        <Setter Property="Width" Value="36" />
         <Setter Property="Height" Value="32" />
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
-        <Setter Property="CornerRadius" Value="0" />
-        <Setter Property="VerticalAlignment" Value="Top" />
-        <Setter Property="IconSize" Value="10" />
+        <Setter Property="CornerRadius" Value="12" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="IconSize" Value="14" />
         <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
     </Style>
 

@@ -1,195 +1,87 @@
-<!--
-SPDX-FileCopyrightText: 2026 Froststrap
-
-SPDX-License-Identifier: MPL-2.0
--->
-
-<UserControl
-    x:Class="Froststrap.UI.Elements.Settings.Pages.ShortcutsPage"
-    xmlns="https://github.com/avaloniaui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:resources="using:Froststrap.Resources"
-    xmlns:ui="using:FluentAvalonia.UI.Controls"
-    xmlns:vm="clr-namespace:Froststrap.UI.ViewModels.Settings"
-    xmlns:apis="clr-namespace:Froststrap.Models.APIs.Roblox"
-    xmlns:gv="using:Froststrap.UI.ViewModels"
-    xmlns:controls="clr-namespace:Froststrap.UI.Elements.Controls"
-    xmlns:ic="clr-namespace:LucideAvalonia;assembly=LucideAvalonia"
-    x:DataType="vm:ShortcutsViewModel">
-
-    <ScrollViewer>
-        <StackPanel Margin="14">
-            <controls:OptionControl
-                Description="{Binding Source={x:Static resources:Strings.Menu_Shortcuts_ExtractIcons_Description}, Converter={StaticResource StringFormatConverter}, ConverterParameter='https://bloxstraplabs.com/wiki/info/using-roblox-icons-for-shortcuts/'}"
-                Header="{x:Static resources:Strings.Menu_Shortcuts_ExtractIcons_Title}"
-                HelpLink="https://bloxstraplabs.com/wiki/info/using-roblox-icons-for-shortcuts/">
-                <ToggleSwitch IsChecked="{Binding ExtractIconsTask.NewState, Mode=TwoWay}" />
+<!-- SPDX-FileCopyrightText: 2026 Froststrap; 2026 CoffeeStrap contributors
+ SPDX-License-Identifier: MPL-2.0 -->
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:resources="using:Froststrap.Resources" xmlns:ui="using:FluentAvalonia.UI.Controls" xmlns:vm="clr-namespace:Froststrap.UI.ViewModels.Settings" xmlns:apis="clr-namespace:Froststrap.Models.APIs.Roblox" xmlns:gv="using:Froststrap.UI.ViewModels" xmlns:controls="clr-namespace:Froststrap.UI.Elements.Controls" xmlns:ic="clr-namespace:LucideAvalonia;assembly=LucideAvalonia" x:Class="Froststrap.UI.Elements.Settings.Pages.ShortcutsPage" x:DataType="vm:AdvancedSettingsViewModel">
+<controls:SmoothScrollViewer><StackPanel Margin="{DynamicResource CoffeePageMargin}" Spacing="18">
+<controls:SettingsCardPanel DataContext="{Binding Appearance}" x:DataType="vm:AppearanceViewModel"><controls:OptionControl Header="Theme"><ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding Theme, Mode=TwoWay}"/></controls:OptionControl>
+<controls:OptionControl Header="Reduce motion" Description="Use immediate transitions throughout CoffeeStrap."><ToggleSwitch IsChecked="{Binding DisableAnimations, Mode=TwoWay}"/></controls:OptionControl></controls:SettingsCardPanel>
+<controls:SettingsCardPanel DataContext="{Binding Deployment}" x:DataType="vm:ChannelViewModel"><controls:OptionControl IsVisible="{x:Static gv:GlobalViewModel.IsLinux}" Header="{x:Static resources:Strings.Menu_Deployment_AutoUpdateSober}">
+                <ToggleSwitch IsChecked="{Binding AutomaticallyUpdateSober, Mode=TwoWay}"/>
             </controls:OptionControl>
+<controls:OptionControl Header="{x:Static resources:Strings.Menu_Behaviour_ForceRobloxReinstall_Title}" Description="{x:Static resources:Strings.Menu_Behaviour_ForceRobloxReinstall_Description}" IsEnabled="{Binding !IsRobloxInstallationMissing}">
+                <ToggleSwitch IsChecked="{Binding ForceRobloxReinstallation, Mode=TwoWay}"/>
+            </controls:OptionControl>
+<controls:OptionControl IsVisible="{x:Static gv:GlobalViewModel.IsWindowsOrMacOS}" Header="{x:Static resources:Strings.Menu_Channel_RobloxUpgrades}" Description="{x:Static resources:Strings.Menu_Channel_RobloxUpgrades_Description}" IsEnabled="{Binding !IsRobloxInstallationMissing}">
+                <ToggleSwitch IsChecked="{Binding UpdateRoblox, Mode=TwoWay}"/>
+            </controls:OptionControl>
+<controls:CardExpander Header="{x:Static resources:Strings.Menu_Deployment_PlayerOverrideHash_Title}" Description="{x:Static resources:Strings.Menu_Deployment_PlayerOverrideHash_Description}" IsExpanded="{Binding PlayerVersionOverrideEnabled, Mode=OneWay}" Classes="NoUserExpansion" IsVisible="{x:Static gv:GlobalViewModel.IsWindowsOrMacOS}">
+                <controls:CardExpander.HeaderContent>
+                    <ToggleSwitch IsChecked="{Binding PlayerVersionOverrideEnabled, Mode=TwoWay}"/>
+                </controls:CardExpander.HeaderContent>
+                <controls:SettingsCardPanel>
+                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_Deployment_VersionHash_Title}" Description="{x:Static resources:Strings.Menu_Deployment_VersionHash_Description}">
+                        <StackPanel Spacing="6">
+                            <TextBox Width="280" Margin="8,0,0,0" Padding="10,5" IsEnabled="{Binding PlayerVersionOverrideEnabled}" PlaceholderText="version-xxxxxxxxxxxxxxxx" Text="{Binding PlayerVersionOverrideHash, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
 
-            <Separator Margin="0,12" />
+                            <StackPanel Orientation="Horizontal" Margin="8,0,0,0" IsVisible="{Binding !IsPlayerHashIdle}">
 
-            <TextBlock
-                FontSize="20"
-                FontWeight="Bold"
-                Margin="0,10,0,0"
-                Text="{x:Static resources:Strings.Menu_Shortcuts_General_Title}" />
-            <TextBlock FontSize="14" Margin="0,4,0,10" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Shortcuts_General_Description}" />
+                                <ui:FAProgressRing Width="18" Height="18" Margin="0,0,8,0" IsIndeterminate="True" IsVisible="{Binding IsPlayerHashChecking}"/>
 
-            <Grid x:Name="ShortcutsGrid" ColumnDefinitions="*, *">
-                <controls:OptionControl
-                    x:Name="DesktopOption"
-                    Grid.Column="0"
-                    Margin="0,0,4,0"
-                    Header="{x:Static resources:Strings.Common_Shortcuts_Desktop}">
-                    <ToggleSwitch IsChecked="{Binding DesktopIconTask.NewState, Mode=TwoWay}" />
-                </controls:OptionControl>
+                                <Image Source="avares://CoffeeStrap/Resources/MessageBox/Information.png" Width="18" Height="18" Margin="0,0,8,0" RenderOptions.BitmapInterpolationMode="HighQuality" IsVisible="{Binding IsPlayerHashValid}"/>
 
-                <controls:OptionControl
-                    x:Name="StartMenuOption"
-                    Grid.Column="1"
-                    Margin="2,0,4,0"
-                    IsVisible="{x:Static gv:GlobalViewModel.IsWindows}"
-                    Header="{x:Static resources:Strings.Common_Shortcuts_StartMenu}">
-                    <ToggleSwitch IsChecked="{Binding StartMenuIconTask.NewState, Mode=TwoWay}" />
-                </controls:OptionControl>
-            </Grid>
+                                <Image Source="avares://CoffeeStrap/Resources/MessageBox/Error.png" Width="18" Height="18" Margin="0,0,8,0" RenderOptions.BitmapInterpolationMode="HighQuality" IsVisible="{Binding IsPlayerHashInvalid}"/>
 
-            <Separator Margin="0,12" />
+                                <TextBlock VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding PlayerHashValidationMessage}" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </controls:OptionControl>
 
-            <TextBlock
-                FontSize="20"
-                FontWeight="Bold"
-                Margin="0,10,0,0"
-                Text="{x:Static resources:Strings.Menu_Shortcuts_Function_Title}" />
-            <TextBlock FontSize="14" Margin="0,4,0,10" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Menu_Shortcuts_Function_Description}" />
+                    <controls:OptionControl Header="Available Version Hashes">
+                        <Button Command="{Binding BrowsePlayerVersionHashCommand}" CommandParameter="{Binding $parent[UserControl]}" IsEnabled="{Binding PlayerVersionOverrideEnabled}" Content="Show Available Versions"/>
+                    </controls:OptionControl>
+                </controls:SettingsCardPanel>
+            </controls:CardExpander>
+<controls:OptionControl Header="{x:Static resources:Strings.Menu_Deployment_MultiThread_Title}" Description="{x:Static resources:Strings.Menu_Deployment_MultiThread_Description}">
+                <TextBox Width="200" Margin="5,0,0,0" Padding="10,5" Text="{Binding MaxThreadDownload, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+            </controls:OptionControl>
+<controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_StaticDirectory_Title}" Description="{x:Static resources:Strings.Menu_Channel_StaticDirectory_Description}">
+                <ToggleSwitch IsChecked="{Binding StaticDirectory, Mode=TwoWay}"/>
+            </controls:OptionControl>
+<controls:CardExpander Header="{x:Static resources:Strings.Menu_Deployment_PlayerChannel_Title}" Description="{x:Static resources:Strings.Menu_Deployment_Channel_Description}" IsVisible="{x:Static gv:GlobalViewModel.IsWindowsOrMacOS}" IsExpanded="True">
 
-            <Grid ColumnDefinitions="*,*,*">
-                <controls:OptionControl
-                    Grid.Column="0"
-                    Margin="0,0,2,0"
-                    Header="{x:Static resources:Strings.LaunchMenu_LaunchRoblox}">
-                    <ToggleSwitch IsChecked="{Binding PlayerIconTask.NewState, Mode=TwoWay}" />
-                </controls:OptionControl>
+                <controls:CardExpander.HeaderContent>
+                    <TextBox Width="172" Margin="8,0,0,0" Padding="10,5" IsEnabled="{Binding !PlayerVersionOverrideEnabled}" Text="{Binding PlayerChannel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </controls:CardExpander.HeaderContent>
 
-                <controls:OptionControl
-                    Grid.Column="1"
-                    Margin="2,0,2,0"
-                    Header="{x:Static resources:Strings.LaunchMenu_LaunchRobloxStudio}">
-                    <ToggleSwitch IsChecked="{Binding StudioIconTask.NewState, Mode=TwoWay}" />
-                </controls:OptionControl>
+                <StackPanel Spacing="8">
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*,Auto" IsVisible="{Binding PlayerDeployInfo, Converter={x:Static ObjectConverters.IsNotNull}}">
+                        <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,16,8" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Common_Version}"/>
+                        <TextBlock Grid.Row="0" Grid.Column="1" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding PlayerDeployInfo.Version, Mode=OneWay}"/>
 
-                <controls:OptionControl
-                    Grid.Column="2"
-                    Margin="2,0,2,0"
-                    Header="{x:Static resources:Strings.Menu_Title}">
-                    <ToggleSwitch IsChecked="{Binding SettingsIconTask.NewState, Mode=TwoWay}" />
-                </controls:OptionControl>
-            </Grid>
+                        <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,0,16,8" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Common_VersionGuid}"/>
+                        <TextBlock Grid.Row="1" Grid.Column="1" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding PlayerDeployInfo.VersionGuid, Mode=OneWay}"/>
 
-            <Separator Margin="0,12" />
+                        <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,0,16,8" VerticalAlignment="Center" Foreground="{DynamicResource TextFillColorSecondaryBrush}" Text="{x:Static resources:Strings.Common_Timestamp}"/>
+                        <TextBlock Grid.Row="2" Grid.Column="1" Foreground="{DynamicResource TextFillColorTertiaryBrush}" Text="{Binding PlayerDeployInfo.Timestamp, Mode=OneWay}"/>
 
-            <TextBlock
-                FontSize="20"
-                FontWeight="Bold"
-                Margin="0,10,0,0"
-                Text="{x:Static resources:Strings.Common_Miscellaneous}" />
-
-            <controls:MarkdownTextBlock Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                        MarkdownText="{x:Static resources:Strings.Menu_Shortcuts_Misc_Description}"
-                                        Margin="0,4,0,10"
-                                        FontSize="14"
-                                        TextWrapping="Wrap" />
-
-            <controls:CardExpander Header="{x:Static resources:Strings.Menu_Shortcuts_GameShortcut_Title}" IsExpanded="True">
-                <StackPanel>
-                    <Grid Margin="0,0,0,16" ColumnDefinitions="Auto,*">
-                        <Border Width="100" Height="100" CornerRadius="12" ClipToBounds="True" Background="{DynamicResource ControlAltFillColorQuarternaryBrush}">
-                            <Image Source="{Binding PreviewIcon}" Stretch="UniformToFill" RenderOptions.BitmapInterpolationMode="HighQuality"/>
-                        </Border>
-                        <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                            <TextBlock Text="{Binding PreviewName}" FontSize="20" FontWeight="Bold" TextTrimming="CharacterEllipsis"/>
-                            <TextBlock Text="{Binding PreviewId}" FontSize="13" Margin="0,4,0,0" Foreground="{DynamicResource TextFillColorSecondaryBrush}" />
+                        <StackPanel Grid.Row="3" Grid.ColumnSpan="3" Margin="0,8,0,0" Orientation="Horizontal" IsVisible="{Binding PlayerShowChannelWarning, Mode=OneWay}">
+                            <Image Source="avares://CoffeeStrap/Resources/MessageBox/Warning.png" RenderOptions.BitmapInterpolationMode="HighQuality" Width="24" Height="24"/>
+                            <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" Text="{x:Static resources:Strings.Menu_Deployment_Channel_OutOfDate}"/>
                         </StackPanel>
                     </Grid>
 
-                    <StackPanel>
-                        <Label Content="{x:Static resources:Strings.Menu_Shortcuts_SearchForGame}" FontWeight="SemiBold" Margin="0,0,0,8"/>
-                        <AutoCompleteBox x:Name="GameSearchAutoCompleteBox"
-                                         MinWidth="200"
-                                         VerticalAlignment="Center"
-                                         HorizontalAlignment="Stretch"
-                                         Text="{Binding SearchQuery, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                         ItemsSource="{Binding SearchResults}"
-                                         SelectedItem="{Binding SelectedSearchResult, Mode=TwoWay}"
-                                         FilterMode="None"
-                                         IsDropDownOpen="{Binding IsSearchFlyoutOpen, Mode=TwoWay}"
-                                         PlaceholderText="{x:Static resources:Strings.Menu_RegionSelector_FindGame}">
-                            <AutoCompleteBox.ItemTemplate>
-                                <DataTemplate DataType="apis:OmniSearchContent">
-                                    <Grid ColumnDefinitions="Auto,*,Auto">
-                                        <Border Grid.Column="0" Width="44" Height="44"
-                                                Background="#10FFFFFF" ClipToBounds="True" CornerRadius="4">
-                                            <Image RenderOptions.BitmapInterpolationMode="HighQuality"
-                                                   Source="{Binding ThumbnailBitmap}" Stretch="UniformToFill" />
-                                        </Border>
-                                        <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
-                                            <TextBlock FontWeight="SemiBold" FontSize="16"
-                                                       Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
-                                            <TextBlock FontSize="10" Opacity="0.5"
-                                                       Text="{Binding RootPlaceId, StringFormat='ID: {0}'}" />
-                                        </StackPanel>
-                                        <StackPanel Grid.Column="2" VerticalAlignment="Center"
-                                                    Orientation="Horizontal" Spacing="4">
-                                            <ic:Lucide Margin="0,2,0,0" Height="12" Width="12"
-                                                       Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                                       Icon="Users"/>
-                                            <TextBlock VerticalAlignment="Center" FontSize="12"
-                                                       Text="{Binding PlayerCount, Converter={StaticResource NumberAbbreviationConverter}}" />
-                                        </StackPanel>
-                                    </Grid>
-                                </DataTemplate>
-                            </AutoCompleteBox.ItemTemplate>
+                    <Grid ColumnDefinitions="Auto,*" IsVisible="{Binding PlayerDeployInfo, Converter={x:Static ObjectConverters.IsNull}}">
+                        <ui:FAProgressRing Grid.Column="0" Width="64" Height="64" Margin="12" IsIndeterminate="True" IsVisible="{Binding !PlayerShowLoadingError, Mode=OneWay}"/>
 
-                            <AutoCompleteBox.InnerLeftContent>
-                                <ic:Lucide Icon="Search" Height="14" Width="14" VerticalAlignment="Center" Margin="8,0,0,0"/>
-                            </AutoCompleteBox.InnerLeftContent>
+                        <Image Source="avares://CoffeeStrap/Resources/MessageBox/FullQuality/Error.png" Grid.Column="0" RenderOptions.BitmapInterpolationMode="HighQuality" Margin="6" Width="60" Height="60" IsVisible="{Binding PlayerShowLoadingError, Mode=OneWay}"/>
 
-                            <AutoCompleteBox.InnerRightContent>
-                                <StackPanel Orientation="Horizontal" Spacing="4">
-                                    <ui:FAProgressRing IsIndeterminate="True"
-                                                       Width="20" Height="20"
-                                                       VerticalAlignment="Center"
-                                                       IsVisible="{Binding IsGameSearchLoading}" />
-                                    <controls:IconButton Command="{Binding ClearSearchCommand}"
-                                                         IsVisible="{Binding SearchQuery, Converter={x:Static StringConverters.IsNotNullOrEmpty}, FallbackValue=False}"
-                                                         Icon="X" IconSize="14"
-                                                         Background="Transparent" BorderThickness="0"
-                                                         Width="28" Height="28"
-                                                         VerticalAlignment="Center"
-                                                         Margin="0,0,2,0" Padding="8"/>
-                                </StackPanel>
-                            </AutoCompleteBox.InnerRightContent>
-                        </AutoCompleteBox>
-                    </StackPanel>
-
-                    <Grid Margin="0,16,0,0" ColumnDefinitions="*,16,*">
-                        <StackPanel Grid.Column="0">
-                            <Label Content="{x:Static resources:Strings.Menu_Shortcuts_ServerInstanceId}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                            <TextBox Text="{Binding JobId, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,0" PlaceholderText="GUID/JobID" />
-                        </StackPanel>
-                        <StackPanel Grid.Column="2">
-                            <Label Content="{x:Static resources:Strings.Menu_Shortcuts_PrivateAccessCode}" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-                            <TextBox Text="{Binding AccessCode, UpdateSourceTrigger=PropertyChanged}" Margin="0,4,0,0" PlaceholderText="Access Code" />
-                        </StackPanel>
+                        <TextBlock Grid.Column="1" Margin="16" VerticalAlignment="Center" Text="{Binding PlayerInfoLoadingText, Mode=OneWay}" TextWrapping="Wrap"/>
                     </Grid>
-
-                    <Separator Margin="0,12"/>
-                    <DockPanel>
-                        <controls:IconButton Command="{Binding CreateGameShortcutCommand}" Content="{x:Static resources:Strings.Menu_Shortcuts_CreateShortcut}" Icon="Plus" />
-                        <TextBlock Text="{Binding ShortcutStatus}" Margin="16,8,0,0" FontSize="12" />
-                    </DockPanel>
                 </StackPanel>
             </controls:CardExpander>
-        </StackPanel>
-    </ScrollViewer>
+<controls:OptionControl Header="{x:Static resources:Strings.Menu_Channel_ChangeAction_Title}" Description="{x:Static resources:Strings.Menu_Channel_ChangeAction_Description}">
+                <ComboBox Width="200" Margin="5,0,0,0" Padding="10,5,10,5" ItemsSource="{Binding ChannelChangeModes.Keys, Mode=OneTime}" SelectedItem="{Binding SelectedChannelChangeMode, Mode=TwoWay}"/>
+            </controls:OptionControl>
+
+</controls:SettingsCardPanel>
+</StackPanel></controls:SmoothScrollViewer>
 </UserControl>

@@ -107,7 +107,7 @@ SPDX-License-Identifier: MPL-2.0
         </Border>
 
         <Grid Grid.Row="1">
-            <ScrollViewer CornerRadius="8">
+            <controls:SmoothScrollViewer CornerRadius="8">
                 <ItemsControl ItemsSource="{Binding Servers}" Padding="8">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate DataType="models:ServerEntry">
@@ -140,7 +140,7 @@ SPDX-License-Identifier: MPL-2.0
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </ScrollViewer>
+            </controls:SmoothScrollViewer>
 
             <Border IsVisible="{Binding IsServerListEmptyAndNotLoading}"
                     CornerRadius="12"

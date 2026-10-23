@@ -1,0 +1,59 @@
+<!-- SPDX-FileCopyrightText: 2026 CoffeeStrap contributors
+     SPDX-License-Identifier: MPL-2.0 -->
+<Styles xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:Froststrap.UI.Elements.Controls">
+    <Style Selector="controls|CoffeeNavigationView">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Grid ColumnDefinitions="Auto,*" Margin="12,0,12,0">
+                    <Border Name="PART_Pane" Width="{TemplateBinding CurrentPaneLength}" CornerRadius="24"
+                            ClipToBounds="True" Background="{DynamicResource CoffeeChromeBrush}">
+                        <Grid RowDefinitions="Auto,*,Auto" Margin="10,8">
+                            <ContentPresenter Content="{TemplateBinding PaneToggleRowContent}" Margin="0,0,0,12" HorizontalAlignment="Left" />
+                            <Grid Grid.Row="1" Name="PART_MenuArea">
+                                <Border Name="PART_Highlight" IsHitTestVisible="False" Height="44" VerticalAlignment="Top"
+                                        CornerRadius="16" Background="{DynamicResource CoffeeNavigationHighlightBrush}" />
+                                <ScrollViewer HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding MenuItems, RelativeSource={RelativeSource TemplatedParent}}">
+                                        <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Spacing="2" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Grid>
+                            <ItemsControl Grid.Row="2" ItemsSource="{Binding FooterMenuItems, RelativeSource={RelativeSource TemplatedParent}}" />
+                        </Grid>
+                    </Border>
+                    <Border Name="PART_FeatureArea" Grid.Column="1" Margin="10,0,0,0" CornerRadius="24"
+                            Background="{DynamicResource CoffeePageBrush}" ClipToBounds="True">
+                        <ContentPresenter Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}" />
+                    </Border>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="controls|CoffeeNavigationItem">
+        <Setter Property="MinHeight" Value="44" />
+        <Setter Property="HorizontalAlignment" Value="Stretch" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="16" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="AutomationProperties.Name" Value="{Binding Content, RelativeSource={RelativeSource Self}}" />
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="Transparent" CornerRadius="16" Padding="0,0,4,0">
+                    <Grid ColumnDefinitions="48,170" Height="44" HorizontalAlignment="Left">
+                        <ContentPresenter Content="{TemplateBinding Icon}" Width="19" Height="19" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <TextBlock Grid.Column="1" Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+                    </Grid>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="controls|CoffeeNavigationItem.selected, controls|CoffeeNavigationItem:pointerover">
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+    </Style>
+    <Style Selector="controls|CoffeeNavigationItem:disabled"><Setter Property="Opacity" Value="0.4" /></Style>
+</Styles>

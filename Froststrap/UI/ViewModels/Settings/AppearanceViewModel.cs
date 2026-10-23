@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -133,7 +133,8 @@ namespace Froststrap.UI.ViewModels.Settings
 
         public BootstrapperIcon Icon
         {
-            get => App.Settings.Prop.BootstrapperIcon;
+            get => App.Settings.Prop.BootstrapperIcon is BootstrapperIcon.IconFroststrap or BootstrapperIcon.IconFroststrapClassic
+                ? BootstrapperIcon.IconCoffeeStrap : App.Settings.Prop.BootstrapperIcon;
             set
             {
                 App.Settings.Prop.BootstrapperIcon = value;
@@ -943,9 +944,9 @@ namespace Froststrap.UI.ViewModels.Settings
         {
             List<GradientStops> defaultStops =
             [
-                new() { Offset = 0.0, Color = "#8025304A" },
-                new() { Offset = 0.5, Color = "#80272F48" },
-                new() { Offset = 1.0, Color = "#80202C36" }
+                new() { Offset = 0.0, Color = "#FF362A22" },
+                new() { Offset = 0.5, Color = "#FF2B221C" },
+                new() { Offset = 1.0, Color = "#FF211C18" }
             ];
 
             foreach (var stop in GradientStops) stop.PropertyChanged -= OnGradientStopPropertyChanged;
@@ -969,7 +970,7 @@ namespace Froststrap.UI.ViewModels.Settings
             {
                 Title = "Export Gradient",
                 FileTypeChoices = [new FilePickerFileType("JSON Files") { Patterns = JsonPatterns }],
-                SuggestedFileName = "Froststrap Gradient Background.json"
+                SuggestedFileName = "CoffeeStrap Gradient Background.json"
             });
 
             if (file == null) return;

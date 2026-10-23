@@ -78,7 +78,7 @@ internal class Updater
         }
         if (Utility.Versioning.CompareVersions(existingVer, "1.4.2") == VersionComparison.LessThan)
         {
-            string genCacheDir = Path.Combine(Path.GetTempPath(), "Froststrap", "mod-generator");
+            string genCacheDir = Path.Combine(Path.GetTempPath(), App.ProjectName, "mod-generator");
             string pluginCacheDir = Path.Combine(Paths.Roblox, "Plugins", "FroststrapStudioRPC.rbxmx");
 
             if (Directory.Exists(genCacheDir))

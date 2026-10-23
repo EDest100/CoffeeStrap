@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -6,7 +6,7 @@ namespace Froststrap.Enums
 {
     internal enum BootstrapperIcon
     {
-        [EnumName(StaticName = "Froststrap")]
+        [EnumName(StaticName = "CoffeeStrap Classic")]
         IconFroststrap,
         [EnumName(StaticName = "2008")]
         Icon2008,
@@ -27,6 +27,8 @@ namespace Froststrap.Enums
         [EnumName(FromTranslation = "Common.Custom")]
         IconCustom,
         [EnumName(FromTranslation = "Enums.BootstrapperIcon.IconFroststrapClassic")]
-        IconFroststrapClassic
+        IconFroststrapClassic,
+        [EnumName(StaticName = "CoffeeStrap")]
+        IconCoffeeStrap
     }
 }

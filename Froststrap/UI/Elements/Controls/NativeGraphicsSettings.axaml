@@ -1,0 +1,45 @@
+<!-- SPDX-FileCopyrightText: 2026 Froststrap; 2026 CoffeeStrap contributors
+ SPDX-License-Identifier: MPL-2.0 -->
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="using:Froststrap.UI.Elements.Controls" xmlns:resources="using:Froststrap.Resources" xmlns:fa="using:FluentAvalonia.UI.Controls" xmlns:vm="using:Froststrap.UI.ViewModels.Settings" x:Class="Froststrap.UI.Elements.Controls.NativeGraphicsSettings" x:DataType="vm:GlobalSettingsViewModel"><controls:SettingsCardPanel><controls:OptionControl Header="Prevent Override" Description="Mark the Roblox saved settings file read-only. In-game settings may not save until this is off."><ToggleSwitch IsChecked="{Binding ReadOnly, Mode=TwoWay}"/></controls:OptionControl>
+                    <controls:OptionControl Header="Frame rate limit (saved)" Description="Stored in Roblox settings. Use the in-game menu for live frame-rate changes.">
+                        <TextBox Width="150" Text="{Binding FramerateCap, Mode=TwoWay}"/>
+                    </controls:OptionControl>
+
+                    <controls:OptionControl Header="Maximum draw-distance setting" Description="Keep Roblox's saved graphics slider at 10 on save and launch. Use the 1–21 override below for low effects. Leave the in-game slider at maximum; changing it can reduce distance. Game streaming can still limit what is visible.">
+                        <ToggleSwitch IsChecked="{Binding LockMaximumRenderDistance, Mode=TwoWay}"/>
+                    </controls:OptionControl>
+
+                    <controls:OptionControl Header="In-game graphics level" Description="Roblox's saved slider position: 0 is automatic and 10 is maximum. Maximum draw-distance mode keeps this at 10; the separate FRM override below can stay at 1.">
+                        <fa:ShowValueSlider Minimum="0" Maximum="10" Width="250" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding GraphicsQuality}" ShowValue="True" IsEnabled="{Binding !LockMaximumRenderDistance}"/>
+                    </controls:OptionControl>
+
+                    <controls:OptionControl Header="Texture quality" Description="Persistent FastFlag override, independent of the in-game slider. 0 is lowest; 3 is highest. Applies after relaunch." Classes="stacked">
+                        <StackPanel Spacing="8"><ToggleSwitch IsChecked="{Binding TextureQualityOverride, Mode=TwoWay}"/>
+                            <fa:ShowValueSlider Minimum="0" Maximum="3" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding TextureQuality, Mode=TwoWay}" ShowValue="True" IsEnabled="{Binding TextureQualityOverride}" HorizontalAlignment="Stretch"/>
+                        </StackPanel>
+                    </controls:OptionControl>
+
+                    <controls:OptionControl Header="Override Graphics Quality level" Description="FRM rendering quality from 1 to 21; 1 is lowest. Pair a low value with Roblox's slider at 10 for long distance and low effects. Results depend on the experience and client. Applies after relaunch." Classes="stacked">
+                        <StackPanel Spacing="8"><ToggleSwitch IsChecked="{Binding RenderDistanceOverride, Mode=TwoWay}"/>
+                            <fa:ShowValueSlider Minimum="1" Maximum="21" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding RenderDistance, Mode=TwoWay}" ShowValue="True" IsEnabled="{Binding RenderDistanceOverride}" HorizontalAlignment="Stretch"/>
+                        </StackPanel>
+                    </controls:OptionControl>
+
+                    <Button Content="Maximum distance + lowest effects" Command="{Binding MaximumDistanceLowEffectsCommand}" HorizontalAlignment="Left"/>
+                    <Button Content="Plastic textures + maximum distance" Command="{Binding PlasticMaximumCommand}" HorizontalAlignment="Left"/>
+                    <controls:OptionControl Header="Black-texture compatibility" Description="Try Direct3D 11 instead of Vulkan/OpenGL, keep texture detail at 3, and resume voxel lighting updates. Preserves your graphics override and distance lock. This is a renderer workaround; verify the result after relaunch." Classes="stacked">
+                        <Button Content="Use Direct3D 11 + full texture detail" Command="{Binding TextureCompatibilityCommand}" HorizontalAlignment="Left"/>
+                    </controls:OptionControl>
+
+                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_GlobalSettings_Fullscreen_Title}" Description="{x:Static resources:Strings.Menu_GlobalSettings_Fullscreen_Description}">
+                        <ToggleSwitch Margin="5,0,0,0" IsChecked="{Binding Fullscreen, Mode=TwoWay}"/>
+                    </controls:OptionControl>
+
+                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_GlobalSettings_MaxQuality_Title}" Description="{x:Static resources:Strings.Menu_GlobalSettings_MaxQuality_Description}">
+                        <ToggleSwitch IsChecked="{Binding MaxQualityEnabled, Mode=TwoWay}"/>
+                    </controls:OptionControl>
+
+                    <controls:OptionControl Header="{x:Static resources:Strings.Menu_GlobalSettings_Vignette_Title}" Description="{x:Static resources:Strings.Menu_GlobalSettings_Vignette_Description}">
+                        <ToggleSwitch IsChecked="{Binding VignetteEnabled, Mode=TwoWay}"/>
+                    </controls:OptionControl>
+                </controls:SettingsCardPanel></UserControl>

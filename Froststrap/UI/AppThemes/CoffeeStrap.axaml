@@ -1,0 +1,47 @@
+<!-- SPDX-FileCopyrightText: 2026 CoffeeStrap contributors
+     SPDX-License-Identifier: MPL-2.0 -->
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ui="using:FluentAvalonia.UI.Controls"
+        xmlns:controls="using:Froststrap.UI.Elements.Controls">
+    <Styles.Resources>
+        <!-- Fallbacks for user-created image/gradient themes, which load no built-in palette. -->
+        <SolidColorBrush x:Key="CoffeeChromeBrush" Color="#801B1714" />
+        <SolidColorBrush x:Key="CoffeePageBrush" Color="#40211C18" />
+        <CornerRadius x:Key="ControlCornerRadius">8</CornerRadius>
+        <CornerRadius x:Key="OverlayCornerRadius">12</CornerRadius>
+        <x:Double x:Key="NavigationViewItemOnLeftMinHeight">38</x:Double>
+        <Thickness x:Key="CoffeePageMargin">24,20,24,24</Thickness>
+        <Thickness x:Key="CoffeeOptionPadding">18,14</Thickness>
+    </Styles.Resources>
+
+    <Style Selector="Window">
+        <Setter Property="Background" Value="{DynamicResource ApplicationBackgroundColor}" />
+        <Setter Property="FontFamily" Value="Segoe UI, sans-serif" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+    <Style Selector="controls|OptionControl Button, controls|OptionControl ComboBox, controls|OptionControl TextBox, controls|OptionControl NumericUpDown">
+        <Setter Property="MinHeight" Value="34" />
+    </Style>
+    <Style Selector="Button, controls|IconButton">
+        <Setter Property="FontWeight" Value="Medium" />
+    </Style>
+    <Style Selector="ComboBox, TextBox, NumericUpDown">
+        <Setter Property="CornerRadius" Value="6" />
+    </Style>
+    <Style Selector="controls|OptionControl">
+        <Setter Property="Padding" Value="{DynamicResource CoffeeOptionPadding}" />
+    </Style>
+    <Style Selector="controls|Card">
+        <Setter Property="CornerRadius" Value="8" />
+    </Style>
+    <Style Selector="ui|FANavigationViewItem">
+        <Setter Property="FontWeight" Value="Medium" />
+        <Setter Property="FontSize" Value="14" />
+    </Style>
+    <Style Selector="TextBlock.coffeeWordmark">
+        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+</Styles>

@@ -89,7 +89,7 @@ namespace Froststrap
 
                 Directory.CreateDirectory(Path.GetDirectoryName(DesktopFile)!);
                 File.WriteAllText(DesktopFile,
-                    $"[Desktop Entry]\nType=Application\nName=Froststrap\nExec=\"{ExePath}\" %u\nTerminal=false\nNoDisplay=true\nMimeType={mime}\n");
+                    $"[Desktop Entry]\nType=Application\nName=CoffeeStrap\nExec=\"{ExePath}\" %u\nTerminal=false\nNoDisplay=true\nMimeType={mime}\n");
 
                 foreach (string scheme in Schemes)
                     Run("xdg-mime", $"default froststrap.desktop x-scheme-handler/{scheme}");

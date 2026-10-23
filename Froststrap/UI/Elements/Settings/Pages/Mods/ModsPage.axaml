@@ -268,7 +268,7 @@ SPDX-License-Identifier: MPL-2.0
                                       VerticalAlignment="Center" />
                         </StackPanel>
 
-                        <ScrollViewer Grid.Row="3"
+                        <controls:SmoothScrollViewer Grid.Row="3"
                                       VerticalScrollBarVisibility="Auto"
                                       HorizontalScrollBarVisibility="Auto"
                                       IsEnabled="{Binding !IsLoadingPreview}">
@@ -315,7 +315,7 @@ SPDX-License-Identifier: MPL-2.0
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
                             </Grid>
-                        </ScrollViewer>
+                        </controls:SmoothScrollViewer>
 
                         <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,12,0,0" HorizontalAlignment="Center">
                             <Button Content="{x:Static resources:Strings.Common_Close}"

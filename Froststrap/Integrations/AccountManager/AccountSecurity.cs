@@ -12,7 +12,7 @@ namespace Froststrap.Integrations.AccountManager;
 
 internal static class AccountSecurity
 {
-    private const string ServiceName = "Froststrap";
+    private const string ServiceName = App.ProjectName;
 
     public static string? GetCredential(string accountId)
     {

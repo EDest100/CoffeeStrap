@@ -20,8 +20,8 @@ SPDX-License-Identifier: MPL-2.0
     x:DataType="vm:ChannelViewModel"
     mc:Ignorable="d">
 
-    <ScrollViewer>
-        <StackPanel Margin="14">
+    <controls:SmoothScrollViewer>
+        <controls:SettingsCardPanel Margin="{DynamicResource CoffeePageMargin}">
             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="6">
                 <controls:CardAction
                     Grid.Column="0"
@@ -72,7 +72,7 @@ SPDX-License-Identifier: MPL-2.0
             <TextBlock
                 FontSize="20"
                 FontWeight="Bold"
-                Text="Froststrap"
+                Text="CoffeeStrap"
                 Margin="0,10,0,0"
                 />
 
@@ -147,7 +147,7 @@ SPDX-License-Identifier: MPL-2.0
                 <controls:CardExpander.HeaderContent>
                     <ToggleSwitch IsChecked="{Binding PlayerVersionOverrideEnabled, Mode=TwoWay}" />
                 </controls:CardExpander.HeaderContent>
-                <StackPanel>
+                <controls:SettingsCardPanel>
                     <controls:OptionControl
                         Header="{x:Static resources:Strings.Menu_Deployment_VersionHash_Title}"
                         Description="{x:Static resources:Strings.Menu_Deployment_VersionHash_Description}">
@@ -173,7 +173,7 @@ SPDX-License-Identifier: MPL-2.0
                                     IsVisible="{Binding IsPlayerHashChecking}" />
 
                                 <Image
-                                    Source="avares://Froststrap/Resources/MessageBox/Information.png"
+                                    Source="avares://CoffeeStrap/Resources/MessageBox/Information.png"
                                     Width="18"
                                     Height="18"
                                     Margin="0,0,8,0"
@@ -181,7 +181,7 @@ SPDX-License-Identifier: MPL-2.0
                                     IsVisible="{Binding IsPlayerHashValid}" />
 
                                 <Image
-                                    Source="avares://Froststrap/Resources/MessageBox/Error.png"
+                                    Source="avares://CoffeeStrap/Resources/MessageBox/Error.png"
                                     Width="18"
                                     Height="18"
                                     Margin="0,0,8,0"
@@ -205,7 +205,7 @@ SPDX-License-Identifier: MPL-2.0
                             IsEnabled="{Binding PlayerVersionOverrideEnabled}"
                             Content="Show Available Versions"/>
                     </controls:OptionControl>
-                </StackPanel>
+                </controls:SettingsCardPanel>
             </controls:CardExpander>
 
             <controls:OptionControl Header="{x:Static resources:Strings.Menu_Deployment_MultiThread_Title}"
@@ -284,7 +284,7 @@ SPDX-License-Identifier: MPL-2.0
                             Margin="0,8,0,0"
                             Orientation="Horizontal"
                             IsVisible="{Binding PlayerShowChannelWarning, Mode=OneWay}">
-                            <Image Source="avares://Froststrap/Resources/MessageBox/Warning.png"
+                            <Image Source="avares://CoffeeStrap/Resources/MessageBox/Warning.png"
                                    RenderOptions.BitmapInterpolationMode="HighQuality"
                                    Width="24"
                                    Height="24"/>
@@ -304,7 +304,7 @@ SPDX-License-Identifier: MPL-2.0
                             IsIndeterminate="True"
                             IsVisible="{Binding !PlayerShowLoadingError, Mode=OneWay}" />
 
-                        <Image Source="avares://Froststrap/Resources/MessageBox/FullQuality/Error.png"
+                        <Image Source="avares://CoffeeStrap/Resources/MessageBox/FullQuality/Error.png"
                                Grid.Column="0"
                                RenderOptions.BitmapInterpolationMode="HighQuality"
                                Margin="6"
@@ -356,7 +356,7 @@ SPDX-License-Identifier: MPL-2.0
                 <controls:CardExpander.HeaderContent>
                     <ToggleSwitch IsChecked="{Binding StudioVersionOverrideEnabled, Mode=TwoWay}" />
                 </controls:CardExpander.HeaderContent>
-                <StackPanel>
+                <controls:SettingsCardPanel>
                     <controls:OptionControl
                         Header="{x:Static resources:Strings.Menu_Deployment_VersionHash_Title}"
                         Description="{x:Static resources:Strings.Menu_Deployment_VersionHash_Description}">
@@ -382,7 +382,7 @@ SPDX-License-Identifier: MPL-2.0
                                     IsVisible="{Binding IsStudioHashChecking}" />
 
                                 <Image
-                                    Source="avares://Froststrap/Resources/MessageBox/Information.png"
+                                    Source="avares://CoffeeStrap/Resources/MessageBox/Information.png"
                                     Width="18"
                                     Height="18"
                                     Margin="0,0,8,0"
@@ -390,7 +390,7 @@ SPDX-License-Identifier: MPL-2.0
                                     IsVisible="{Binding IsStudioHashValid}" />
 
                                 <Image
-                                    Source="avares://Froststrap/Resources/MessageBox/Error.png"
+                                    Source="avares://CoffeeStrap/Resources/MessageBox/Error.png"
                                     Width="18"
                                     Height="18"
                                     Margin="0,0,8,0"
@@ -414,7 +414,7 @@ SPDX-License-Identifier: MPL-2.0
                             IsEnabled="{Binding StudioVersionOverrideEnabled}"
                             Content="Show Available Versions"/>
                     </controls:OptionControl>
-                </StackPanel>
+                </controls:SettingsCardPanel>
             </controls:CardExpander>
 
             <controls:CardExpander
@@ -478,7 +478,7 @@ SPDX-License-Identifier: MPL-2.0
                             Margin="0,8,0,0"
                             Orientation="Horizontal"
                             IsVisible="{Binding StudioShowChannelWarning, Mode=OneWay}">
-                            <Image Source="avares://Froststrap/Resources/MessageBox/Warning.png"
+                            <Image Source="avares://CoffeeStrap/Resources/MessageBox/Warning.png"
                                    RenderOptions.BitmapInterpolationMode="HighQuality"
                                    Width="24"
                                    Height="24"/>
@@ -498,7 +498,7 @@ SPDX-License-Identifier: MPL-2.0
                             IsIndeterminate="True"
                             IsVisible="{Binding !StudioShowLoadingError, Mode=OneWay}" />
 
-                        <Image Source="avares://Froststrap/Resources/MessageBox/FullQuality/Error.png"
+                        <Image Source="avares://CoffeeStrap/Resources/MessageBox/FullQuality/Error.png"
                                Grid.Column="0"
                                RenderOptions.BitmapInterpolationMode="HighQuality"
                                Margin="6"
@@ -515,6 +515,6 @@ SPDX-License-Identifier: MPL-2.0
                     </Grid>
                 </StackPanel>
             </controls:CardExpander>
-        </StackPanel>
-    </ScrollViewer>
+        </controls:SettingsCardPanel>
+    </controls:SmoothScrollViewer>
 </UserControl>

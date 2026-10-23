@@ -22,7 +22,6 @@ namespace Froststrap.UI.Elements.Onboarding
             typeof(Page2),
             typeof(Page3),
             typeof(Page4),
-            typeof(Page5),
             typeof(Page6),
             typeof(Page7)
         ];
@@ -84,18 +83,9 @@ namespace Froststrap.UI.Elements.Onboarding
 
         public bool Navigate(Type pageType)
         {
-            int currentIndex = _pages.IndexOf(_currentPage);
-            int newIndex = _pages.IndexOf(pageType);
-            bool goingForward = newIndex > currentIndex;
-
             if (!_isInitialLoad)
             {
-                RootFrame.PageTransition = new FluentSlideTransition
-                {
-                    Direction = goingForward ? SlideDirection.Right : SlideDirection.Left,
-                    HorizontalOffset = 150,
-                    Duration = TimeSpan.FromMilliseconds(300)
-                };
+                RootFrame.PageTransition = new CoffeePageTransition();
             }
             else
             {

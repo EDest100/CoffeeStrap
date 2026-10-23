@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -280,84 +280,9 @@ namespace Froststrap.UI.ViewModels.Settings
             }
         }
 
-        private async Task LoadAvailableRegionsAsync()
+        private static Task LoadAvailableRegionsAsync()
         {
-            List<string> baseRegions;
-
-            var cacheResult = await LoadDatacentersFromCacheAsync();
-            if (cacheResult != null)
-            {
-                baseRegions = cacheResult.Value.regions;
-                AvailableRegions = BuildAvailableRegionsWithCurrent(baseRegions);
-                await SyncSelectedRegionAfterLoad();
-                return;
-            }
-
-            IsLoadingRegions = true;
-
-            try
-            {
-                var datacenters = await Http.GetJson<List<DatacenterEntry>>(
-                    new Uri("https://apis.rovalra.com/v1/datacenters/list"));
-
-                if (datacenters != null && datacenters.Count > 0)
-                {
-                    var regions = new HashSet<string>();
-
-                    foreach (var dc in datacenters)
-                    {
-                        if (dc.Location != null && !string.IsNullOrEmpty(dc.Location.City))
-                        {
-                            string region = $"{dc.Location.City}, {dc.Location.Country}"
-                                .TrimStart(',')
-                                .Trim();
-                            regions.Add(region);
-                        }
-                        else if (dc.Location != null && !string.IsNullOrEmpty(dc.Location.Country))
-                        {
-                            regions.Add(dc.Location.Country);
-                        }
-                    }
-
-                    baseRegions = [.. regions.OrderBy(r => r, StringComparer.OrdinalIgnoreCase)];
-
-                    var map = new Dictionary<int, string>();
-                    foreach (var dc in datacenters)
-                    {
-                        string regionKey = string.IsNullOrWhiteSpace(dc.Location?.City) && string.IsNullOrWhiteSpace(dc.Location?.Country)
-                            ? "Unknown"
-                            : $"{dc.Location.City}, {dc.Location.Country}".Trim().Trim(',', ' ');
-                        foreach (var id in dc.DataCenterIds)
-                            map[id] = regionKey;
-                    }
-                    await SaveDatacentersToCacheAsync(map);
-                }
-                else
-                {
-                    baseRegions = [];
-                }
-            }
-            catch (Exception ex)
-            {
-                App.Logger.Error("Unhandled exception: ", ex);
-
-                var stale = await LoadDatacentersFromCacheAsync(allowExpired: true);
-                if (stale != null)
-                {
-                    baseRegions = stale.Value.regions;
-                }
-                else
-                {
-                    baseRegions = [];
-                }
-            }
-            finally
-            {
-                IsLoadingRegions = false;
-            }
-
-            AvailableRegions = BuildAvailableRegionsWithCurrent(baseRegions);
-            await SyncSelectedRegionAfterLoad();
+            return Task.CompletedTask; // Region providers are unavailable pending verified terms and consent.
         }
 
         private List<string> BuildAvailableRegionsWithCurrent(IEnumerable<string> baseRegions)

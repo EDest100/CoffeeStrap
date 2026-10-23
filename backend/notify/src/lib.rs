@@ -27,7 +27,7 @@ pub extern "C" fn init() -> i32 {
     return macos::request_notification_permission();
     
     #[cfg(target_os = "windows")]
-    return win::set_application("xyz.froststrap.desktop".into());
+    return win::set_application("local.coffeestrap.desktop".into());
 
     #[cfg(target_os = "linux")]
     return 0;

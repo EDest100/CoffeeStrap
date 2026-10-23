@@ -6,7 +6,7 @@ SPDX-License-Identifier: MPL-2.0
 
 <Application
     x:Class="Froststrap.App"
-    Name="Froststrap"
+    Name="CoffeeStrap"
     xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ic="clr-namespace:LucideAvalonia;assembly=LucideAvalonia"
@@ -18,7 +18,7 @@ SPDX-License-Identifier: MPL-2.0
     <NativeMenu.Menu>
         <NativeMenu>
             <NativeMenuItem
-                Header="About Froststrap"
+                Header="About CoffeeStrap"
                 Click="About_OnClick"
             />
 
@@ -33,20 +33,24 @@ SPDX-License-Identifier: MPL-2.0
     </NativeMenu.Menu>
 
     <Application.Styles>
-        <sty:FluentAvaloniaTheme PreferSystemTheme="True" PreferUserAccentColor="True" />
+        <sty:FluentAvaloniaTheme PreferSystemTheme="False" PreferUserAccentColor="False" CustomAccentColor="#D7AD84" />
 
-        <StyleInclude Source="avares://Froststrap/UI/Elements/Controls/Hyperlink.axaml" />
-        <StyleInclude Source="avares://Froststrap/UI/Elements/Controls/OptionControl.axaml" />
-        <StyleInclude Source="avares://Froststrap/UI/Elements/Controls/SquareCard.axaml" />
-        <StyleInclude Source="avares://Froststrap/UI/Elements/Controls/Card.axaml" />
-        <StyleInclude Source="avares://Froststrap/UI/Elements/Controls/CardExpander.axaml" />
-        <StyleInclude Source="avares://Froststrap/UI/Elements/Controls/TitleBar.axaml" />
-        <StyleInclude Source="avares://Froststrap/UI/Elements/Controls/CardAction.axaml" />
-        <StyleInclude Source="avares://Froststrap/UI/Elements/Controls/IconButton.axaml" />
+        <StyleInclude Source="avares://CoffeeStrap/UI/Elements/Controls/Hyperlink.axaml" />
+        <StyleInclude Source="avares://CoffeeStrap/UI/Elements/Controls/OptionControl.axaml" />
+        <StyleInclude Source="avares://CoffeeStrap/UI/Elements/Controls/SquareCard.axaml" />
+        <StyleInclude Source="avares://CoffeeStrap/UI/Elements/Controls/Card.axaml" />
+        <StyleInclude Source="avares://CoffeeStrap/UI/Elements/Controls/CardExpander.axaml" />
+        <StyleInclude Source="avares://CoffeeStrap/UI/Elements/Controls/TitleBar.axaml" />
+        <StyleInclude Source="avares://CoffeeStrap/UI/Elements/Controls/CoffeeNavigationView.axaml" />
+        <StyleInclude Source="avares://CoffeeStrap/UI/Elements/Controls/CardAction.axaml" />
+        <StyleInclude Source="avares://CoffeeStrap/UI/Elements/Controls/IconButton.axaml" />
 
         <StyleInclude Source="avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml" />
 
-        <StyleInclude Source="avares://Froststrap/UI/AppThemes/Default.axaml" />
+        <StyleInclude Source="avares://CoffeeStrap/UI/AppThemes/Default.axaml" />
+        <StyleInclude Source="avares://CoffeeStrap/UI/AppThemes/CoffeeStrap.axaml" />
+        <StyleInclude Source="avares://CoffeeStrap/UI/AppThemes/ModernSettings.axaml" />
+        <StyleInclude Source="avares://CoffeeStrap/UI/AppThemes/Revision3.axaml" />
     </Application.Styles>
 
     <Application.Resources>
@@ -60,9 +64,9 @@ SPDX-License-Identifier: MPL-2.0
             <StaticResource x:Key="ToolTipBackground" ResourceKey="ToolTipBackgroundBrush" />
             <StaticResource x:Key="ToolTipForeground" ResourceKey="ToolTipForegroundBrush" />
 
-            <FontFamily x:Key="Rubik">avares://Froststrap/Resources/Fonts/Rubik-VariableFont_wght.ttf</FontFamily>
-            <FontFamily x:Key="BuilderIconsRegular">avares://Froststrap/Resources/Fonts#BuilderIcons-Regular</FontFamily>
-            <FontFamily x:Key="BuilderIconsFilled">avares://Froststrap/Resources/Fonts#BuilderIcons-Filled</FontFamily>
+            <FontFamily x:Key="Rubik">avares://CoffeeStrap/Resources/Fonts/Rubik-VariableFont_wght.ttf</FontFamily>
+            <FontFamily x:Key="BuilderIconsRegular">avares://CoffeeStrap/Resources/Fonts#BuilderIcons-Regular</FontFamily>
+            <FontFamily x:Key="BuilderIconsFilled">avares://CoffeeStrap/Resources/Fonts#BuilderIcons-Filled</FontFamily>
 
             <converters:StringFormatConverter x:Key="StringFormatConverter" />
             <converters:EnumNameConverter x:Key="EnumNameConverter" />

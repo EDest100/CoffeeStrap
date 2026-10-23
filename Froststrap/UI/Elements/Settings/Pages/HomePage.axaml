@@ -1,0 +1,35 @@
+<!-- SPDX-FileCopyrightText: 2026 CoffeeStrap contributors
+     SPDX-License-Identifier: MPL-2.0 -->
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Froststrap.UI.Elements.Controls" xmlns:vm="using:Froststrap.UI.ViewModels.Settings" xmlns:models="using:Froststrap.Models"
+    x:Class="Froststrap.UI.Elements.Settings.Pages.HomePage" x:DataType="vm:HomeViewModel">
+    <controls:SmoothScrollViewer HorizontalScrollBarVisibility="Disabled">
+        <StackPanel Margin="28,24" Spacing="20">
+            <Border IsVisible="{Binding HasUpdate}" CornerRadius="14" Padding="16" Background="{DynamicResource CoffeeGroupBrush}"><StackPanel Orientation="Horizontal" Spacing="8"><TextBlock Text="A CoffeeStrap update is available."/><controls:Hyperlink Text="Here" Url="{Binding UpdateUrl}"/></StackPanel></Border>
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="12"><TextBlock Text="Preferred Region" FontSize="13" FontWeight="Medium" VerticalAlignment="Center"/><ComboBox Grid.Column="1" MinWidth="190" MaxWidth="290" ItemsSource="{Binding Regions}" SelectedItem="{Binding PreferredRegion, Mode=TwoWay}" ToolTip.Tip="{Binding RegionHint}"/><Button Grid.Column="2" Content="Reconnect" Command="{Binding ReconnectCommand}" IsEnabled="{Binding CanReconnect}" ToolTip.Tip="{Binding ReconnectHint}" VerticalAlignment="Center"/></Grid>
+            <WrapPanel Orientation="Horizontal"><StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,24,8"><TextBlock Text="RoValra regions" VerticalAlignment="Center"/><ToggleSwitch IsChecked="{Binding EnableRoValra, Mode=TwoWay}"/></StackPanel><StackPanel Orientation="Horizontal" Spacing="10" Margin="0,0,24,8"><TextBlock Text="Auto Reconnect" VerticalAlignment="Center"/><ToggleSwitch IsChecked="{Binding AutoReconnect, Mode=TwoWay}"/></StackPanel><Button Content="Refresh regions" Command="{Binding RefreshRegionsCommand}" IsVisible="{Binding EnableRoValra}" Height="32" MinHeight="0"/></WrapPanel>
+            <TextBlock Text="{Binding RegionHint}" FontSize="12" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+            <controls:Hyperlink Text="Powered by RoValra" Url="https://www.rovalra.com" IsVisible="{Binding EnableRoValra}"/>
+
+            <TextBox Text="{Binding SearchQuery, Mode=TwoWay}" PlaceholderText="Search your games" MaxWidth="900" Height="32" MinHeight="0" Padding="14,0" VerticalContentAlignment="Center" HorizontalAlignment="Stretch" AutomationProperties.Name="Search Continue and Recommended games"/>
+            <StackPanel Spacing="12"><TextBlock Text="Continue" FontSize="18" FontWeight="SemiBold"/>
+                <TextBlock IsVisible="{Binding ContinueEmpty}" Text="{Binding ContinueMessage}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                <ItemsControl ItemsSource="{Binding ContinueGames}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><controls:ResponsiveCardGrid MinimumCardWidth="170" MaximumColumns="4"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate><DataTemplate x:DataType="models:QuickPlayGameItem"><controls:GameArtworkCard Game="{Binding}" Height="180" PlayCommand="{Binding $parent[UserControl].((vm:HomeViewModel)DataContext).PlayGameCommand}"/></DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+            <StackPanel Spacing="12"><TextBlock Text="Recommended" FontSize="18" FontWeight="SemiBold" Margin="0,8,0,0"/>
+                <TextBlock IsVisible="{Binding RecommendedEmpty}" Text="{Binding RecommendedMessage}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}" FontSize="13"/>
+                <ItemsControl ItemsSource="{Binding RecommendedGames}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><controls:ResponsiveCardGrid MinimumCardWidth="170" MaximumColumns="4"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate><DataTemplate x:DataType="models:QuickPlayGameItem"><controls:GameArtworkCard Game="{Binding}" Height="180" PlayCommand="{Binding $parent[UserControl].((vm:HomeViewModel)DataContext).PlayGameCommand}"/></DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+            <TextBlock Text="Pinned games" FontSize="18" FontWeight="SemiBold" IsVisible="{Binding HasPins}"/>
+            <controls:ArtworkScrollViewer x:Name="PinnedScroller" MaxHeight="138" MaxWidth="396" HorizontalAlignment="Left">
+                <ItemsControl ItemsSource="{Binding PinnedGames}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="12"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate><DataTemplate x:DataType="models:QuickPlayGameItem"><controls:GameArtworkCard Game="{Binding}" Width="120" Height="120" PlayCommand="{Binding $parent[UserControl].((vm:HomeViewModel)DataContext).PlayGameCommand}"/></DataTemplate></ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </controls:ArtworkScrollViewer>
+        </StackPanel>
+    </controls:SmoothScrollViewer>
+</UserControl>

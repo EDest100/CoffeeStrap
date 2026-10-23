@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -257,7 +257,7 @@ namespace Froststrap.UI.ViewModels.Onboarding
             {
                 Title = "Export Gradient",
                 FileTypeChoices = [new FilePickerFileType("JSON Files") { Patterns = JsonPatterns }],
-                SuggestedFileName = "Froststrap Gradient Background.json"
+                SuggestedFileName = "CoffeeStrap Gradient Background.json"
             });
 
             if (file == null) return;

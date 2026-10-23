@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -16,8 +16,25 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
     internal partial class CommunityModsViewModel : NotifyPropertyChangedViewModel, IDisposable
     {
         private List<CommunityMod> _allMods = [];
+        private readonly CommunityMod _coffeeMod = Services.CoffeeCommunityMod.Create();
         private CancellationTokenSource? _searchCts;
         private bool _disposed;
+        private readonly EventHandler _dataLoaded;
+        public bool IsEmpty => !IsLoading && Mods.Count == 0;
+        internal static string SafeFolderName(string name)
+        {
+            string safe = string.Concat(name.Select(ch => Path.GetInvalidFileNameChars().Contains(ch) || ch is '/' or '\\' ? '_' : ch)).Trim().Trim('.');
+            if (string.IsNullOrWhiteSpace(safe)) throw new InvalidDataException("The mod has no valid installation name.");
+            return safe.Length > 100 ? safe[..100] : safe;
+        }
+        private static string ThemeFolder(CommunityMod mod) => App.Settings.Prop.CommunityThemeFolders.GetValueOrDefault(mod.Id) ?? SafeFolderName(mod.Name);
+        private static bool Installed(CommunityMod mod)
+        {
+            var entry = App.State.Prop.Mods.FirstOrDefault(item => item.CommunityModId == mod.Id || item.FolderName == mod.Name);
+            string folder = mod.IsCustomTheme ? Paths.CustomThemes : Paths.Modifications;
+            return mod.IsCustomTheme ? Directory.Exists(Services.ModFilePolicy.InstalledPath(folder, ThemeFolder(mod)))
+                : entry != null && Directory.Exists(Path.Combine(folder, SafeFolderName(entry.FolderName)));
+        }
 
         public event EventHandler? OpenModsEvent;
         public event EventHandler? OpenModGeneratorEvent;
@@ -34,7 +51,7 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
         public bool IsLoading
         {
             get => _isLoading;
-            set => SetProperty(ref _isLoading, value);
+            set { if (SetProperty(ref _isLoading, value)) OnPropertyChanged(nameof(IsEmpty)); }
         }
 
         private bool _hasError;
@@ -71,9 +88,14 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
             set => SetProperty(ref _activeFilter, value);
         }
 
-        public CommunityModsViewModel()
+        private readonly Func<string, string, IProgress<double>, Task> _download;
+        public CommunityModsViewModel() : this(DownloadFileAsync) { }
+        internal CommunityModsViewModel(Func<string, string, IProgress<double>, Task> download)
         {
-            App.RemoteData.Subscribe(async (_, _) => await RefreshModsAsync());
+            _download = download;
+            _dataLoaded = async (_, _) => { if (!_disposed) await RefreshModsAsync(); };
+            App.RemoteData.Subscribe(_dataLoaded);
+            Mods.CollectionChanged += (_, _) => OnPropertyChanged(nameof(IsEmpty));
         }
 
         [RelayCommand] private void OpenMods() => OpenModsEvent?.Invoke(this, EventArgs.Empty);
@@ -106,14 +128,18 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
                 if (App.RemoteData.LoadedState == GenericTriState.Unknown)
                     await App.RemoteData.WaitUntilDataFetched();
 
-                _allMods = App.RemoteData.Prop.CommunityMods ?? [];
+                if (_disposed) return;
+                if (App.RemoteData.LoadedState != GenericTriState.Successful) throw new IOException("Community mods are unavailable. Check your connection and retry.");
+                _allMods = Services.CoffeeCommunityMod.Merge(App.RemoteData.Prop.CommunityMods ?? [], _coffeeMod);
+                AddInstalledCards();
                 ApplyFilters();
             }
             catch (Exception ex)
             {
                 HasError = true;
-                ErrorMessage = $"Failed to load mods: {ex.Message}";
+                ErrorMessage = "Other community mods couldn't be loaded. CoffeeStrap Espresso and installed mods are still available. Check your connection and retry.";
                 App.Logger.Error($"Unhandled exception: {ex}");
+                _allMods = [_coffeeMod]; AddInstalledCards(); ApplyFilters();
             }
             finally { IsLoading = false; }
         }
@@ -123,14 +149,23 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
             var query = SearchQuery.ToUpperInvariant().Trim();
 
             var filtered = _allMods.Where(mod =>
-                (ActiveFilter == null || mod.ModType == ActiveFilter) &&
+                (!mod.IsLocalOnly || Installed(mod)) && (ActiveFilter == null || mod.ModType == ActiveFilter) &&
                 (string.IsNullOrEmpty(query) ||
                  mod.Name.Contains(query, StringComparison.OrdinalIgnoreCase) ||
                  mod.Author?.Contains(query, StringComparison.OrdinalIgnoreCase) == true)
             ).ToList();
 
             foreach (var mod in filtered)
+            {
                 mod.DownloadCommand = DownloadModCommand;
+                mod.ToggleCommand = ToggleModCommand;
+                mod.PreviewCommand = OpenModInfoDialogCommand;
+                mod.UninstallCommand = UninstallModCommand;
+                mod.IsEnabled = mod.IsCustomTheme ? App.Settings.Prop.SelectedCustomTheme == ThemeFolder(mod) && App.Settings.Prop.BootstrapperStyle == BootstrapperStyle.CustomDialog
+                    : App.State.Prop.Mods.FirstOrDefault(item => item.CommunityModId == mod.Id || item.FolderName == mod.Name)?.Enabled == true;
+                try { mod.IsInstalled = Installed(mod); } catch { mod.IsInstalled = false; }
+            }
+            filtered = [.. filtered.OrderByDescending(mod => mod.IsInstalled).ThenBy(mod => mod.Name, StringComparer.OrdinalIgnoreCase)];
 
             Dispatcher.UIThread.Invoke(() =>
             {
@@ -146,31 +181,88 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
         [RelayCommand]
         private async Task SearchModsAsync()
         {
-            await _searchCts!.CancelAsync();
+            if (_searchCts != null) { await _searchCts.CancelAsync(); _searchCts.Dispose(); }
             _searchCts = new CancellationTokenSource();
             try
             {
                 await Task.Delay(300, _searchCts.Token);
-                ApplyFilters();
+                if (!_disposed) await Dispatcher.UIThread.InvokeAsync(ApplyFilters);
             }
             catch (OperationCanceledException) { }
         }
 
-        [RelayCommand]
-        private static async Task DownloadModAsync(CommunityMod mod)
+        private void AddInstalledCards()
         {
-            if (mod == null || mod.IsDownloading) return;
+            _allMods = [.. _allMods];
+            foreach (var entry in App.State.Prop.Mods)
+            {
+                if (_allMods.Any(mod => mod.Id == entry.CommunityModId || mod.Name == entry.FolderName)) continue;
+                if (!Directory.Exists(Services.ModFilePolicy.InstalledPath(Paths.Modifications, entry.FolderName))) continue;
+                _allMods.Add(new CommunityMod { Id = entry.CommunityModId ?? "installed:" + entry.FolderName, Name = entry.FolderName, Description = "Installed content mod", ModType = ModType.MiscMod, IsLocalOnly = true, ThumbnailUrl = "", DownloadUrl = "" });
+            }
+        }
 
-            string tempFile = Path.Combine(Path.GetTempPath(), "Froststrap", $"{Guid.NewGuid()}.zip");
+        [RelayCommand]
+        internal void ToggleMod(CommunityMod mod)
+        {
+            if (!mod.IsInstalled || mod.IsDownloading) return;
+            if (mod.IsCustomTheme)
+            {
+                App.Settings.Prop.SelectedCustomTheme = mod.IsEnabled ? null : ThemeFolder(mod);
+                App.Settings.Prop.BootstrapperStyle = mod.IsEnabled ? BootstrapperStyle.FluentAeroDialog : BootstrapperStyle.CustomDialog;
+                App.Settings.Save();
+            }
+            else
+            {
+                var entry = App.State.Prop.Mods.FirstOrDefault(item => item.CommunityModId == mod.Id || item.FolderName == mod.Name);
+                if (entry == null) return;
+                entry.Enabled = !entry.Enabled;
+                App.State.SaveSetting("Mods");
+            }
+            ApplyFilters();
+        }
+
+        [RelayCommand]
+        internal void UninstallMod(CommunityMod mod)
+        {
+            if (!mod.IsInstalled || mod.IsDownloading) return;
             try
             {
+                var entry = App.State.Prop.Mods.FirstOrDefault(item => item.CommunityModId == mod.Id || item.FolderName == mod.Name);
+                string source = Services.ModFilePolicy.InstalledPath(mod.IsCustomTheme ? Paths.CustomThemes : Paths.Modifications, mod.IsCustomTheme ? ThemeFolder(mod) : entry?.FolderName ?? throw new InvalidDataException("Installed mod record is missing."));
+                string trash = Path.Combine(Paths.Base, "ModTrash");
+                Directory.CreateDirectory(trash);
+                Directory.Move(source, Path.Combine(trash, Guid.NewGuid().ToString("N")));
+                if (mod.IsCustomTheme)
+                {
+                    if (App.Settings.Prop.SelectedCustomTheme == ThemeFolder(mod)) { App.Settings.Prop.SelectedCustomTheme = null; App.Settings.Prop.BootstrapperStyle = BootstrapperStyle.FluentAeroDialog; }
+                    App.Settings.Prop.CommunityThemeFolders.Remove(mod.Id); App.Settings.Save();
+                }
+                if (entry != null) { App.State.Prop.Mods.Remove(entry); App.State.SaveSetting("Mods"); }
+                mod.IsInstalled = false; mod.IsEnabled = false; mod.DownloadError = "";
+                ApplyFilters();
+            }
+            catch (Exception error) when (error is IOException or UnauthorizedAccessException)
+            { mod.DownloadError = "Uninstall failed: " + error.Message; App.Logger.Error(error); }
+        }
+
+        [RelayCommand]
+        internal async Task DownloadModAsync(CommunityMod mod)
+        {
+            if (mod == null || !mod.CanDownload) return;
+
+            string tempFile = Path.Combine(Path.GetTempPath(), App.ProjectName, $"{Guid.NewGuid()}.zip");
+            try
+            {
+                mod.DownloadError = "";
+                if (!Uri.TryCreate(mod.DownloadUrl, UriKind.Absolute, out var download) || download.Scheme != "https") throw new InvalidDataException("A secure download URL is required.");
                 mod.IsDownloading = true;
                 Directory.CreateDirectory(Path.GetDirectoryName(tempFile)!);
 
                 var progress = new Progress<double>(p => mod.DownloadProgress = p);
-                await DownloadFileAsync(mod.DownloadUrl, tempFile, progress);
+                await _download(mod.DownloadUrl, tempFile, progress);
 
-                string baseName = mod.Name;
+                string baseName = SafeFolderName(mod.Name);
                 string finalName = baseName;
 
                 if (mod.IsCustomTheme)
@@ -186,7 +278,7 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
 
                         if (result == MessageBoxResult.Yes)
                         {
-                            Directory.Delete(themePath, true);
+                            // The archive installer atomically replaces this folder after validation.
                         }
                         else
                         {
@@ -198,13 +290,14 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
                         }
                     }
 
-                    await ExtractZipAsync(tempFile, themePath);
+                    await Services.ModArchiveInstaller.InstallAsync(tempFile, themePath);
 
                     App.Settings.Prop.SelectedCustomTheme = finalName;
+                    App.Settings.Prop.CommunityThemeFolders[mod.Id] = finalName;
                     App.Settings.Prop.BootstrapperStyle = BootstrapperStyle.CustomDialog;
                     App.Settings.Save();
 
-                    _ = Frontend.ShowMessageBox(string.Format(CultureInfo.InvariantCulture, Strings.Menu_CommunityMods_ThemeInstalled, finalName), MessageBoxImage.Information);
+
                 }
                 else
                 {
@@ -219,7 +312,7 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
 
                         if (result == MessageBoxResult.Yes)
                         {
-                            Directory.Delete(installPath, true);
+                            // The archive installer atomically replaces this folder after validation.
                         }
                         else
                         {
@@ -231,7 +324,7 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
                         }
                     }
 
-                    await ExtractZipAsync(tempFile, installPath);
+                    await Services.ModArchiveInstaller.InstallAsync(tempFile, installPath);
 
                     var existingMod = App.State.Prop.Mods.FirstOrDefault(m =>
                         string.Equals(m.FolderName, finalName, StringComparison.OrdinalIgnoreCase));
@@ -239,6 +332,7 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
                     if (existingMod != null)
                     {
                         existingMod.Enabled = true;
+                        existingMod.CommunityModId = mod.Id;
                         App.Logger.Info($"Enabled existing mod '{finalName}'.");
                     }
                     else
@@ -247,6 +341,7 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
                         var newMod = new ModConfig
                         {
                             FolderName = finalName,
+                            CommunityModId = mod.Id,
                             Enabled = true,
                             Priority = maxPriority + 1,
                             Target = ModTarget.Both
@@ -256,17 +351,19 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
                     }
 
                     App.State.SaveSetting("Mods");
-                    _ = Frontend.ShowMessageBox(string.Format(CultureInfo.InvariantCulture, Strings.Menu_CommunityMods_ModInstalled, finalName), MessageBoxImage.Information);
+
                 }
             }
             catch (Exception ex)
             {
-                _ = Frontend.ShowMessageBox(ex.Message, MessageBoxImage.Error);
+                mod.DownloadError = ex is InvalidDataException ? ex.Message : "Download failed. Try again.";
                 App.Logger.Error(ex);
             }
             finally
             {
                 mod.IsDownloading = false;
+                try { mod.IsInstalled = Installed(mod); } catch { mod.IsInstalled = false; }
+                if (!_disposed) ApplyFilters();
                 if (File.Exists(tempFile)) File.Delete(tempFile);
             }
         }
@@ -293,83 +390,6 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
             finally
             {
                 App.FrostRPC?.ClearDialog();
-            }
-        }
-
-        private static readonly HashSet<string> RequiredModFolders = new(StringComparer.OrdinalIgnoreCase)
-        {
-            "content",
-            "ExtraContent",
-            "PlatformContent"
-        };
-
-        private static async Task ExtractZipAsync(string zipPath, string dest)
-        {
-            await Task.Run(() =>
-            {
-                string tempExtract = Path.Combine(Path.GetTempPath(), "Froststrap", Guid.NewGuid().ToString());
-                Directory.CreateDirectory(tempExtract);
-
-                try
-                {
-                    ZipFile.ExtractToDirectory(zipPath, tempExtract, true);
-
-                    string[] entries = Directory.GetFileSystemEntries(tempExtract);
-
-                    if (Directory.Exists(dest))
-                        Directory.Delete(dest, true);
-                    Directory.CreateDirectory(dest);
-
-                    if (entries.Length == 1 && Directory.Exists(entries[0]))
-                    {
-                        string rootDir = entries[0];
-                        string rootName = Path.GetFileName(rootDir);
-
-                        if (RequiredModFolders.Contains(rootName))
-                        {
-                            string target = Path.Combine(dest, rootName);
-                            Directory.Move(rootDir, target);
-                        }
-                        else
-                        {
-                            CopyDirectoryContents(rootDir, dest);
-                        }
-                    }
-                    else
-                    {
-                        foreach (string entry in entries)
-                        {
-                            string name = Path.GetFileName(entry);
-                            string target = Path.Combine(dest, name);
-                            if (Directory.Exists(entry))
-                                Directory.Move(entry, target);
-                            else
-                                File.Move(entry, target);
-                        }
-                    }
-                }
-                finally
-                {
-                    if (Directory.Exists(tempExtract))
-                        Directory.Delete(tempExtract, true);
-                }
-            });
-        }
-
-        private static void CopyDirectoryContents(string sourceDir, string destDir)
-        {
-            Directory.CreateDirectory(destDir);
-
-            foreach (string file in Directory.GetFiles(sourceDir))
-            {
-                string destFile = Path.Combine(destDir, Path.GetFileName(file));
-                File.Copy(file, destFile, overwrite: true);
-            }
-
-            foreach (string subDir in Directory.GetDirectories(sourceDir))
-            {
-                string destSubDir = Path.Combine(destDir, Path.GetFileName(subDir));
-                CopyDirectoryContents(subDir, destSubDir);
             }
         }
 
@@ -406,6 +426,7 @@ namespace Froststrap.UI.ViewModels.Settings.Mods
 
             if (disposing)
             {
+                App.RemoteData.DataLoaded -= _dataLoaded;
                 _searchCts?.Cancel();
                 _searchCts?.Dispose();
                 _searchCts = null;

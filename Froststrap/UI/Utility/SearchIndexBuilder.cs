@@ -32,18 +32,8 @@ namespace Froststrap.UI.Utility
                 return _navigationItemsCache;
             }
 
-            var navigationItems = new[]
-            {
-                new { Display = Strings.Menu_Integrations_Title, Tag = "integrations" },
-                new { Display = Strings.Menu_Behaviour_Title, Tag = "behaviour" },
-                new { Display = Strings.Menu_PresetMods_Title, Tag = "mods" },
-                new { Display = Strings.Menu_FastFlags_Title, Tag = "fastflags" },
-                new { Display = Strings.Menu_Appearance_Title, Tag = "appearance" },
-                new { Display = Strings.Menu_RegionSelector_Title, Tag = "regionselector" },
-                new { Display = Strings.Menu_GlobalSettings_Title, Tag = "globalsettings" },
-                new { Display = Strings.Common_Shortcuts, Tag = "shortcuts" },
-                new { Display = Strings.Common_Deployment, Tag = "channels" }
-            };
+            var navigationItems = NavigationRegistry.Pages.Where(page => page.Sidebar)
+                .Select(page => new { Display = page.Title, Tag = page.Tag });
 
             _navigationItemsCache = [];
             foreach (var item in navigationItems)
@@ -105,7 +95,7 @@ namespace Froststrap.UI.Utility
         private static void ScanForCardExpanders(Control pageView, string pageTag, string pageTitle, List<SearchBarItem> searchIndex)
         {
             var cardExpanders = pageView.GetVisualDescendants()
-                .OfType<CardExpander>();
+                .OfType<CardExpander>().Where(IsIndexable);
 
             foreach (var expander in cardExpanders)
             {
@@ -128,7 +118,7 @@ namespace Froststrap.UI.Utility
         private static void ScanForOptionControls(Control pageView, string pageTag, string pageTitle, List<SearchBarItem> searchIndex)
         {
             var optionControls = pageView.GetVisualDescendants()
-                .OfType<OptionControl>();
+                .OfType<OptionControl>().Where(IsIndexable);
 
             foreach (var option in optionControls)
             {
@@ -155,11 +145,11 @@ namespace Froststrap.UI.Utility
         private static void ScanForCardActions(Control pageView, string pageTag, string pageTitle, List<SearchBarItem> searchIndex)
         {
             var cardActions = pageView.GetVisualDescendants()
-                .OfType<CardAction>();
+                .OfType<CardAction>().Where(IsIndexable);
 
             foreach (var action in cardActions)
             {
-                var content = action.Content as string ?? (action.Content as TextBlock)?.Text;
+                var content = string.IsNullOrWhiteSpace(action.Header) ? action.Content as string ?? (action.Content as TextBlock)?.Text : action.Header;
                 if (!string.IsNullOrWhiteSpace(content))
                 {
                     searchIndex.Add(new SearchBarItem
@@ -168,7 +158,9 @@ namespace Froststrap.UI.Utility
                         Tag = NormalizeTag(content),
                         PageTag = pageTag,
                         PageTitle = pageTitle,
-                        Category = "Action"
+                        Category = "Action",
+                        Description = action.Description,
+                        ParentSectionName = FindParentCardExpander(action)?.Header as string
                     });
                 }
             }
@@ -177,7 +169,7 @@ namespace Froststrap.UI.Utility
         private static void ScanForSquareCards(Control pageView, string pageTag, string pageTitle, List<SearchBarItem> searchIndex)
         {
             var squareCards = pageView.GetVisualDescendants()
-                .OfType<SquareCard>();
+                .OfType<SquareCard>().Where(IsIndexable);
 
             foreach (var card in squareCards)
             {
@@ -191,28 +183,20 @@ namespace Froststrap.UI.Utility
                         PageTag = pageTag,
                         PageTitle = pageTitle,
                         Category = "Card",
-                        Description = card.Description as string
+                        Description = card.Description as string,
+                        ParentSectionName = FindParentCardExpander(card)?.Header as string
                     });
                 }
             }
         }
 
         private static CardExpander? FindParentCardExpander(Control control)
-        {
-            var parent = control.Parent;
-            while (parent != null)
-            {
-                if (parent is CardExpander cardExpander)
-                    return cardExpander;
-
-                parent = (parent as Control)?.Parent;
-            }
-            return null;
-        }
+            => control.GetVisualAncestors().OfType<CardExpander>().FirstOrDefault();
+        private static bool IsIndexable(Control control) => control.IsVisible && control.GetVisualAncestors().OfType<Control>().All(parent => parent.IsVisible);
 
         private static string NormalizeTag(string text)
         {
-            return Regex.Replace(text.ToUpperInvariant(), @"[^a-z0-9]+", "-").Trim('-');
+            return Regex.Replace(text.ToUpperInvariant(), @"[^A-Z0-9]+", "-").Trim('-');
         }
     }
 }

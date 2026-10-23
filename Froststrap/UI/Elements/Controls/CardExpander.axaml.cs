@@ -1,12 +1,9 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Presenters;
-using Avalonia.Controls.Primitives;
-using Avalonia.Layout;
 
 namespace Froststrap.UI.Elements.Controls
 {
@@ -46,51 +43,6 @@ namespace Froststrap.UI.Elements.Controls
         {
             get => GetValue(IsExpandedProperty);
             set => SetValue(IsExpandedProperty, value);
-        }
-
-        private Border? _container;
-        private ContentPresenter? _presenter;
-
-        protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
-        {
-            base.OnPropertyChanged(change);
-            if (change.Property == IsExpandedProperty)
-            {
-                UpdateVisualState();
-            }
-        }
-
-        protected override void OnApplyTemplate(TemplateAppliedEventArgs e)
-        {
-            base.OnApplyTemplate(e);
-            _container = e.NameScope.Find<Border>("PART_ContentContainer");
-            _presenter = e.NameScope.Find<ContentPresenter>("PART_ContentPresenter");
-
-            this.PropertyChanged += (sender, args) =>
-            {
-                if (args.Property == BoundsProperty)
-                {
-                    UpdateVisualState();
-                }
-            };
-
-            UpdateVisualState();
-        }
-
-        private void UpdateVisualState()
-        {
-            if (_container == null || _presenter == null) return;
-
-            if (IsExpanded)
-            {
-                _container.ClearValue(Layoutable.HeightProperty);
-                _container.Opacity = 1;
-            }
-            else
-            {
-                _container.Height = 0;
-                _container.Opacity = 0;
-            }
         }
     }
 }

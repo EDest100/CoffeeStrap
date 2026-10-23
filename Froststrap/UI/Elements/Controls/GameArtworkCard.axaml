@@ -1,0 +1,37 @@
+<!-- SPDX-FileCopyrightText: 2026 CoffeeStrap contributors
+     SPDX-License-Identifier: MPL-2.0 -->
+<UserControl xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:Froststrap.UI.Elements.Controls" xmlns:ic="clr-namespace:LucideAvalonia;assembly=LucideAvalonia"
+    x:Class="Froststrap.UI.Elements.Controls.GameArtworkCard" x:Name="Root" x:DataType="controls:GameArtworkCard">
+    <Grid>
+        <Button x:Name="PlayTile" Command="{Binding PlayCommand, ElementName=Root}" CommandParameter="{Binding Game, ElementName=Root}"
+            Padding="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+            AutomationProperties.Name="{Binding Game.Name, ElementName=Root}" ToolTip.Tip="{Binding Game.Name, ElementName=Root}">
+            <Button.Template><ControlTemplate><Border CornerRadius="18" ClipToBounds="True" BorderThickness="1"
+                BorderBrush="{DynamicResource ControlStrokeColorDefaultBrush}" Background="{DynamicResource CoffeeGroupBrush}">
+                <ContentPresenter Content="{TemplateBinding Content}"/>
+            </Border></ControlTemplate></Button.Template>
+            <Grid>
+                <ic:Lucide Icon="Gamepad2" Width="32" Height="32" Opacity="0.35" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Image x:Name="GameImage" Source="{Binding Game.ThumbnailBitmap, ElementName=Root}" Stretch="UniformToFill" RenderOptions.BitmapInterpolationMode="HighQuality" />
+                <Border VerticalAlignment="Bottom" Padding="12,26,12,12">
+                    <Border.Background><LinearGradientBrush StartPoint="0%,0%" EndPoint="0%,100%"><GradientStop Offset="0" Color="#00000000"/><GradientStop Offset="0.35" Color="#C8000000"/><GradientStop Offset="1" Color="#E6000000"/></LinearGradientBrush></Border.Background>
+                    <TextBlock Text="{Binding Game.Name, ElementName=Root}" FontSize="13" FontWeight="SemiBold" Foreground="#FFFFFF" TextWrapping="Wrap" MaxLines="2" />
+                </Border>
+                <Border x:Name="PlayReveal" Background="#80000000" Opacity="0" IsHitTestVisible="False">
+                    <Border HorizontalAlignment="Center" VerticalAlignment="Center" CornerRadius="16" Background="{DynamicResource AccentFillColorDefaultBrush}" Padding="18,9">
+                        <TextBlock Text="Play" FontSize="14" FontWeight="SemiBold" Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+                    </Border>
+                </Border>
+            </Grid>
+        </Button>
+        <ToggleButton IsVisible="{Binding ShowPin, ElementName=Root}" IsChecked="{Binding Game.IsPinned, ElementName=Root, Mode=TwoWay}"
+            Width="32" Height="32" MinHeight="0" Padding="6" CornerRadius="12" Margin="8" HorizontalAlignment="Right" VerticalAlignment="Top"
+            AutomationProperties.Name="Pin game" ToolTip.Tip="Pin to Home">
+            <Grid><Path Data="M12,2 L15.1,8.3 22,9.3 17,14.2 18.2,21.1 12,17.8 5.8,21.1 7,14.2 2,9.3 8.9,8.3 Z"
+                Stretch="Uniform" Stroke="{DynamicResource TextFillColorPrimaryBrush}" StrokeThickness="1.6" />
+                <Path IsVisible="{Binding Game.IsPinned, ElementName=Root}" Data="M12,2 L15.1,8.3 22,9.3 17,14.2 18.2,21.1 12,17.8 5.8,21.1 7,14.2 2,9.3 8.9,8.3 Z" Stretch="Uniform" Fill="{DynamicResource TextFillColorPrimaryBrush}"/>
+            </Grid>
+        </ToggleButton>
+    </Grid>
+</UserControl>

@@ -18,5 +18,20 @@ result
 [Bb]in/
 [Oo]bj/
 Releases/
+/Release/
 publish/
+artifacts/
+.tooling/
+*.log
 !build/src/action/publish/
+
+# Local development evidence and preserved reference archives
+/revision*-publish-target.txt
+/revision*-app-before-warning-fix.txt
+/revision*-full-coverage.json
+/CHANGED_FILES.txt
+/tools/CONTINUATION.md
+/tools/References/*
+!/tools/References/Ed25519-Rfc8032-1023.json
+!/tools/References/ChannelPage.upstream.axaml
+/tools/Preview/History/

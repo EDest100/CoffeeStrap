@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -63,7 +63,7 @@ namespace Froststrap.UI.Elements.Base
 
         public AvaloniaWindow()
         {
-            var uri = new Uri("avares://Froststrap/UI/Elements/Base/BackgroundPanel.axaml");
+            var uri = new Uri("avares://CoffeeStrap/UI/Elements/Base/BackgroundPanel.axaml");
             var panel = (Panel)AvaloniaXamlLoader.Load(uri);
 
             _backgroundBorder = panel.Find<Border>("PART_BackgroundBorder");
@@ -141,7 +141,10 @@ namespace Froststrap.UI.Elements.Base
             if (faTheme != null)
             {
                 faTheme.PreferSystemTheme = false;
-                faTheme.PreferUserAccentColor = true;
+                faTheme.PreferUserAccentColor = false;
+                faTheme.CustomAccentColor = finalTheme == Enums.Theme.Light
+                    ? Color.Parse("#754A2D")
+                    : Color.Parse("#D7AD84");
             }
 
             if (_activeThemeDictionary != null)
@@ -169,12 +172,12 @@ namespace Froststrap.UI.Elements.Base
                 {
                     if (_cachedThemeName != themeName || _cachedThemeDictionary == null || _cachedThemeStyles == null)
                     {
-                        var themeUri = new Uri($"avares://Froststrap/UI/AppThemes/ResourceDictionarys/{themeName}.axaml");
+                        var themeUri = new Uri($"avares://CoffeeStrap/UI/AppThemes/ResourceDictionarys/{themeName}.axaml");
                         var loadedTheme = AvaloniaXamlLoader.Load(themeUri);
                         if (loadedTheme is ResourceDictionary dict)
                             _cachedThemeDictionary = dict;
 
-                        var styleUri = new Uri($"avares://Froststrap/UI/AppThemes/Styles/{themeName}.axaml");
+                        var styleUri = new Uri($"avares://CoffeeStrap/UI/AppThemes/Styles/{themeName}.axaml");
                         var loadedStyle = AvaloniaXamlLoader.Load(styleUri);
                         if (loadedStyle is Styles loadedStyles)
                             _cachedThemeStyles = loadedStyles;
@@ -199,7 +202,7 @@ namespace Froststrap.UI.Elements.Base
                 }
                 catch (Exception ex)
                 {
-                    App.Logger.Error($"Theme/Style loading error for {themeName}: {ex.Message}");
+                    App.Logger.Error(ex, $"Theme/Style loading error for {themeName}");
                 }
             }
             else

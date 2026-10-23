@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -17,8 +17,12 @@ using Windows.Win32.Foundation;
 
 namespace Froststrap.UI.ViewModels.Settings
 {
-    internal class ModsPresetsViewModel : NotifyPropertyChangedViewModel
+    internal class ModsPresetsViewModel : NotifyPropertyChangedViewModel, IDisposable
     {
+        public Mods.CommunityModsViewModel Community { get; } = new();
+        public ModReportViewModel ApplicationReport { get; } = new();
+        public ICommand RestoreCursorCommand => new RelayCommand(() => { CursorTypeTask.NewState = Enums.CursorType.Default; if (HasCustomCursors) RemoveCustomCursorMod(); });
+        public void Dispose() => Community.Dispose();
         public event EventHandler? OpenModsEvent;
         public event EventHandler? OpenCommunityModsEvent;
         public event EventHandler? OpenModGeneratorEvent;
@@ -70,6 +74,8 @@ namespace Froststrap.UI.ViewModels.Settings
 
         public bool IsCustomFontSet => !string.IsNullOrEmpty(TextFontTask?.NewState);
 
+        public string FontSelectionLabel => string.IsNullOrWhiteSpace(TextFontTask.NewState) ? "Roblox default" : Path.GetFileName(TextFontTask.NewState);
+
         private async Task ChooseCustomFont()
         {
             var topLevel = GetDialogTopLevel();
@@ -110,6 +116,7 @@ namespace Froststrap.UI.ViewModels.Settings
 
                 TextFontTask.NewState = filePath;
                 OnPropertyChanged(nameof(IsCustomFontSet));
+            OnPropertyChanged(nameof(FontSelectionLabel));
             }
             catch (Exception ex)
             {
@@ -121,6 +128,7 @@ namespace Froststrap.UI.ViewModels.Settings
         {
             TextFontTask.NewState = string.Empty;
             OnPropertyChanged(nameof(IsCustomFontSet));
+            OnPropertyChanged(nameof(FontSelectionLabel));
         }
 
         public ICommand OpenCompatSettingsCommand => new RelayCommand(OpenCompatSettings);
@@ -140,7 +148,7 @@ namespace Froststrap.UI.ViewModels.Settings
 
         public EmojiModPresetTask EmojiFontTask { get; } = new();
 
-        public EnumModPresetTask<Enums.CursorType> CursorTypeTask { get; } = new("CursorType", new()
+        public CursorPresetTask CursorTypeTask { get; } = new("CursorType", new()
         {
             {
                 Enums.CursorType.From2006, new()
@@ -230,7 +238,7 @@ namespace Froststrap.UI.ViewModels.Settings
 
         public async Task AddCustomCursorMod() =>
             await AddCustomFileAsync(CursorFiles, CursorPath, "Select Cursor",
-                [CursorImageFileType], "cursors", RefreshStates, convertToPng: true);
+                [CursorImageFileType], "cursors", () => { CursorTypeTask.AcceptCustomFiles(); OnPropertyChanged(nameof(CursorTypeTask)); RefreshStates(); }, convertToPng: true);
 
         public async Task AddCustomShiftlockMod() =>
             await AddCustomFileAsync(ShiftlockFiles, ShiftlockPath, "Select Shiftlock",

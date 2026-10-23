@@ -44,7 +44,7 @@ SPDX-License-Identifier: MPL-2.0
                                        FontWeight="SemiBold"
                                        Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
                             <controls:MarkdownTextBlock MarkdownText="{TemplateBinding Description}"
-                                                        FontSize="12"
+                                                        FontSize="13"
                                                         Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                                         TextWrapping="Wrap"
                                                         IsVisible="{TemplateBinding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />

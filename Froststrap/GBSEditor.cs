@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -320,7 +320,7 @@ internal class GBSEditor
                 App.Logger.Info($"Created directory: {directory}");
             }
 
-            var uri = new Uri("avares://Froststrap/Resources/GlobalBasicSettings_Template.xml");
+            var uri = new Uri("avares://CoffeeStrap/Resources/GlobalBasicSettings_Template.xml");
             using var resourceStream = Avalonia.Platform.AssetLoader.Open(uri);
             using var fileStream = File.Create(FileLocation);
             resourceStream.CopyTo(fileStream);
@@ -397,6 +397,7 @@ internal class GBSEditor
         _savedHash = ComputeHash();
 
         RemoveLegacyJunk();
+        ApplyDrawDistancePreference();
     }
 
     private bool HasExpectedStructure(XDocument document)
@@ -433,8 +434,9 @@ internal class GBSEditor
     public virtual bool Save()
     {
         App.Logger.Info($"Saving to {FileLocation}...");
+        ApplyDrawDistancePreference();
 
-        if (!HasUnsavedChanges)
+        if (!HasUnsavedChanges && File.Exists(FileLocation))
         {
             App.Logger.Info("No changes, skipping save.");
             return false;
@@ -473,11 +475,7 @@ internal class GBSEditor
 
         try
         {
-            string tempFile = FileLocation + ".tmp";
-            Document.Save(tempFile);
-
-            File.Copy(tempFile, FileLocation, true);
-            File.Delete(tempFile);
+            AtomicFile.Write(FileLocation, temporary => Document.Save(temporary));
 
             _savedHash = ComputeHash();
             App.Logger.Info("Save complete!");
@@ -497,6 +495,12 @@ internal class GBSEditor
                 SetReadOnly(true, true);
             }
         }
+    }
+
+    internal void ApplyDrawDistancePreference()
+    {
+        if (Loaded && App.Settings.Prop.LockMaximumRenderDistance)
+            SetPreset("Rendering.SavedQualityLevel", "10");
     }
 
     private static string ResolvePath(string rawPath, Dictionary<string, string> rootPaths)

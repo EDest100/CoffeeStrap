@@ -131,6 +131,9 @@ internal class SoberSettingsManager : JsonManager<Dictionary<string, object>>
     }
 
     public override bool Save()
+        => Save(true);
+
+    public override bool Save(bool alertFailure)
     {
         if (!HasUnsavedChanges)
         {

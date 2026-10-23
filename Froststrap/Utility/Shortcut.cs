@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 // Copyright (C) Froststrap Team
 //
 // SPDX-License-Identifier: MPL-2.0
@@ -28,7 +28,7 @@ namespace Froststrap.Utility
 
                 try
                 {
-                    string iconPath = Path.Combine(Paths.Base, "froststrap.png");
+                    string iconPath = Path.Combine(Paths.Base, "coffeestrap.png");
 
                     if (File.Exists(iconPath))
                     {
@@ -36,9 +36,9 @@ namespace Froststrap.Utility
                         return iconPath;
                     }
 
-                    var uri = new Uri("avares://Froststrap/Froststrap.png");
+                    var uri = new Uri("avares://CoffeeStrap/CoffeeStrap.png");
                     using var pngStream = AssetLoader.Open(uri);
-                    _ = pngStream ?? throw new FileNotFoundException("Embedded Froststrap.png not found.");
+        _ = pngStream ?? throw new FileNotFoundException("Embedded CoffeeStrap.png not found.");
 
                     using var fileStream = File.Create(iconPath);
                     pngStream.CopyTo(fileStream);

@@ -1,113 +1,43 @@
-<h1 align="center">
-    Froststrap
-</h1>
-
 <p align="center">
-    Froststrap is a cross-platform Roblox bootstrapper derived from <a href="https://github.com/fishstrap/fishstrap.git"><strong>Fishstrap</strong></a>.
+  <img src="branding/CoffeeStrap.svg" width="160" alt="CoffeeStrap icon" />
+</p>
+<p align="center">
+  <a href="https://discord.gg/CZ3P4Rw9D4"><img src="https://img.shields.io/badge/Discord-Join%20the%20community-5865F2?style=for-the-badge&logo=discord&logoColor=white" alt="Discord" /></a>
+  <a href="https://github.com/EDest100/CoffeeStrap/releases/latest"><img src="https://img.shields.io/badge/Downloads-Grab%20CoffeeStrap-825234?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Downloads" /></a>
 </p>
 
-<p align="center">
-    <img src="./.resources/froststrap.webp" height=200 alt="logo"/>
-</p>
+# CoffeeStrap
 
-<p align="center">
-    If you'd like to support our project, consider giving this repository a star!
-</p>
+This is my fork of [Froststrap](https://github.com/Froststrap/Froststrap), built on the work of [Fishstrap](https://github.com/fishstrap/fishstrap) and [Bloxstrap](https://github.com/bloxstraplabs/bloxstrap). These launchers apply tweaks and modifications to the Roblox client through FastFlags, file mods and quality of life improvements. I didn't like some of the features and wanted more performance options, so I decided to make CoffeeStrap!
 
-<div align="center">
+I wanted something that feels like its own app, with an espresso and cream theme, useful Game Tweaks and more control over how Roblox looks. Anyone is welcome to [join the Discord](https://discord.gg/CZ3P4Rw9D4) for questions, suggestions or info about CoffeeStrap.
 
-[![License][badge-repo-license]][repo-license]
-[![Downloads (Total)][badge-repo-downloads-total]][repo-releases]
-[![Downloads (Latest)][badge-repo-downloads]][repo-releases]
-[![Version][badge-repo-latest]][repo-latest]
-[![Stars][badge-repo-stars]][repo-stargazer]
-[![Discord][badge-discord]][discord-invite]
+## A little coffee for Roblox
 
-</div>
+![CoffeeStrap Espresso theme preview](Froststrap/Resources/CommunityMods/EspressoPreview.png)
 
-> [!CAUTION]
-> The official repository [Froststrap/Froststrap](https://github.com/Froststrap/Froststrap.git) and [our website](https://froststrap.xyz) are the **ONLY PLACES** where you should download the binary/executable. Any other source is **NOT** affiliated with us and poses a potential security threat.
+My **CoffeeStrap Espresso** mod is in **Texture Editor > Community Mods**. It gives local icons, menus, cursors, the default sky and particle colors a coffee theme, including the icon fonts used by newer Roblox menus. Download it there, save, then relaunch Roblox through CoffeeStrap. You can disable it or uninstall it with the trash icon; the launcher restores its backed-up originals on the next launch.
 
----
+This preview shows the actual generated assets, not a gameplay screenshot. Games can supply their own textures, UI colors and lighting, so a local theme can't recolor everything in every game. Other enabled mods can also take priority. The [theme guide](docs/ESPRESSO-THEME.md) explains coverage and how to rebuild the pack from source.
 
-## Key Improvements Over Fishstrap
+## What's in it?
 
-### Integrations
-- Automatically rejoin servers you were disconnected from due to inactivity
-- Disable Roblox’s built-in screenshot and video recording system
-- Custom Froststrap Discord RPC that shows the current page/dialog
-- Replace "Playing Roblox" with the name of the game you're playing using Custom Status Display
-- The playtime counter shows both total and session playtime
-- Roblox Studio RPC integrated within Froststrap
-    * Change the Studio RPC thumbnail depending on the script that is open
-    * Show script type, name, and number of lines of code
+- **Game Tweaks:** rendering profiles, mesh detail, texture and effects quality, default texture budgets and optional Windows session controls.
+- **Texture Editor:** community mods, local file replacements, previews and an application report so you can see what applied or conflicted.
+- **Quick launch:** search, pinned games and a compact launcher with the same coffee theme.
+- **Server regions:** optional RoValra integration, a saved region choice and selection of the fullest available matching server found. Provider coverage and rate limits can affect results.
+- **Your setup:** dark and light themes, responsive menus, animations and a reduced-motion option.
 
-### Mods
-- Multi-mod system that allows you to download many mods at once
-- Select where to apply the mod (Player/Studio)
-- Download community-made mods directly from within the app
-- Generate mods using hex codes, with options to color the cursor, Shift Lock, or Emote Wheel
-- Change the cursor, Shift Lock, death sound, and game font by selecting a file
-- Use custom cursor sets to change between your cursors faster
+Performance depends on the game and your hardware. I don't want to promise an FPS boost from every toggle. Some changes need a Roblox restart; the live window-size controls say when they can apply immediately.
 
-### FastFlag Enhancements
-- Automatic notification when applying FastFlags that are not in the Roblox FastFlag Allowlist
-- Create or use FastFlag profiles
-- Change all Roblox FastFlags in the allowlist via the FastFlag settings
-- Click 'Clean List' to remove flags that are not in the Roblox FastFlag Allowlist
+## Downloads
 
-### UI & Appearance
-- Fully customizable bootstrapper launcher
-- Change the app font to any font you prefer
-- Supports image and gradient background themes
-- Built-in app themes
-- Change the window background to Aero, Acrylic, or Mica
+Grab **CoffeeStrap.exe** from the [latest GitHub release](https://github.com/EDest100/CoffeeStrap/releases/latest). The current build is for **Windows x64** and needs the **[.NET 10 x64 runtime](https://dotnet.microsoft.com/en-us/download/dotnet/10.0/runtime)** installed. The app is one EXE; .NET is separate to keep the download smaller. You don't need the source code or the Espresso ZIP just to run the launcher.
 
-### Settings
-- Easily switch Roblox update channels
-- Option to fully block Roblox updates
-- Replace Roblox’s changing version-xxxxx folders with a non-changing folder
-- View all currently available Roblox channels
+## More Info
 
-### Extra Features
-- Easily import settings from other bootstrappers such as Fishstrap and Bloxstrap
-- Create game shortcuts for faster game joining
-- Join servers in your region more easily using the region selector
-- Join servers in your selected region through the system tray while playing
-- Built-in account manager
+I used AI while making CoffeeStrap to help remove features I thought were bloated, work on the UI and add more useful tweaks. The tweaks don't read or edit Roblox's process memory, inject code or shaders, patch game binaries, or bypass the FastFlag allowlist. They use supported flags, saved settings, local content replacements and optional Windows controls. That doesn't mean every feature will work in every game or on every GPU.
 
-More features are planned! You can also suggest new features in the Issues section.
+CoffeeStrap is a community project and isn't affiliated with Roblox. Thanks to Froststrap, Fishstrap, Bloxstrap and everyone whose work made this possible. The original licenses and credits are kept with the source.
 
----
-
-## Licensing
-
-All new code revisions are under [MPL-2.0](https://opensource.org/license/MPL-2.0).
-
-## Stargazing
-
-To support the development of Froststrap, consider giving the repository a star.
-
-<a href="https://www.star-history.com/?repos=Froststrap%2FFroststrap&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Froststrap/Froststrap&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Froststrap/Froststrap&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Froststrap/Froststrap&type=date&legend=top-left" />
- </picture>
-</a>
-
-<!-- Badge defs -->
-[badge-repo-license]: https://img.shields.io/github/license/Froststrap/Froststrap?style=for-the-badge&color=37add9
-[badge-repo-downloads]: https://img.shields.io/github/downloads/Froststrap/Froststrap/latest/total?style=for-the-badge&color=37add9
-[badge-repo-downloads-total]: https://img.shields.io/github/downloads/Froststrap/Froststrap/total?style=for-the-badge&color=37add9
-[badge-repo-latest]: https://img.shields.io/github/v/release/Froststrap/Froststrap?style=for-the-badge&color=37add9
-[badge-repo-stars]: https://img.shields.io/github/stars/Froststrap/Froststrap?style=for-the-badge&color=37add9
-[badge-discord]: https://img.shields.io/discord/1364660238963179520?style=for-the-badge&label=discord&color=5865f2
-
-[repo-license]: https://github.com/Froststrap/Froststrap/blob/main/LICENSE
-[repo-actions]: https://github.com/Froststrap/Froststrap/actions
-[repo-releases]: https://github.com/Froststrap/Froststrap/releases
-[repo-latest]: https://github.com/Froststrap/Froststrap/releases/latest
-[repo-stargazer]: https://github.com/Froststrap/Froststrap/stargazers
-
-[discord-invite]: https://discord.gg/KdR9vpRcUN
+Want to build it yourself? Start with [BUILDING.md](docs/BUILDING.md). The source is available under [MPL-2.0](LICENSE); third-party notices are in [LICENSES](LICENSES). Older implementation and verification notes are kept in [the development history](docs/DEVELOPMENT-HISTORY.md).

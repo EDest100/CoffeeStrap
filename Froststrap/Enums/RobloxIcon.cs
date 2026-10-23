@@ -18,7 +18,7 @@
         Icon2019,
         [EnumName(StaticName = "2022")]
         Icon2022,
-        [EnumName(StaticName = "Froststrap")]
+        [EnumName(StaticName = "CoffeeStrap")]
         IconFroststrap,
         [EnumName(FromTranslation = "Common.Custom")]
         IconCustom,

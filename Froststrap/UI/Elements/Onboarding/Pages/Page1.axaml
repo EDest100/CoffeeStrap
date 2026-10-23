@@ -57,6 +57,9 @@ SPDX-License-Identifier: MPL-2.0
                         <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
                         <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
                     </Style>
+                    <Style Selector="ListBoxItem:selected TextBlock">
+                        <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+                    </Style>
                 </ListBox.Styles>
                 <ListBox.ItemTemplate>
                     <DataTemplate x:DataType="x:String">

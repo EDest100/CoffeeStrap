@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -19,7 +19,7 @@ namespace Froststrap.Models.SettingTasks
             "Icon2019.ico",
             "Icon2022.ico",
             "Icon2025.ico",
-            "IconFroststrap.ico",
+            "IconCoffeeStrap.ico",
             "IconEarly2015.ico",
             "IconLate2015.ico"
         ];

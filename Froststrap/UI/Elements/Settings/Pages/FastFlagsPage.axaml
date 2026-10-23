@@ -1,12 +1,6 @@
-<!--
-SPDX-FileCopyrightText: 2026 Froststrap
-
-SPDX-License-Identifier: MPL-2.0
--->
-
-<UserControl
-    x:Class="Froststrap.UI.Elements.Settings.Pages.FastFlagsPage"
-    xmlns="https://github.com/avaloniaui"
+<!-- SPDX-FileCopyrightText: 2026 Froststrap; 2026 CoffeeStrap contributors
+     SPDX-License-Identifier: MPL-2.0 -->
+<UserControl xmlns="https://github.com/avaloniaui"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="clr-namespace:Froststrap.UI.Elements.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -14,162 +8,138 @@ SPDX-License-Identifier: MPL-2.0
     xmlns:resources="using:Froststrap.Resources"
     xmlns:vm="clr-namespace:Froststrap.UI.ViewModels.Settings"
     xmlns:ic="clr-namespace:LucideAvalonia;assembly=LucideAvalonia"
-    d:DesignHeight="2500"
-    d:DesignWidth="1200"
-    x:DataType="vm:FastFlagsViewModel"
-    mc:Ignorable="d">
-
-    <ScrollViewer>
-        <StackPanel Margin="14">
-
-            <controls:CardAction
-                Icon="FilePenLine"
-                Header="{x:Static resources:Strings.Menu_FastFlagEditor_Title}"
-                Description="{x:Static resources:Strings.Menu_FastFlags_Editor_Description}"
-                Command="{Binding OpenFastFlagEditorCommand}"/>
-
-            <controls:OptionControl
-                x:Name="ManagerEnabled"
-                Header="{x:Static resources:Strings.Menu_FastFlags_ManagerEnabled_Title}"
-                Description="{x:Static resources:Strings.Menu_FastFlags_ManagerEnabled_Description}">
-                <ToggleSwitch IsChecked="{Binding UseFastFlagManager, Mode=TwoWay}" />
-            </controls:OptionControl>
-
-            <controls:OptionControl
-                x:Name="Reset"
-                Header="{x:Static resources:Strings.Menu_FastFlags_Reset_Title}">
-                <ToggleSwitch IsChecked="{Binding ResetConfiguration, Mode=TwoWay}" />
-            </controls:OptionControl>
-			<Separator Margin="0,8" />
-
-            <controls:OptionControl
-                Header="{x:Static resources:Strings.Menu_FastFlags_Presets_MSAA_Title}"
-                Description="{x:Static resources:Strings.Menu_FastFlags_Presets_MSAA_Description}">
-                <ComboBox
-                    Margin="0"
-                    Padding="10,5"
-                    MinWidth="200"
-                    ItemsSource="{Binding MSAALevels.Keys, Mode=OneTime}"
-                    SelectedItem="{Binding SelectedMSAALevel, Mode=TwoWay}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding Path=., Converter={StaticResource EnumNameConverter}}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-            </controls:OptionControl>
-
-            <controls:OptionControl
-                Header="{x:Static resources:Strings.Menu_FastFlags_Presets_PauseVoxelizer_Title}"
-                Description="{x:Static resources:Strings.Menu_FastFlags_Presets_PauseVoxelizer_Description}">
-                <ToggleSwitch IsChecked="{Binding PauseVoxelizer, Mode=TwoWay}" />
-            </controls:OptionControl>
-
-            <controls:OptionControl
-                Header="{x:Static resources:Strings.Menu_FastFlags_Presets_GraySky_Title}"
-                Description="{x:Static resources:Strings.Menu_FastFlags_Presets_GraySky_Description}">
-                <ToggleSwitch IsChecked="{Binding GraySky, Mode=TwoWay}" />
-            </controls:OptionControl>
-
-            <controls:OptionControl
-                Header="{x:Static resources:Strings.Menu_FastFlags_Presets_RemoveGrass_Title}"
-                Description="{x:Static resources:Strings.Menu_FastFlags_Presets_RemoveGrass_Description}">
-                <ToggleSwitch IsChecked="{Binding RemoveGrass, Mode=TwoWay}" />
-            </controls:OptionControl>
-
-            <controls:CardExpander
-                IsExpanded="{Binding Path=LowPolyMeshesEnabled, Mode=OneWay}"
-                Classes="NoUserExpansion"
-                Header="{x:Static resources:Strings.Menu_FastFlags_Presets_LowPolyMeshes_Title}"
-                Description="{x:Static resources:Strings.Menu_FastFlags_Presets_LowPolyMeshes_Description}">
-                <controls:CardExpander.HeaderContent>
-                    <ToggleSwitch IsChecked="{Binding LowPolyMeshesEnabled, Mode=TwoWay}" />
-                </controls:CardExpander.HeaderContent>
-                <StackPanel Margin="0,8,0,0" Spacing="8">
-                    <TextBlock
-                        Padding="4"
-                        Text="{x:Static resources:Strings.Menu_FastFlags_Presets_LowPolyMeshes_Information}"
-                        FontSize="13"
-                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                        TextAlignment="Center"
-                        TextWrapping="Wrap" />
-                    <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock
-                            Grid.Column="0"
-                            Text="{x:Static resources:Strings.Common_Performance}"
-                            FontSize="13"
-                            VerticalAlignment="Center" />
-                        <Slider
-                            Grid.Column="1"
-                            Margin="12,0"
-                            Minimum="0"
-                            Maximum="9"
-                            TickFrequency="1"
-                            IsSnapToTickEnabled="True"
-                            Value="{Binding LowPolyMeshesLevel, Mode=TwoWay}" />
-                        <TextBlock
-                            Grid.Column="2"
-                            Text="{x:Static resources:Strings.Common_Quality}"
-                            FontSize="13"
-                            VerticalAlignment="Center" />
-                    </Grid>
-                </StackPanel>
-            </controls:CardExpander>
-
-            <controls:OptionControl
-                Header="{x:Static resources:Strings.Menu_FastFlags_Presets_FixDisplayScaling_Title}"
-                Description="{x:Static resources:Strings.Menu_FastFlags_Presets_FixDisplayScaling_Description}"
-                HelpLink="https://bloxstraplabs.com/wiki/features/engine-settings/#preserving-rendering-quality">
-                <ToggleSwitch IsChecked="{Binding FixDisplayScaling, Mode=TwoWay}" />
-            </controls:OptionControl>
-
-            <controls:OptionControl
-                Header="{x:Static resources:Strings.Menu_FastFlags_Presets_RenderingMode_Title}"
-                Description="{x:Static resources:Strings.Menu_FastFlags_Presets_RenderingMode_Description}"
-                HelpLink="https://github.com/Meddsam/Froststrap/wiki/A-guide-to-FastFlags#rendering-mode">
-				<ComboBox
-					MinWidth="200"
-					Margin="0"
-					Padding="10,5"
-					ItemsSource="{Binding RenderingModeOptions, Mode=OneTime}"
-					SelectedItem="{Binding SelectedRenderingModeItem, Mode=TwoWay}">
-					<ComboBox.ItemTemplate>
-						<DataTemplate>
-							<TextBlock Text="{Binding Value}" />
-						</DataTemplate>
-					</ComboBox.ItemTemplate>
-				</ComboBox>
-            </controls:OptionControl>
-
-            <controls:OptionControl
-                Header="{x:Static resources:Strings.Menu_FastFlags_Presets_OverrideGraphicQuality_Title}"
-                Description="{x:Static resources:Strings.Menu_FastFlags_Presets_OverrideGraphicQuality_Description}"
-                HelpLink="https://github.com/Meddsam/Froststrap/wiki/A-guide-to-FastFlags#override-graphic-level">
-                <ComboBox
-                    MinWidth="200"
-                    Margin="0"
-                    Padding="10,5"
-                    ItemsSource="{Binding QualityLevels.Keys, Mode=OneTime}"
-                    SelectedItem="{Binding SelectedQualityLevel, Mode=TwoWay}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding ., Converter={StaticResource EnumNameConverter}}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-            </controls:OptionControl>
-
-            <controls:OptionControl
-                Header="{x:Static resources:Strings.Menu_FastFlags_Presets_TextureQuality_Title}"
-                Description="{x:Static resources:Strings.Menu_FastFlags_Presets_TextureQuality_Description}">
-                <ComboBox Width="200" Margin="5,0,0,0" Padding="10,5,10,5" ItemsSource="{Binding TextureQualities.Keys, Mode=OneTime}" SelectedItem="{Binding SelectedTextureQuality, Mode=TwoWay}">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate>
-                            <TextBlock Text="{Binding ., Converter={StaticResource EnumNameConverter}}" />
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-            </controls:OptionControl>
-        </StackPanel>
-    </ScrollViewer>
+    xmlns:fa="using:FluentAvalonia.UI.Controls"
+    x:Class="Froststrap.UI.Elements.Settings.Pages.FastFlagsPage"
+    x:DataType="vm:CuratedFastFlagsViewModel"
+    mc:Ignorable="d" >
+<controls:SmoothScrollViewer><StackPanel Margin="{DynamicResource CoffeePageMargin}" Spacing="16">
+<controls:CardExpander Header="Performance profiles" Description="Choose a rendering tradeoff with a restorable backup." IsExpanded="True">
+    <StackPanel Spacing="12">
+        <ComboBox ItemsSource="{Binding Performance.Profiles}" SelectedItem="{Binding Performance.Selected, Mode=TwoWay}" HorizontalAlignment="Stretch"/>
+        <TextBlock Text="{Binding Performance.Description}" TextWrapping="Wrap"/>
+        <ToggleButton Content="Compare settings" IsChecked="{Binding Performance.ShowComparison, Mode=TwoWay}" HorizontalAlignment="Left"/>
+        <controls:AnimatedReveal IsExpanded="{Binding Performance.ShowComparison}">
+            <StackPanel Spacing="8" Margin="0,4,0,4">
+                <TextBlock Text="{Binding Performance.ComparisonSummary}" TextWrapping="Wrap" FontSize="12"/>
+                <Grid ColumnDefinitions="2*,*,*" ColumnSpacing="12"><TextBlock Text="Setting" FontWeight="SemiBold"/><TextBlock Grid.Column="1" Text="Current" FontWeight="SemiBold"/><TextBlock Grid.Column="2" Text="Selected profile" FontWeight="SemiBold" TextWrapping="Wrap"/></Grid>
+                <ItemsControl ItemsSource="{Binding Performance.Changes}"><ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:ProfileValueChange">
+                    <Grid ColumnDefinitions="2*,*,*" ColumnSpacing="12" Margin="0,4"><TextBlock Text="{Binding Label}" TextWrapping="Wrap"/><TextBlock Grid.Column="1" Text="{Binding CurrentDisplay}" TextWrapping="Wrap" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/><TextBlock Grid.Column="2" Text="{Binding SelectedDisplay}" TextWrapping="Wrap" FontWeight="SemiBold"/></Grid>
+                </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+            </StackPanel>
+        </controls:AnimatedReveal>
+        <WrapPanel><Button Content="Apply profile" Command="{Binding Performance.ApplyCommand}" Margin="0,0,8,4"/><Button Content="Restore previous profile" Command="{Binding Performance.RestoreCommand}" Margin="0,0,0,4"/></WrapPanel>
+        <controls:CardAction Header="Manage experience profiles" Description="Save supported flags and assign a snapshot to place IDs for their next direct launch. Selected global effects, texture, renderer and fullscreen preferences retain priority." Icon="Gamepad2" Click="ManageExperienceProfiles_Click"/>
+        <TextBlock Text="{Binding Performance.Status}" TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+    </StackPanel>
+</controls:CardExpander>
+<controls:OptionControl Header="Mesh Detail" Description="Control CSG detail distances. Higher levels retain detail farther away; zero writes zero distances. Disable to restore Roblox defaults." Classes="stacked">
+    <StackPanel Spacing="10"><ToggleSwitch IsChecked="{Binding Graphics.MeshDetailEnabled, Mode=TwoWay}"/>
+        <fa:ShowValueSlider Minimum="0" Maximum="9" TickFrequency="1" IsSnapToTickEnabled="True" Value="{Binding Graphics.MeshDetail, Mode=TwoWay}" ShowValue="True" IsEnabled="{Binding Graphics.MeshDetailEnabled}"/>
+    </StackPanel>
+</controls:OptionControl>
+<controls:CardExpander Header="Advanced mesh distances" Description="Override each CSG LOD threshold independently." IsExpanded="False">
+    <ItemsControl ItemsSource="{Binding Graphics.MeshThresholds}"><ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:FlagNumberSetting">
+        <controls:OptionControl Header="{Binding Title}" Classes="stacked"><Grid ColumnDefinitions="Auto,*" ColumnSpacing="12"><ToggleSwitch IsChecked="{Binding Enabled, Mode=TwoWay}"/><NumericUpDown Grid.Column="1" Minimum="0" Maximum="{Binding Maximum}" Increment="1" Value="{Binding Value, Mode=TwoWay}" IsEnabled="{Binding Enabled}" FormatString="0"/></Grid></controls:OptionControl>
+    </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+</controls:CardExpander>
+<ItemsControl ItemsSource="{Binding Settings}"><ItemsControl.ItemsPanel><ItemsPanelTemplate><controls:ResponsiveCardGrid MinimumCardWidth="310" MaximumColumns="2" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+<ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:FlagSetting"><controls:OptionControl Header="{Binding Title}" Description="{Binding Description}"><ComboBox ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected, Mode=TwoWay}" PlaceholderText="Custom values" /></controls:OptionControl></DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+<controls:CardExpander Header="Roblox graphics" Description="Saved frame rate, quality and display settings. Live changes are not verified." IsExpanded="False" IsEnabled="{Binding NativeSettingsLoaded}"><controls:NativeGraphicsSettings DataContext="{Binding NativeSettings}" /></controls:CardExpander>
+<controls:CardExpander Header="Grass customization" Description="Set grass distances and motion separately. Disable each override to use Roblox defaults." IsExpanded="False">
+    <ItemsControl ItemsSource="{Binding Graphics.GrassSettings}"><ItemsControl.ItemTemplate><DataTemplate x:DataType="vm:FlagNumberSetting">
+        <controls:OptionControl Header="{Binding Title}" Classes="stacked"><Grid ColumnDefinitions="Auto,*" ColumnSpacing="12"><ToggleSwitch IsChecked="{Binding Enabled, Mode=TwoWay}"/><NumericUpDown Grid.Column="1" Minimum="0" Maximum="{Binding Maximum}" Increment="1" Value="{Binding Value, Mode=TwoWay}" IsEnabled="{Binding Enabled}" FormatString="0"/></Grid></controls:OptionControl>
+    </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
+</controls:CardExpander>
+<Button Content="Restore Roblox visuals" Command="{Binding ResetVisualsCommand}" HorizontalAlignment="Left"/>
+<controls:CardExpander Header="Windowed render size" Description="Trade pixel count for a smaller game window, across NVIDIA, AMD and Intel." IsExpanded="False" IsVisible="{Binding Platform.IsWindows}">
+    <StackPanel Spacing="10">
+        <controls:OptionControl Header="Player resolution" Description="Save a client size for your next launch, or apply it to a running player below. Fits your monitor without changing desktop resolution."><ComboBox x:Name="WindowSizePreset" ItemsSource="{Binding Platform.WindowSizes}" SelectedIndex="{Binding Platform.WindowSize, Mode=TwoWay}"/></controls:OptionControl>
+        <TextBlock Text="Smaller windows give the renderer fewer pixels to draw. Graphics 10 and your effects override stay independent. Windowed mode only; fullscreen and maximized windows are skipped. You can resize normally afterward. Roblox's internal scaling and the performance benefit depend on the experience." TextWrapping="Wrap" FontSize="12"/>
+        <TextBlock Text="{Binding Platform.WindowPixelSummary}" TextWrapping="Wrap" FontWeight="SemiBold"/>
+        <controls:OptionControl Header="Running player" Description="Refresh to select a game window. With multiple players, choose explicitly." Classes="stacked">
+            <ComboBox x:Name="LivePlayerPicker" ItemsSource="{Binding Platform.LivePlayers}" SelectedItem="{Binding Platform.SelectedLivePlayer, Mode=TwoWay}" IsEnabled="{Binding Platform.CanChooseLivePlayer}" PlaceholderText="Refresh players…" HorizontalAlignment="Stretch"/>
+        </controls:OptionControl>
+        <WrapPanel>
+            <Button Content="Refresh players" Command="{Binding Platform.RefreshLivePlayersCommand}" Margin="0,0,8,6"/>
+            <Button Content="Apply to player now" Command="{Binding Platform.ApplyLiveWindowSizeCommand}" Margin="0,0,8,6"/>
+            <Button Content="Restore previous size" Command="{Binding Platform.RestoreLiveWindowSizeCommand}" Margin="0,0,8,6"/>
+            <Button Content="Keep this size" Command="{Binding Platform.KeepLiveWindowSizeCommand}" Margin="0,0,0,6"/>
+        </WrapPanel>
+        <TextBlock Text="{Binding Platform.LiveWindowStatus}" TextWrapping="Wrap" FontSize="12"/>
+        <controls:AnimatedReveal IsExpanded="{Binding Platform.LiveHasRestore}">
+            <TextBlock Text="Restore is available while this page is open. Reapplying another preset keeps the first backup. Keep this size, leaving the page or closing Settings leaves the applied size in place. Later manual moves, resizing or fullscreen changes are respected." TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+        </controls:AnimatedReveal>
+        <TextBlock Text="Last launch result" FontWeight="SemiBold" FontSize="12"/>
+        <Border Padding="10" CornerRadius="6" Background="{DynamicResource SubtleFillColorSecondaryBrush}"><TextBlock Text="{Binding Platform.WindowSizeStatus}" TextWrapping="Wrap" FontSize="12"/></Border>
+        <Button Content="Refresh last window result" Command="{Binding Platform.RefreshWindowSizeStatusCommand}" HorizontalAlignment="Left"/>
+        <TextBlock Text="Roblox default stops resizing on future launches. If the watcher stops while its size is still unchanged, CoffeeStrap restores the original window. A size you change yourself is retained." TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+    </StackPanel>
+</controls:CardExpander>
+<controls:CardExpander Header="Texture resolution budget" Description="Use smaller existing mip levels for selected built-in texture groups." IsExpanded="False">
+    <StackPanel Spacing="10">
+        <TextBlock Text="Choose lower detail for each group. Applies after enabled mods on your next Roblox launch. Original restores the group's full resolution." TextWrapping="Wrap" FontSize="12"/>
+        <controls:SettingsCardPanel>
+            <controls:OptionControl Header="Sky textures" Description="The outdoor and indoor default sky faces; custom game sky IDs are unaffected."><ComboBox ItemsSource="{Binding Visuals.TextureResolutions}" SelectedIndex="{Binding Visuals.SkyTextureResolution, Mode=TwoWay}"/></controls:OptionControl>
+            <controls:OptionControl Header="Cloud detail maps" Description="Reduce the two built-in 2D cloud detail and advection maps, independently of the volume maps below."><ComboBox ItemsSource="{Binding Visuals.TextureResolutions}" SelectedIndex="{Binding Visuals.CloudTextureResolution, Mode=TwoWay}"/></controls:OptionControl>
+            <controls:OptionControl Header="Cloud volume maps" Description="Use smaller existing mip levels for default 3D cloud shape/detail maps and their 2D fallback. Only affects experiences that render these clouds; cloud simulation stays enabled."><ComboBox ItemsSource="{Binding Visuals.TextureResolutions}" SelectedIndex="{Binding Visuals.CloudVolumeResolution, Mode=TwoWay}"/></controls:OptionControl>
+            <controls:OptionControl Header="Water normal maps" Description="Lower the resolution of the 25 built-in ripple maps."><ComboBox ItemsSource="{Binding Visuals.TextureResolutions}" SelectedIndex="{Binding Visuals.WaterTextureResolution, Mode=TwoWay}"/></controls:OptionControl>
+            <controls:OptionControl Header="Surface maps" Description="Plastic color/normal/detail maps and the built-in stud atlas."><ComboBox ItemsSource="{Binding Visuals.TextureResolutions}" SelectedIndex="{Binding Visuals.SurfaceTextureResolution, Mode=TwoWay}"/></controls:OptionControl>
+            <controls:OptionControl Header="Effect sprites" Description="Default fire, smoke, sparkles, forcefield and explosion shapes; custom game images are unaffected."><ComboBox ItemsSource="{Binding Visuals.TextureResolutions}" SelectedIndex="{Binding Visuals.EffectTextureResolution, Mode=TwoWay}"/></controls:OptionControl>
+        </controls:SettingsCardPanel>
+        <TextBlock Text="Distance and effect counts stay the same. Files without supported mipmaps are skipped; see Texture Editor's last application report. Performance gains are not measured." TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+    </StackPanel>
+</controls:CardExpander>
+<controls:CardExpander Header="Visual asset tweaks" Description="Built-in texture replacements. Apply on your next launch; turn off to restore the original files." IsExpanded="False">
+    <StackPanel Spacing="8">
+        <controls:OptionControl Header="Default sky palette" Description="Recolor Roblox's six default sky faces. An installed skybox mod takes priority; game-provided skies and gray-sky mode can override this."><ComboBox ItemsSource="{Binding Visuals.SkyPalettes}" SelectedItem="{Binding Visuals.SkyPalette, Mode=TwoWay}"/></controls:OptionControl>
+        <controls:OptionControl Header="Smooth water" Description="Flatten the 25 built-in water normal maps to reduce visible ripples."><ToggleSwitch IsChecked="{Binding Visuals.SmoothWater, Mode=TwoWay}"/></controls:OptionControl>
+        <controls:OptionControl Header="Flat plastic textures" Description="Flatten the built-in plastic color, normal and detail maps. This changes material texture variation; game lighting and custom materials still apply."><ToggleSwitch IsChecked="{Binding Visuals.SmoothPlastic, Mode=TwoWay}"/></controls:OptionControl>
+        <controls:OptionControl Header="Plain stud surfaces" Description="Replace the default stud shading atlas with plain white detail for a flatter surface. Part colors and actual geometry stay intact. Custom game textures can override it."><ToggleSwitch IsChecked="{Binding Visuals.SmoothStuds, Mode=TwoWay}"/></controls:OptionControl>
+        <controls:OptionControl Header="Replace default indoor sky too" Description="Apply the selected skybox to both built-in sky texture sets. Custom sky asset IDs supplied by a game can still override them."><ToggleSwitch IsChecked="{Binding Visuals.ReplaceIndoorSky, Mode=TwoWay}"/></controls:OptionControl>
+        <controls:OptionControl Header="Hide default sun and moon" Description="Replace the built-in celestial disc textures. Game-provided textures remain controlled by the game."><ToggleSwitch IsChecked="{Binding Visuals.HideSunMoon, Mode=TwoWay}"/></controls:OptionControl>
+    </StackPanel>
+</controls:CardExpander>
+<controls:CardExpander Header="Built-in effect styles" Description="Default textures only. Custom game images stay unchanged." IsExpanded="False">
+    <StackPanel Spacing="8">
+        <controls:OptionControl Header="Fire style" Description="Change the default fire and ember colors, or hide their textures."><ComboBox ItemsSource="{Binding Visuals.FireStyles}" SelectedItem="{Binding Visuals.FireStyle, Mode=TwoWay}"/></controls:OptionControl>
+        <controls:OptionControl Header="Smoke style" Description="Choose light or charcoal smoke, or hide the default smoke texture."><ComboBox ItemsSource="{Binding Visuals.SmokeStyles}" SelectedItem="{Binding Visuals.SmokeStyle, Mode=TwoWay}"/></controls:OptionControl>
+        <controls:OptionControl Header="Sparkles style" Description="Use gold or icy sparkles, or hide the default sparkle texture."><ComboBox ItemsSource="{Binding Visuals.SparklesStyles}" SelectedItem="{Binding Visuals.SparklesStyle, Mode=TwoWay}"/></controls:OptionControl>
+        <controls:OptionControl Header="Forcefield style" Description="Recolor the default glow and vortex, or hide their textures. This does not change protection or collisions."><ComboBox ItemsSource="{Binding Visuals.ForceFieldStyles}" SelectedItem="{Binding Visuals.ForceFieldStyle, Mode=TwoWay}"/></controls:OptionControl>
+        <controls:OptionControl Header="Explosion layers" Description="Keep only the core/ring or hide all four modern default explosion sprites. Custom game effects remain unchanged."><ComboBox ItemsSource="{Binding Visuals.ExplosionStyles}" SelectedItem="{Binding Visuals.ExplosionStyle, Mode=TwoWay}"/></controls:OptionControl>
+    </StackPanel>
+</controls:CardExpander>
+<controls:CardExpander Header="Hardware &amp; window title" Description="Detected hardware, driver settings and the current game name." IsExpanded="False" IsVisible="{Binding Platform.IsWindows}">
+    <StackPanel Spacing="10">
+        <TextBlock Text="{Binding Platform.HardwareLabel}" TextWrapping="Wrap"/>
+        <WrapPanel><Button Content="Windows graphics preferences" Command="{Binding Platform.OpenWindowsGraphicsCommand}" Margin="0,0,8,8"/><Button Content="Refresh hardware &amp; path" Command="{Binding Platform.RefreshHardwareCommand}" Margin="0,0,8,8"/></WrapPanel>
+        <controls:OptionControl Header="GPU driver app" Description="{Binding Platform.PanelAvailability}" IsVisible="{Binding Platform.HasDriverPanel}">
+            <ComboBox ItemsSource="{Binding Platform.DriverPanels}" SelectedItem="{Binding Platform.SelectedPanel, Mode=TwoWay}" MinWidth="170" MaxWidth="260">
+                <ComboBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding Name}"/></DataTemplate></ComboBox.ItemTemplate>
+            </ComboBox>
+        </controls:OptionControl>
+        <Button Content="Open GPU driver settings" Command="{Binding Platform.OpenDriverPanelCommand}" IsEnabled="{Binding Platform.HasDriverPanel}" HorizontalAlignment="Left"/>
+        <TextBlock Text="{Binding Platform.PanelAvailability}" TextWrapping="Wrap" FontSize="12" IsVisible="{Binding !Platform.HasDriverPanel}"/>
+        <TextBlock Text="Roblox program profile" FontWeight="SemiBold"/>
+        <TextBox Text="{Binding Platform.PlayerPath, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" MaxHeight="100" AutomationProperties.Name="Installed Roblox executable path"/>
+        <Button Content="Show Roblox executable" Command="{Binding Platform.ShowPlayerFileCommand}" IsEnabled="{Binding Platform.HasPlayerPath}" HorizontalAlignment="Left"/>
+        <TextBlock Text="Add this executable in Windows or your GPU app's per-program settings. Its folder may change after Roblox updates. To undo a manual preference, reset or remove that program profile in the same app. Ryzen identifies the CPU; GPU options depend on the display adapter." TextWrapping="Wrap" FontSize="12"/>
+        <Border Padding="10" CornerRadius="6" Background="{DynamicResource SubtleFillColorSecondaryBrush}" IsVisible="{Binding Platform.HardwareStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"><TextBlock Text="{Binding Platform.HardwareStatus}" TextWrapping="Wrap" FontSize="12"/></Border>
+        <controls:OptionControl Header="Game name in window title" Description="Follow game changes in the Roblox window title. Starts with your next CoffeeStrap launch."><ToggleSwitch IsChecked="{Binding Platform.ShowGameInTitle, Mode=TwoWay}"/></controls:OptionControl>
+    </StackPanel>
+</controls:CardExpander>
+<controls:CardExpander Header="Windows session scheduling" Description="Opt-in process settings for the next launched player." IsExpanded="False" IsVisible="{Binding Platform.IsWindows}">
+    <StackPanel Spacing="10">
+        <TextBlock Text="Uses Windows APIs across NVIDIA, AMD and Intel. These are scheduling requests, not guaranteed FPS boosts. Windows permissions or a driver can reject a request. Changes are scoped to the launched player and restored when its watcher stops. More active CPU/timer policies can use more battery." TextWrapping="Wrap" FontSize="12"/>
+        <controls:SettingsCardPanel>
+            <controls:OptionControl Header="Above-normal CPU priority" Description="Give the player higher scheduling preference under CPU contention."><ToggleSwitch IsChecked="{Binding Platform.AboveNormalCpuPriority, Mode=TwoWay}"/></controls:OptionControl>
+            <controls:OptionControl Header="Above-normal GPU priority" Description="Request the Windows WDDM above-normal GPU process class. Availability depends on the driver and access rights."><ToggleSwitch IsChecked="{Binding Platform.AboveNormalGpuPriority, Mode=TwoWay}"/></controls:OptionControl>
+            <controls:OptionControl Header="Keep performance QoS" Description="Opt the player out of execution-speed power throttling for its launched session."><ToggleSwitch IsChecked="{Binding Platform.PreventEcoQoS, Mode=TwoWay}"/></controls:OptionControl>
+            <controls:OptionControl Header="Honor player timer requests" Description="Ask Windows to keep honoring Roblox's own timer-resolution requests while occluded. Does not create a system-wide timer request."><ToggleSwitch IsChecked="{Binding Platform.HonorTimerRequests, Mode=TwoWay}"/></controls:OptionControl>
+        </controls:SettingsCardPanel>
+        <TextBlock Text="{Binding Platform.SchedulingStatus}" TextWrapping="Wrap" FontSize="12"/>
+        <Button Content="Refresh last session result" Command="{Binding Platform.RefreshSchedulingStatusCommand}" HorizontalAlignment="Left"/>
+    </StackPanel>
+</controls:CardExpander>
+<TextBlock Text="Roblox may change supported overrides. Roblox default removes the override." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+</StackPanel></controls:SmoothScrollViewer>
 </UserControl>

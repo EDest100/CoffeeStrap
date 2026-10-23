@@ -8,7 +8,7 @@
         public int DatacenterId { get; set; }
         [JsonPropertyName("first_seen")]
         public DateTime FirstSeen { get; set; }
-        [JsonPropertyName("ip_address")]
+        [JsonIgnore]
         public string? IpAddress { get; set; }
         [JsonPropertyName("place_version")]
         public int PlaceVersion { get; set; }

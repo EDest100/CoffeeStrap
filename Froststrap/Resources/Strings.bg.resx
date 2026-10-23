@@ -118,7 +118,7 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Bootstrapper.AutoUpdateFailed" xml:space="preserve">
-    <value>Froststrap не успя да се актуализира автоматично до версия {0}. Моля, актуализирайте го ръчно, като го изтеглите и стартирате от уебсайта.</value>
+    <value>CoffeeStrap не успя да се актуализира автоматично до версия {0}. Моля, актуализирайте го ръчно, като го изтеглите и стартирате от уебсайта.</value>
   </data>
   <data name="Bootstrapper.ConfirmLaunch" xml:space="preserve">
     <value>Roblox в момента работи и стартирането на още един екземпляр ще го затвори. Сигурен ли си, че искаш да продължиш със стартирането?</value>
@@ -127,10 +127,10 @@
     <value>В момента Roblox може да не работи. За повече информация вижте {0}.</value>
   </data>
   <data name="Dialog.Connectivity.BadConnection" xml:space="preserve">
-    <value>Не беше възможно да се установи връзка, което вероятно се дължи на слаба интернет връзка или блокиране от защитна стена. Ако връзката ви е наред, моля, уверете се, че антивирусната ви програма не блокира Froststrap.</value>
+    <value>Не беше възможно да се установи връзка, което вероятно се дължи на слаба интернет връзка или блокиране от защитна стена. Ако връзката ви е наред, моля, уверете се, че антивирусната ви програма не блокира CoffeeStrap.</value>
   </data>
   <data name="Bootstrapper.NotEnoughSpace" xml:space="preserve">
-    <value>Froststrap няма достатъчно място на диска, за да изтегли и инсталира Roblox. Моля, освободете малко място на диска и опитайте отново.</value>
+    <value>CoffeeStrap няма достатъчно място на диска, за да изтегли и инсталира Roblox. Моля, освободете малко място на диска и опитайте отново.</value>
   </data>
   <data name="Bootstrapper.Status.ApplyingModifications" xml:space="preserve">
     <value>Прилагане на модификации в Roblox...</value>
@@ -166,10 +166,10 @@
     <comment>Text for style previews that use text button that says "Cancel"</comment>
   </data>
   <data name="Bootstrapper.SuccessfullyUninstalled" xml:space="preserve">
-    <value>Froststrap беше успешно деинсталиран</value>
+    <value>CoffeeStrap беше успешно деинсталиран</value>
   </data>
   <data name="Bootstrapper.Uninstall.RobloxRunning" xml:space="preserve">
-    <value>Roblox в момента работи, но трябва да бъде затворен, преди да деинсталирате Froststrap. Искате ли да затворите Roblox сега?</value>
+    <value>Roblox в момента работи, но трябва да бъде затворен, преди да деинсталирате CoffeeStrap. Искате ли да затворите Roblox сега?</value>
   </data>
   <data name="Bootstrapper.WMFNotFound" xml:space="preserve">
     <value>Roblox изисква използването на компоненти на Windows Media Foundation. Изглежда, че те липсват, вероятно защото използвате версия N на Windows. Моля, първо ги инсталирайте, а след това стартирайте Roblox.</value>
@@ -278,22 +278,22 @@
     <value>Грешка при свързването</value>
   </data>
   <data name="Dialog.Connectivity.UnableToConnect" xml:space="preserve">
-    <value>Froststrap не може да се свърже с {0}</value>
+    <value>CoffeeStrap не може да се свърже с {0}</value>
     <comment>{0} is the name of a service (i.e. Roblox, GitHub)</comment>
   </data>
   <data name="Dialog.Exception.CopyLogContents" xml:space="preserve">
     <value>Копиране на съдържанието на лога</value>
   </data>
   <data name="Dialog.Exception.Info.1" xml:space="preserve">
-    <value>Възникна изключение при изпълнението на Froststrap/Froststrap</value>
+    <value>Възникна изключение при изпълнението на CoffeeStrap</value>
   </data>
   <data name="Dialog.Exception.Info.2" xml:space="preserve">
-    <value>Първо проверете [Froststrap Wiki]({0}), за да видите дали този проблем вече е решен.
+    <value>Първо проверете [CoffeeStrap Wiki]({0}), за да видите дали този проблем вече е решен.
 
 Ако не е, моля, докладвайте това изключение чрез [GitHub issue]({1}), като приложите копие от създадения лог файл.</value>
   </data>
   <data name="Dialog.Exception.Title" xml:space="preserve">
-    <value>Изключение „Froststrap“</value>
+    <value>Изключение „CoffeeStrap“</value>
   </data>
   <data name="Common.Custom" xml:space="preserve">
     <value>По избор</value>
@@ -305,16 +305,16 @@
     <value>Фалшив Byfron (~2023)</value>
   </data>
   <data name="Enums.BootstrapperStyle.FluentDialog" xml:space="preserve">
-    <value>Froststrap (непрозрачен)</value>
+    <value>CoffeeStrap (непрозрачен)</value>
   </data>
   <data name="Enums.BootstrapperStyle.TwentyFiveDialog" xml:space="preserve">
     <value>Roblox (~2025 г.)</value>
   </data>
   <data name="Enums.BootstrapperStyle.ClassicFluentDialog" xml:space="preserve">
-    <value>Froststrap (Класически)</value>
+    <value>CoffeeStrap (Класически)</value>
   </data>
   <data name="Enums.BootstrapperStyle.FluentAeroDialog" xml:space="preserve">
-    <value>Фростстрап (стъкло)</value>
+    <value>CoffeeStrap (стъкло)</value>
   </data>
   <data name="Enums.CursorType.From2006" xml:space="preserve">
     <value>~2006 (в анимационен стил)</value>
@@ -524,10 +524,10 @@
     <value>Не успях да изтрия персонализираната тема {0}: {1}</value>
   </data>
   <data name="InstallChecker.Updated" xml:space="preserve">
-    <value>Froststrap беше актуализиран до версия {0}</value>
+    <value>CoffeeStrap беше актуализиран до версия {0}</value>
   </data>
   <data name="InstallChecker.VersionDifferentThanInstalled" xml:space="preserve">
-    <value>Версията на Froststrap, която сте стартирали, е различна от версията, която имате инсталирана в момента.
+    <value>Версията на CoffeeStrap, която сте стартирали, е различна от версията, която имате инсталирана в момента.
 Искате ли да актуализирате инсталираната в момента версия?</value>
   </data>
   <data name="Menu.About.Contributors" xml:space="preserve">
@@ -543,7 +543,7 @@
     <value>Вдъхновения</value>
   </data>
   <data name="Menu.About.Description" xml:space="preserve">
-    <value>Вилка „Fishstrap“/„Froststrap“.</value>
+    <value>Froststrap / Fishstrap / Bloxstrap</value>
   </data>
   <data name="Menu.About.DiscordServer" xml:space="preserve">
     <value>Сървър в Discord</value>
@@ -571,10 +571,10 @@
     <value>Моля, имайте предвид, че не всички промени ще влязат в сила веднага, докато не затворите всички отворени в момента инстанции на Roblox.</value>
   </data>
   <data name="Menu.AlreadyRunning.Title" xml:space="preserve">
-    <value>Froststrap вече работи</value>
+    <value>CoffeeStrap вече работи</value>
   </data>
   <data name="Menu.Appearance.Bootstrapper.Description" xml:space="preserve">
-    <value>Персонализирайте буутстрапъра на Froststrap, като използвате голямо разнообразие от опции.</value>
+    <value>Персонализирайте буутстрапъра на CoffeeStrap, като използвате голямо разнообразие от опции.</value>
   </data>
   <data name="Menu.Appearance.CustomisationTitle.Description" xml:space="preserve">
     <value>Текстът, който се показва като заглавие на буутстрапъра.</value>
@@ -583,16 +583,16 @@
     <value>Заглавие</value>
   </data>
   <data name="Menu.Appearance.Description" xml:space="preserve">
-    <value>Настройте външния вид на Froststrap.</value>
+    <value>Настройте външния вид на CoffeeStrap.</value>
   </data>
   <data name="Menu.Appearance.Custom.Theme.Title" xml:space="preserve">
     <value>Теми за приложения</value>
   </data>
   <data name="Menu.Appearance.Custom.Theme.Description" xml:space="preserve">
-    <value>Персонализирайте лесно темите на Froststrap с помощта на готови настройки или създайте свой собствен уникален дизайн.</value>
+    <value>Персонализирайте лесно темите на CoffeeStrap с помощта на готови настройки или създайте свой собствен уникален дизайн.</value>
   </data>
   <data name="Menu.Appearance.Icon.Description" xml:space="preserve">
-    <value>Изберете коя икона да използва Froststrap.</value>
+    <value>Изберете коя икона да използва CoffeeStrap.</value>
   </data>
   <data name="Menu.Appearance.Icon.Title" xml:space="preserve">
     <value>Икона</value>
@@ -601,7 +601,7 @@
     <value>Предварителен преглед</value>
   </data>
   <data name="Menu.Appearance.Launcher.Description" xml:space="preserve">
-    <value>Изберете стил на стартовия екран. Забележка: Тъмната тема не се поддържа за Legacy или Vista. За повече персонализирани стартови екрани посетете официалния Discord сървър на Froststrap.</value>
+    <value>Изберете стил на стартовия екран. Забележка: Тъмната тема не се поддържа за Legacy или Vista. За повече персонализирани стартови екрани посетете официалния Discord сървър на CoffeeStrap.</value>
   </data>
   <data name="Menu.Appearance.Launcher.Title" xml:space="preserve">
     <value>Стил „Bootstrapper“</value>
@@ -610,10 +610,10 @@
     <value>Външен вид</value>
   </data>
   <data name="Menu.Behaviour.AutoUpdate.Description" xml:space="preserve">
-    <value>Froststrap автоматично ще провери и ще се актуализира до стабилна версия при стартирането на Roblox.</value>
+    <value>CoffeeStrap автоматично ще провери и ще се актуализира до стабилна версия при стартирането на Roblox.</value>
   </data>
   <data name="Menu.Behaviour.AutoUpdate.Title" xml:space="preserve">
-    <value>Автоматично актуализиране на Froststrap</value>
+    <value>Автоматично актуализиране на CoffeeStrap</value>
   </data>
   <data name="Menu.Behaviour.ConfirmLaunches.Description" xml:space="preserve">
     <value>Предотвратява затварянето на текущата ви игра, когато случайно стартирате друг екземпляр на Roblox.</value>
@@ -622,7 +622,7 @@
     <value>Потвърждение за стартиране на инстанция</value>
   </data>
   <data name="Menu.Behaviour.Description" xml:space="preserve">
-    <value>Настройте какви действия да извършва Froststrap при стартирането на Roblox.</value>
+    <value>Настройте какви действия да извършва CoffeeStrap при стартирането на Roblox.</value>
   </data>
   <data name="Menu.Behaviour.ForceRobloxReinstall.Description" xml:space="preserve">
     <value>При следващото стартиране ще се извърши чиста инсталация на Roblox.</value>
@@ -637,7 +637,7 @@
     <value>Вече съществува запис за това име на знаме.</value>
   </data>
   <data name="Menu.Bootstrapper.CleanUp.Title" xml:space="preserve">
-    <value>Почистващ препарат за „Фростстрап“</value>
+    <value>Почистващ препарат за „CoffeeStrap“</value>
   </data>
   <data name="Menu.Bootstrapper.CleanUp.Description" xml:space="preserve">
     <value>Автоматично изтрива старите данни, за да освободи място. Първоначално създадено от Fishstrap.</value>
@@ -796,7 +796,7 @@
     <value>Близо до работния плот</value>
   </data>
   <data name="Menu.Integrations.EnableActivityTracking.Description" xml:space="preserve">
-    <value>Позволява на Froststrap да разпознае коя игра в Roblox играете. Някои функции може да изискват това.</value>
+    <value>Позволява на CoffeeStrap да разпознае коя игра в Roblox играете. Някои функции може да изискват това.</value>
   </data>
   <data name="Menu.Integrations.EnableActivityTracking.Title" xml:space="preserve">
     <value>Активиране на проследяването на активността</value>
@@ -874,7 +874,7 @@
     <value>Настройките са запазени!</value>
   </data>
   <data name="Menu.Title" xml:space="preserve">
-    <value>Настройки на Froststrap</value>
+    <value>Настройки на CoffeeStrap</value>
   </data>
   <data name="Dialog.LanguageSelector.Header" xml:space="preserve">
     <value>Изберете предпочитания език</value>
@@ -896,7 +896,7 @@
     <value>Фиксира качеството на графиката на избраната стойност. Забележка: Когато тази настройка е активирана, плъзгачът за графиката в менюто на Roblox ще влияе само върху разстоянието на рендиране в играта.</value>
   </data>
   <data name="Menu.FastFlags.ManagerEnabled.Title" xml:space="preserve">
-    <value>Разрешете на Froststrap да управлява FastFlags</value>
+    <value>Разрешете на CoffeeStrap да управлява FastFlags</value>
   </data>
   <data name="Menu.FastFlags.ManagerEnabled.Description" xml:space="preserve">
     <value>Ако деактивирате тази опция, нищо от конфигурираното тук няма да се приложи към Roblox.</value>
@@ -926,7 +926,7 @@
     <value>Премахва стандартните текстури на тревата в Roblox. Забележка: Тази настройка не засяга персонализираните текстури на тревата, използвани в отделните игри.</value>
   </data>
   <data name="Dialog.Connectivity.UnableToDownload" xml:space="preserve">
-    <value>Froststrap не може да изтегли Roblox</value>
+    <value>CoffeeStrap не може да изтегли Roblox</value>
   </data>
   <data name="Dialog.Connectivity.UnableToDownloadReason" xml:space="preserve">
     <value>В момента не е възможно да изтеглите Roblox. Моля, прочетете следната страница с помощна информация за повече подробности: {0}</value>
@@ -936,7 +936,7 @@
     <value>Импортиране от файл</value>
   </data>
   <data name="Logger.NoWriteMode" xml:space="preserve">
-    <value>За това стартиране няма да бъде създаден лог файл, тъй като Froststrap не може да запише в папката „{0}“</value>
+    <value>За това стартиране няма да бъде създаден лог файл, тъй като CoffeeStrap не може да запише в папката „{0}“</value>
   </data>
   <data name="Common.Default" xml:space="preserve">
     <value>По подразбиране</value>
@@ -954,22 +954,22 @@
     <value>Икона на работния плот</value>
   </data>
   <data name="Uninstaller.Title" xml:space="preserve">
-    <value>Деинсталиране на Froststrap</value>
+    <value>Деинсталиране на CoffeeStrap</value>
   </data>
   <data name="Uninstaller.Text" xml:space="preserve">
-    <value>Деинсталирането ще премахне Froststrap от системата ви и автоматично ще преконфигурира стандартния стартиращ модул на Roblox, ако той все още е инсталиран.
+    <value>Деинсталирането ще премахне CoffeeStrap от системата ви и автоматично ще преконфигурира стандартния стартиращ модул на Roblox, ако той все още е инсталиран.
 
 Ако деинсталирате или преинсталирате, защото имате проблеми с Roblox, първо прочетете [тази страница за помощ]({0}).
 
-Възможно е процесът на деинсталиране да не успее да изчисти напълно всички следи, затова може да се наложи ръчно да изтриете останалите файлове от мястото, където е бил инсталиран Froststrap.
+Възможно е процесът на деинсталиране да не успее да изчисти напълно всички следи, затова може да се наложи ръчно да изтриете останалите файлове от мястото, където е бил инсталиран CoffeeStrap.
 
-Froststrap е бил инсталиран в „{1}“.</value>
+CoffeeStrap е бил инсталиран в „{1}“.</value>
   </data>
   <data name="Uninstaller.KeepData.Label" xml:space="preserve">
     <value>Запази настройките и модификациите ми</value>
   </data>
   <data name="Uninstaller.KeepData.Description" xml:space="preserve">
-    <value>Те ще бъдат запазени на мястото, където е бил инсталиран Froststrap, и автоматично ще бъдат възстановени при повторна инсталация.</value>
+    <value>Те ще бъдат запазени на мястото, където е бил инсталиран CoffeeStrap, и автоматично ще бъдат възстановени при повторна инсталация.</value>
   </data>
   <data name="Uninstaller.Uninstall" xml:space="preserve">
     <value>Деинсталиране</value>
@@ -981,16 +981,16 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <value>В момента нямате инсталирана средата за изпълнение WebView2. Без нея някои функции на Roblox няма да работят правилно, като например приложението за настолни компютри. Искате ли да я изтеглите сега?</value>
   </data>
   <data name="Dialog.CannotCreateShortcuts" xml:space="preserve">
-    <value>Froststrap не успя да създаде преки пътища на работния плот и в менюто „Старт“. Опитайте да ги създадете по-късно чрез настройките.</value>
+    <value>CoffeeStrap не успя да създаде преки пътища на работния плот и в менюто „Старт“. Опитайте да ги създадете по-късно чрез настройките.</value>
   </data>
   <data name="Dialog.Exception.Info.2.Alt" xml:space="preserve">
-    <value>Първо проверете [Froststrap Wiki]({0}), за да видите дали този проблем вече е решен.
+    <value>Първо проверете [CoffeeStrap Wiki]({0}), за да видите дали този проблем вече е решен.
 
-Ако не е, моля, докладвайте това изключение на поддържащите този форк. НЕ докладвайте това в GitHub Issues на Froststrap, тъй като това е неофициална версия.</value>
+Ако не е, моля, докладвайте това изключение на поддържащите този форк. НЕ докладвайте това в GitHub Issues на CoffeeStrap, тъй като това е неофициална версия.</value>
     <comment>"fork" in general means "a variation of" or "a different version of". You can alternatively write the first sentence as "...to the maintainers of this version."</comment>
   </data>
   <data name="Menu.Shortcuts.Description" xml:space="preserve">
-    <value>Настройте как Froststrap да се стартира лесно.</value>
+    <value>Настройте как CoffeeStrap да се стартира лесно.</value>
   </data>
   <data name="Menu.Shortcuts.General.Title" xml:space="preserve">
     <value>Общо</value>
@@ -1017,14 +1017,14 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <value>Моля, изчакайте да приключи деинсталирането.</value>
   </data>
   <data name="About.Title" xml:space="preserve">
-    <value>За Froststrap</value>
+    <value>За CoffeeStrap</value>
   </data>
   <data name="About.Licenses.Title" xml:space="preserve">
     <value>Лицензи</value>
     <comment>Referring to code licenses; see https://opensource.org/licenses for example</comment>
   </data>
   <data name="InstallChecker.VersionLessThanInstalled" xml:space="preserve">
-    <value>Версията на Froststrap, която стартирахте, е по-стара от тази, която имате инсталирана в момента.
+    <value>Версията на CoffeeStrap, която стартирахте, е по-стара от тази, която имате инсталирана в момента.
 Възможно е да възникнат проблеми и настройките ви да бъдат променени. Препоръчва се преинсталиране.
 Сигурен ли сте, че искате да продължите?</value>
   </data>
@@ -1037,7 +1037,7 @@ Froststrap е бил инсталиран в „{1}“.</value>
   <data name="Dialog.PlayerError.HelpInformation" xml:space="preserve">
     <value>За информация за причините, поради които това може да се случва, и как може да се разреши, моля, прочетете [тази статия от помощния център]({0}).
 
-Проверете дали Roblox работи с [оригиналния лаунчър]({1}). Ако не работи, това не е проблем, свързан с Froststrap. Ако работи, моля, вижте статията от помощния център.</value>
+Проверете дали Roblox работи с [оригиналния лаунчър]({1}). Ако не работи, това не е проблем, свързан с CoffeeStrap. Ако работи, моля, вижте статията от помощния център.</value>
   </data>
   <data name="Common.Loading" xml:space="preserve">
     <value>Зареждане, моля изчакайте...</value>
@@ -1067,7 +1067,7 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <value>При този старт Roblox няма да бъде проверяван за актуализации, а промените в модификациите няма да бъдат приложени.</value>
   </data>
   <data name="Dialog.Connectivity.RobloxUpgradeNeeded" xml:space="preserve">
-    <value>Тъй като е необходимо да се инсталира или актуализира Roblox, Froststrap не може да продължи.</value>
+    <value>Тъй като е необходимо да се инсталира или актуализира Roblox, CoffeeStrap не може да продължи.</value>
   </data>
   <data name="Common.NotAvailable" xml:space="preserve">
     <value>Не е налично</value>
@@ -1079,7 +1079,7 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <value>Конфигурирайте параметрите на приложението, като например поведението при мащабиране на DPI и [оптимизациите за пълен екран]({0}).</value>
   </data>
   <data name="Common.RobloxNotInstalled" xml:space="preserve">
-    <value>Roblox все още не е инсталиран. Моля, стартирайте Roblox чрез Froststrap поне веднъж, преди да опитате да използвате тази опция.</value>
+    <value>Roblox все още не е инсталиран. Моля, стартирайте Roblox чрез CoffeeStrap поне веднъж, преди да опитате да използвате тази опция.</value>
   </data>
   <data name="Bootstrapper.JsonManagerSaveFailed" xml:space="preserve">
     <value>Не успях да запазя {0}: {1}</value>
@@ -1094,10 +1094,10 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <value>Извличане на иконите на Roblox в папка</value>
   </data>
   <data name="Menu.Shortcuts.ExtractIcons.Description" xml:space="preserve">
-    <value>Позволява ви да използвате гамата от икони на Froststrap за Roblox за вашите преки пътища. [Вижте как.]({0})</value>
+    <value>Позволява ви да използвате гамата от икони на CoffeeStrap за Roblox за вашите преки пътища. [Вижте как.]({0})</value>
   </data>
   <data name="Dialog.RegistryWriteError" xml:space="preserve">
-    <value>Froststrap не може да записва в системния регистър на Windows. Вероятно някой антивирусен софтуер пречи и причинява проблеми. Моля, проверете дали няма нещо, което да ограничава работата на Froststrap.</value>
+    <value>CoffeeStrap не може да записва в системния регистър на Windows. Вероятно някой антивирусен софтуер пречи и причинява проблеми. Моля, проверете дали няма нещо, което да ограничава работата на CoffeeStrap.</value>
   </data>
   <data name="Menu.FastFlags.Reset.Title" xml:space="preserve">
     <value>Възстановяване на фабричните настройки</value>
@@ -1147,7 +1147,7 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <comment>Currently used under the "Froststrap" settings tab for the button to export diagnostic data</comment>
   </data>
   <data name="Menu.Channel.Description" xml:space="preserve">
-    <value>Променете настройките за внедряване и инсталиране на Roblox и Froststrap.</value>
+    <value>Променете настройките за внедряване и инсталиране на Roblox и CoffeeStrap.</value>
   </data>
   <data name="Common.Version" xml:space="preserve">
     <value>Версия</value>
@@ -1178,7 +1178,7 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <value>Извинявай</value>
   </data>
   <data name="Dialog.Bloxshade.Setting" xml:space="preserve">
-    <value>Froststrap вече не поддържа Bloxshade.
+    <value>CoffeeStrap вече не поддържа Bloxshade.
 За повече информация се присъединете към Discord сървъра на Bloxshade.</value>
   </data>
   <data name="Common.Profiles" xml:space="preserve">
@@ -1204,7 +1204,7 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <value>Действие за автоматична смяна на канала</value>
   </data>
   <data name="Menu.Channel.ChangeAction.Description" xml:space="preserve">
-    <value>Roblox или Froststrap може да се опитат да променят предпочитания от вас канал.</value>
+    <value>Roblox или CoffeeStrap може да се опитат да променят предпочитания от вас канал.</value>
   </data>
   <data name="Menu.Channel.ChangeAction.Automatic" xml:space="preserve">
     <value>Автоматично променяне</value>
@@ -1286,10 +1286,10 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <value>Не позволявайте на Roblox да преопределя глобалните настройки.</value>
   </data>
   <data name="Menu.Behaviour.AllowCookieAccess.Title" xml:space="preserve">
-    <value>Права за достъп до акаунта във Froststrap</value>
+    <value>Права за достъп до акаунта във CoffeeStrap</value>
   </data>
   <data name="Menu.Behaviour.AllowCookieAccess.Description" xml:space="preserve">
-    <value>Осигурява достъп до API-та на Roblox чрез вашата бисквитка за удостоверяване. [Към какво ще има достъп Froststrap?]({0})</value>
+    <value>Осигурява достъп до API-та на Roblox чрез вашата бисквитка за удостоверяване. [Към какво ще има достъп CoffeeStrap?]({0})</value>
   </data>
   <data name="Menu.Appearance.WindowsBackdrop.Title" xml:space="preserve">
     <value>Фон за прозорец</value>
@@ -1361,10 +1361,10 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <value>Действие при двойно кликване</value>
   </data>
   <data name="Menu.Integrations.DoubleClickAction.Description" xml:space="preserve">
-    <value>Отваря конкретен прозорец, когато кликнете два пъти върху иконата на Froststrap в системната лента по време на стартирането на Roblox.</value>
+    <value>Отваря конкретен прозорец, когато кликнете два пъти върху иконата на CoffeeStrap в системната лента по време на стартирането на Roblox.</value>
   </data>
   <data name="Menu.Integrations.FroststrapRPC.Description" xml:space="preserve">
-    <value>Активирайте тази опция, за да се показва персонализирано RPC „Playing Froststrap“ в профила ви в Discord, докато приложението е отворено.</value>
+    <value>Активирайте тази опция, за да се показва персонализирано RPC „Playing CoffeeStrap“ в профила ви в Discord, докато приложението е отворено.</value>
   </data>
   <data name="Menu.Integrations.CustomStatusDisplay.Title" xml:space="preserve">
     <value>Персонализирано показване на статуса</value>
@@ -1439,10 +1439,10 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <value>Модификации на общността</value>
   </data>
   <data name="Menu.Bootstrapper.Cleaner.IncludeBloxstrap.Title" xml:space="preserve">
-    <value>Дневници на Froststrap</value>
+    <value>Дневници на CoffeeStrap</value>
   </data>
   <data name="Menu.Bootstrapper.Cleaner.IncludeBloxstrap.Description" xml:space="preserve">
-    <value>Лог файловете на Froststrap ще бъдат изтрити.</value>
+    <value>Лог файловете на CoffeeStrap ще бъдат изтрити.</value>
   </data>
   <data name="Menu.Bootstrapper.Experimental.BetterMatchmaking.FollowUser" xml:space="preserve">
     <value>Изглежда, че един приятел в момента играе тази игра. Искаш ли да се присъединиш към него?</value>
@@ -1451,7 +1451,7 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <value>Активиране на BetterMatchmaking</value>
   </data>
   <data name="Menu.Bootstrapper.Experimental.BetterMatchmaking.Description" xml:space="preserve">
-    <value>Оставете Froststrap да реши към кои сървъри да се присъедините. Приложението дава предимство на сървъра, който се намира най-близо до вас.</value>
+    <value>Оставете CoffeeStrap да реши към кои сървъри да се присъедините. Приложението дава предимство на сървъра, който се намира най-близо до вас.</value>
   </data>
   <data name="Menu.FastFlags.Presets.TextureQuality.Title" xml:space="preserve">
     <value>Качество на текстурата</value>
@@ -2038,7 +2038,7 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <value>Актуализация на предварителните версии</value>
   </data>
   <data name="Menu.Deployment.AutoPreReleaseUpdate.Description" xml:space="preserve">
-    <value>Froststrap автоматично ще провери и ще се актуализира до тестова версия при стартирането на Roblox.</value>
+    <value>CoffeeStrap автоматично ще провери и ще се актуализира до тестова версия при стартирането на Roblox.</value>
   </data>
   <data name="Menu.TestMode.Description" xml:space="preserve">
     <value>Прозорецът с настройките да се скрива автоматично при стартиране на Roblox и да се възстановява при затваряне на Roblox.</value>
@@ -2297,7 +2297,7 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <value>Добавя малък бутон, с който да се присъедините към играта, върху която работите.</value>
   </data>
   <data name="Menu.Integrations.StudioRPC.PluginConfirmation" xml:space="preserve">
-    <value>Това става чрез добавяне на специално създаден плъгин за Froststrap, който ще записва вашите действия.
+    <value>Това става чрез добавяне на специално създаден плъгин за CoffeeStrap, който ще записва вашите действия.
 Искате ли да инсталирате плъгина?</value>
   </data>
   <data name="Menu.PresetMods.OpenModsFolder" xml:space="preserve">
@@ -2427,7 +2427,7 @@ Froststrap е бил инсталиран в „{1}“.</value>
     <value>Малки сървъри</value>
   </data>
   <data name="Menu.RegionSelector.LoginRequired" xml:space="preserve">
-    <value>Влезте чрез мениджъра на акаунти, активирайте „Froststrap Account Permission“ или съобдете за това на нашия Discord сървър, за да можете да го използвате.</value>
+    <value>Влезте чрез мениджъра на акаунти, активирайте „CoffeeStrap Account Permission“ или съобдете за това на нашия Discord сървър, за да можете да го използвате.</value>
   </data>
   <data name="Menu.RegionSelector.EnterPlaceId" xml:space="preserve">
     <value>Въведете Place ID и кликнете върху „Търсене“, за да видите сървърите.</value>

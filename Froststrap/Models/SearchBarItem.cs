@@ -18,6 +18,7 @@ namespace Froststrap.Models
         public string? ParentSectionName { get; set; }
         public LucideIconNames? IconSymbol { get; set; }
         public string? PageName { get; set; }
+        public string DisplayContext => string.IsNullOrWhiteSpace(ParentSectionName) ? PageName ?? "Settings" : PageName + " › " + ParentSectionName;
         public override string ToString() => DisplayName;
     }
 }

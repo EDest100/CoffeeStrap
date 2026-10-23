@@ -24,7 +24,14 @@ namespace Froststrap
 
         public static void LaunchInChildProcess(LaunchMode mode)
         {
-            Process.Start(Paths.Process, GetCliArgs(mode));
+            Process.Start(CreateStartInfo(mode));
+        }
+        public static ProcessStartInfo CreateStartInfo(LaunchMode mode, string? payload = null)
+        {
+            var start = new ProcessStartInfo(Paths.Process) { UseShellExecute = false };
+            start.ArgumentList.Add(IsStudio(mode) ? "--studio" : "--player");
+            if (!string.IsNullOrEmpty(payload)) start.ArgumentList.Add(payload);
+            return start;
         }
     }
 }

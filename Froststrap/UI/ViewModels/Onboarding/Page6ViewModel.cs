@@ -1,89 +1,17 @@
-// SPDX-FileCopyrightText: 2026 Froststrap
-//
+// SPDX-FileCopyrightText: 2026 Froststrap; 2026 CoffeeStrap contributors
 // SPDX-License-Identifier: MPL-2.0
+namespace Froststrap.UI.ViewModels.Onboarding;
 
-using System.Collections.ObjectModel;
-using System.Windows.Input;
-using CommunityToolkit.Mvvm.Input;
+internal sealed record FaqItem(string Question, string Answer);
 
-namespace Froststrap.UI.ViewModels.Onboarding
+internal class Page6ViewModel
 {
-    internal class FaqItem : NotifyPropertyChangedViewModel
-    {
-        private bool _isExpanded;
-
-        public string Question { get; set; } = string.Empty;
-        public string Answer { get; set; } = string.Empty;
-
-        public bool IsExpanded
-        {
-            get => _isExpanded;
-            set
-            {
-                _isExpanded = value;
-                OnPropertyChanged(nameof(IsExpanded));
-            }
-        }
-
-        public ICommand ToggleCommand { get; }
-
-        public FaqItem()
-        {
-            ToggleCommand = new RelayCommand(ToggleExpanded);
-        }
-
-        private void ToggleExpanded()
-        {
-            IsExpanded = !IsExpanded;
-        }
-    }
-
-    internal class Page6ViewModel : NotifyPropertyChangedViewModel
-    {
-        public ObservableCollection<FaqItem> FaqItems { get; } = [];
-
-        public Page6ViewModel()
-        {
-            LoadFaqData();
-        }
-
-        private void LoadFaqData()
-        {
-            FaqItems.Add(new FaqItem
-            {
-                Question = Strings.Menu_Onboarding_Page6_Q1,
-                Answer = Strings.Menu_Onboarding_Page6_A1
-            });
-
-            FaqItems.Add(new FaqItem
-            {
-                Question = Strings.Menu_Onboarding_Page6_Q2,
-                Answer = Strings.Menu_Onboarding_Page6_A2
-            });
-
-            FaqItems.Add(new FaqItem
-            {
-                Question = Strings.Menu_Onboarding_Page6_Q3,
-                Answer = Strings.Menu_Onboarding_Page6_A3
-            });
-
-            FaqItems.Add(new FaqItem
-            {
-                Question = Strings.Menu_Onboarding_Page6_Q4,
-                Answer = Strings.Menu_Onboarding_Page6_A4
-            });
-
-            FaqItems.Add(new FaqItem
-            {
-                Question = Strings.Menu_Onboarding_Page6_Q5,
-                Answer = Strings.Menu_Onboarding_Page6_A5
-            });
-
-            FaqItems.Add(new FaqItem
-            {
-                Question = Strings.Menu_Onboarding_Page6_Q6,
-                Answer = Strings.Menu_Onboarding_Page6_A6
-            });
-        }
-    }
+    public IReadOnlyList<FaqItem> FaqItems { get; } =
+    [
+        new("When do Game Tweaks apply?", "Overrides apply on the next Roblox launch. Choose **Roblox default** to remove an override. Roblox may change which settings it supports."),
+        new("Does lower texture quality unload textures?", "No. It requests a texture-quality level; Roblox controls texture loading. Lower quality can reduce detail, but an FPS improvement is not guaranteed."),
+        new("Can I change the frame rate while playing?", "Use Roblox's in-game **Settings** for live changes. CoffeeStrap edits the saved setting and does not provide a live FPS switcher."),
+        new("How do Auto and Reconnect work?", "**Auto** uses Roblox's normal matchmaking; it does not guarantee the closest server. **Reconnect** returns to your last recorded place, with no promise of the same server instance."),
+        new("How do I pin a game?", "Use the hollow star on a Quick Play card. Pinned games appear on Home; click the star again to remove one.")
+    ];
 }

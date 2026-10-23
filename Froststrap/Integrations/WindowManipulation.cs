@@ -30,7 +30,7 @@ namespace Froststrap.Integrations
         private readonly uint _robloxPID;
         private bool _disposed;
 
-        private string _currentTitle = "Roblox";
+        private volatile string _currentTitle = "Roblox";
         private string _configuredTitle = "Roblox";
         private bool _inGame;
 
@@ -181,7 +181,31 @@ namespace Froststrap.Integrations
                 ApplyConfiguredTitle();
         }
 
-        private async Task<bool> WaitForWindowAsync()
+        public async Task RunTitleAsync(Func<string> title, CancellationToken cancellation)
+        {
+            if (!await WaitForWindowAsync(cancellation)) return;
+            Span<char> buffer = new char[512];
+            PInvoke.GetWindowText(_hWnd, buffer);
+            string original = buffer.TrimEnd('\0').ToString();
+            EnsureTitleHook();
+            try
+            {
+                while (!cancellation.IsCancellationRequested && !_disposed)
+                {
+                    string next = title();
+                    if (_currentTitle != next)
+                    {
+                        _currentTitle = next;
+                        if (!PInvoke.SetWindowText(_hWnd, next)) { App.Logger.Warn("Roblox window title could not be updated."); break; }
+                    }
+                    await Task.Delay(1000, cancellation);
+                }
+            }
+            catch (OperationCanceledException) { }
+            finally { UnhookTitleHook(); if (TryGetWindowForPid((int)_robloxPID, out var current) && new HWND(current) == _hWnd) PInvoke.SetWindowText(_hWnd, original); }
+        }
+
+        private async Task<bool> WaitForWindowAsync(CancellationToken cancellation = default)
         {
             int elapsed = 0;
 
@@ -194,7 +218,7 @@ namespace Froststrap.Integrations
                     return true;
                 }
 
-                await Task.Delay(ResolvePollMs);
+                await Task.Delay(ResolvePollMs, cancellation);
                 elapsed += ResolvePollMs;
             }
 
@@ -210,6 +234,7 @@ namespace Froststrap.Integrations
             try
             {
                 using var proc = Process.GetProcessById(pid);
+                if (proc.ProcessName != Path.GetFileNameWithoutExtension(App.RobloxPlayerAppName) && proc.ProcessName != Path.GetFileNameWithoutExtension(App.RobloxStudioAppName)) return false;
                 proc.Refresh();
 
                 if (proc.MainWindowHandle != IntPtr.Zero)
@@ -240,9 +265,11 @@ namespace Froststrap.Integrations
                     EVENT_OBJECT_NAMECHANGE,
                     null,
                     _setTitleHook,
-                    0,
+                    _robloxPID,
                     0,
                     WINEVENT_OUTOFCONTEXT);
+
+                if (_titleHook.IsInvalid) { _titleHook.Dispose(); _titleHook = null; _titleHookInstalled = false; App.Logger.Warn("Roblox title-change listener could not be installed."); return; }
 
                 App.Logger.Info(LOG_IDENT, "Title change hook installed.");
             });
@@ -250,14 +277,11 @@ namespace Froststrap.Integrations
 
         private void UnhookTitleHook()
         {
+            if (!Dispatcher.UIThread.CheckAccess()) { Dispatcher.UIThread.Invoke(UnhookTitleHook); return; }
             if (!_titleHookInstalled)
                 return;
 
-            try
-            {
-                _titleHook?.Dispose();
-            }
-            catch { }
+            _titleHook?.Dispose();
 
             _titleHook = null;
             _titleHookInstalled = false;

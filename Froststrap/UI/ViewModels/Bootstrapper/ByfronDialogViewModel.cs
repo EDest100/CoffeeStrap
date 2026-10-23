@@ -1,4 +1,4 @@
-﻿// SPDX-FileCopyrightText: 2026 Froststrap
+// SPDX-FileCopyrightText: 2026 Froststrap
 //
 // SPDX-License-Identifier: MPL-2.0
 
@@ -11,7 +11,7 @@ namespace Froststrap.UI.ViewModels.Bootstrapper
 {
     internal class ByfronDialogViewModel(IBootstrapperDialog dialog, string version) : BootstrapperDialogViewModel(dialog)
     {
-        public Bitmap ByfronLogoLocation { get; set; } = new(AssetLoader.Open(new Uri("avares://Froststrap/Resources/BootstrapperStyles/ByfronDialog/ByfronLogoDark.jpg")));
+        public Bitmap ByfronLogoLocation { get; set; } = new(AssetLoader.Open(new Uri("avares://CoffeeStrap/Resources/BootstrapperStyles/ByfronDialog/ByfronLogoDark.jpg")));
 
         public Thickness DialogBorder { get; set; } = new(0);
 

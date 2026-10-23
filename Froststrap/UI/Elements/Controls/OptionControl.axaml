@@ -14,7 +14,9 @@ SPDX-License-Identifier: MPL-2.0
         <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="Padding" Value="16,12" />
+        <Setter Property="Padding" Value="20" />
+        <Setter Property="MinHeight" Value="100" />
+        <Setter Property="FocusAdorner" Value="{x:Null}" />
         <Setter Property="Template">
             <ControlTemplate>
                 <controls:Card Name="PART_RootCard"
@@ -22,20 +24,21 @@ SPDX-License-Identifier: MPL-2.0
                                BorderBrush="{TemplateBinding BorderBrush}"
                                BorderThickness="{TemplateBinding BorderThickness}"
                                Padding="{TemplateBinding Padding}"
-                               Margin="0,4">
+                               CornerRadius="14"
+                               Margin="0">
 
-                    <Grid ColumnDefinitions="*,Auto">
-                        <StackPanel Grid.Column="0" VerticalAlignment="Center" Spacing="3">
+                    <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="6">
+                        <StackPanel Name="PART_Header" Grid.Column="0" VerticalAlignment="Center" Spacing="3">
 
-                            <WrapPanel Orientation="Horizontal">
-                                <TextBlock Text="{TemplateBinding Header}"
+                            <Grid ColumnDefinitions="*,Auto">
+                                <TextBlock Name="PART_Title" Text="{TemplateBinding Header}"
                                            FontSize="14"
                                            FontWeight="SemiBold"
                                            VerticalAlignment="Center"
                                            TextWrapping="Wrap"
                                            Foreground="{DynamicResource TextFillColorPrimaryBrush}" />
 
-                                <controls:Hyperlink Url="{TemplateBinding HelpLink}"
+                                <controls:Hyperlink Grid.Column="1" Url="{TemplateBinding HelpLink}"
                                                     IsVisible="{TemplateBinding HelpLink, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
                                                     VerticalAlignment="Center"
                                                     Margin="6,0,0,0">
@@ -43,25 +46,45 @@ SPDX-License-Identifier: MPL-2.0
                                                Width="16" Height="16"
                                                StrokeBrush="{Binding Foreground, RelativeSource={RelativeSource AncestorType=controls:Hyperlink}}" />
                                 </controls:Hyperlink>
-                            </WrapPanel>
+                            </Grid>
 
-                            <controls:MarkdownTextBlock MarkdownText="{TemplateBinding Description}"
-                                                        FontSize="12"
+                        </StackPanel>
+                            <controls:MarkdownTextBlock Grid.Row="1" Grid.ColumnSpan="2" MarkdownText="{TemplateBinding Description}"
+                                                        FontSize="13"
                                                         Foreground="{DynamicResource TextFillColorSecondaryBrush}"
                                                         Background="Transparent"
                                                         IsHitTestVisible="True"
                                                         TextWrapping="Wrap"
                                                         IsVisible="{TemplateBinding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
-                        </StackPanel>
-
                         <ContentPresenter Grid.Column="1"
+                                          Name="PART_Editor"
                                           Content="{TemplateBinding InnerContent}"
-                                          VerticalAlignment="Center"
+                                          VerticalAlignment="Top"
                                           HorizontalAlignment="Right"
-                                          Margin="16,0,0,0" />
+                                          Margin="0" />
                     </Grid>
                 </controls:Card>
             </ControlTemplate>
         </Setter>
+    </Style>
+    <Style Selector="controls|OptionControl:compact">
+        <Setter Property="MinHeight" Value="158" />
+    </Style>
+    <Style Selector="controls|OptionControl:pointerover">
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorSecondaryBrush}" />
+    </Style>
+    <Style Selector="controls|OptionControl:pressed">
+        <Setter Property="Background" Value="{DynamicResource ControlFillColorTertiaryBrush}" />
+    </Style>
+    <Style Selector="controls|OptionControl:focus-visible">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+        <Setter Property="BorderThickness" Value="2" />
+    </Style>
+    <Style Selector="controls|OptionControl:disabled">
+        <Setter Property="Opacity" Value="0.5" />
+    </Style>
+    <Style Selector="controls|OptionControl /template/ controls|Card#PART_RootCard /template/ Border#PART_RootBorder">
+        <Setter Property="BoxShadow" Value="0 3 9 0 #20000000" />
     </Style>
 </Styles>

@@ -8,6 +8,7 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Froststrap.UI.Elements.Bootstrapper.Base;
 using Froststrap.UI.ViewModels.Bootstrapper;
+using Froststrap.UI.Utility;
 
 namespace Froststrap.UI.Elements.Bootstrapper
 {
@@ -21,6 +22,7 @@ namespace Froststrap.UI.Elements.Bootstrapper
 
             string version = Froststrap.Utility.Versioning.GetRobloxVersionStr(Bootstrapper?.IsStudioLaunch ?? false);
             _viewModel = new ModernDialogViewModel(this, version);
+            ApplyModernStyles();
             DataContext = _viewModel;
 
             SetupDialog();
@@ -29,20 +31,16 @@ namespace Froststrap.UI.Elements.Bootstrapper
             if (iconImage is Bitmap bitmap)
                 Icon = new WindowIcon(bitmap);
 
-            ApplyModernStyles();
         }
 
         private void ApplyModernStyles()
         {
-            if (App.Settings.Prop.Theme.GetFinal() == Enums.Theme.Light)
-            {
-                _viewModel.DialogBorder = new Thickness(1);
-                _viewModel.Background = new SolidColorBrush(Color.FromRgb(242, 244, 245));
-                _viewModel.Foreground = new SolidColorBrush(Color.FromRgb(57, 59, 61));
-                _viewModel.IconColor = new SolidColorBrush(Color.FromRgb(57, 59, 61));
-                _viewModel.ProgressBarBackground = new SolidColorBrush(Color.FromRgb(189, 190, 190));
-
-            }
+            _viewModel.DialogBorder = new Thickness(1);
+            _viewModel.Background = new SolidColorBrush(ThemePalette.GetColor("SolidBackgroundFillColorBase", Colors.Black));
+            var foreground = new SolidColorBrush(ThemePalette.GetColor("TextFillColorPrimary", Colors.White));
+            _viewModel.Foreground = foreground;
+            _viewModel.IconColor = foreground;
+            _viewModel.ProgressBarBackground = new SolidColorBrush(ThemePalette.GetColor("ControlFillColorTertiary", Colors.Gray));
         }
 
         #region UI Elements Overrides
