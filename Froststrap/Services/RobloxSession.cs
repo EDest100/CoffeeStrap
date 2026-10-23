@@ -47,25 +47,31 @@ internal sealed class RobloxSession(WatcherData watcher, HttpClient? client = nu
         App.State.SaveSetting(nameof(App.State.Prop.AutoReconnectWindowUtc)); App.State.SaveSetting(nameof(App.State.Prop.AutoReconnectAttempts));
         return true;
     }
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Reliability", "CA2025", Justification = "Every started observer task is awaited in the finally block before the window and scheduling target are disposed.")]
     public async Task ObserveAsync(CancellationToken cancellation)
     {
         using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
-        using var scheduling = SessionScheduling.ForPlayer(watcher.ProcessId);
-        using var window = OperatingSystem.IsWindows() && App.Settings.Prop.ShowGameInTitle ? new Integrations.WindowManipulation(watcher.ProcessId) : null;
-        var title = window?.RunTitleAsync(() => Title, lifetime.Token) ?? Task.CompletedTask;
-        var names = window != null ? UpdateNamesAsync(lifetime.Token) : Task.CompletedTask;
-        var sizing = PlayerWindowSizing.RunForPlayerAsync(watcher.ProcessId, App.Settings.Prop.PlayerWindowSize, lifetime.Token);
-        Task log = Task.CompletedTask;
+        var scheduling = SessionScheduling.ForPlayer(watcher.ProcessId);
+        Integrations.WindowManipulation? window = null;
+        Task log = Task.CompletedTask, title = Task.CompletedTask, names = Task.CompletedTask, background = Task.CompletedTask;
         try
         {
+            window = OperatingSystem.IsWindows() && App.Settings.Prop.ShowGameInTitle ? new Integrations.WindowManipulation(watcher.ProcessId) : null;
+            title = window?.RunTitleAsync(() => Title, lifetime.Token) ?? Task.CompletedTask;
+            names = window != null ? UpdateNamesAsync(lifetime.Token) : Task.CompletedTask;
+            background = BackgroundMinimizeWatcher.RunForPlayerAsync(watcher.ProcessId, scheduling, lifetime.Token);
             log = LastPlaceRecorder.ObserveAsync(watcher.LogFile, lifetime.Token, ReadLine);
             await Task.WhenAll(log, Task.Delay(Timeout.InfiniteTimeSpan, lifetime.Token));
         }
         catch (OperationCanceledException) when (lifetime.IsCancellationRequested) { }
         finally
         {
-            await lifetime.CancelAsync();
-            try { await Task.WhenAll(log, title, names, sizing); } catch (OperationCanceledException) { }
+            try { await lifetime.CancelAsync(); }
+            finally
+            {
+                try { await Task.WhenAll(log, title, names, background); } catch (OperationCanceledException) { }
+                finally { window?.Dispose(); scheduling?.Dispose(); }
+            }
         }
     }
     internal void ReadLine(string line)

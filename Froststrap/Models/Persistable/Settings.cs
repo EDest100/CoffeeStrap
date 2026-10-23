@@ -61,13 +61,15 @@ namespace Froststrap.Models.Persistable
         public bool AboveNormalGpuPriority { get; set; }
         public bool PreventEcoQoS { get; set; }
         public bool HonorTimerRequests { get; set; }
+        public bool BackgroundResourceSaver { get; set; }
+        public int UpscaleResolutionPercent { get; set; } = 50;
         public string DefaultSkyPalette { get; set; } = "Roblox default";
         public bool SmoothWater { get; set; }
         public bool SmoothPlastic { get; set; }
         public bool SmoothStuds { get; set; }
         public int CloudTextureResolution { get; set; }
         public int CloudVolumeResolution { get; set; }
-        public int PlayerWindowSize { get; set; }
+        [JsonIgnore] public int PlayerWindowSize { get => 0; set { } }
         public int SkyTextureResolution { get; set; }
         public int WaterTextureResolution { get; set; }
         public int SurfaceTextureResolution { get; set; }

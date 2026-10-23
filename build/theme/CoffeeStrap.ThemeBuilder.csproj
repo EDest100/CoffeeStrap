@@ -1,0 +1,14 @@
+<!-- SPDX-FileCopyrightText: 2026 CoffeeStrap contributors
+     SPDX-License-Identifier: MPL-2.0 -->
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AssemblyName>CoffeeStrap.ThemeBuilder</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Froststrap/Froststrap.csproj" />
+  </ItemGroup>
+</Project>

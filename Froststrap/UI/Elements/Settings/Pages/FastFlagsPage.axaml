@@ -51,28 +51,20 @@
     </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
 </controls:CardExpander>
 <Button Content="Restore Roblox visuals" Command="{Binding ResetVisualsCommand}" HorizontalAlignment="Left"/>
-<controls:CardExpander Header="Windowed render size" Description="Trade pixel count for a smaller game window, across NVIDIA, AMD and Intel." IsExpanded="False" IsVisible="{Binding Platform.IsWindows}">
+<controls:CardExpander Header="Fullscreen upscaler" Description="Experimental · render fewer pixels and let Windows scale the window across your monitor." IsExpanded="False" IsVisible="{Binding Platform.IsWindows}">
     <StackPanel Spacing="10">
-        <controls:OptionControl Header="Player resolution" Description="Save a client size for your next launch, or apply it to a running player below. Fits your monitor without changing desktop resolution."><ComboBox x:Name="WindowSizePreset" ItemsSource="{Binding Platform.WindowSizes}" SelectedIndex="{Binding Platform.WindowSize, Mode=TwoWay}"/></controls:OptionControl>
-        <TextBlock Text="Smaller windows give the renderer fewer pixels to draw. Graphics 10 and your effects override stay independent. Windowed mode only; fullscreen and maximized windows are skipped. You can resize normally afterward. Roblox's internal scaling and the performance benefit depend on the experience." TextWrapping="Wrap" FontSize="12"/>
-        <TextBlock Text="{Binding Platform.WindowPixelSummary}" TextWrapping="Wrap" FontWeight="SemiBold"/>
-        <controls:OptionControl Header="Running player" Description="Refresh to select a game window. With multiple players, choose explicitly." Classes="stacked">
-            <ComboBox x:Name="LivePlayerPicker" ItemsSource="{Binding Platform.LivePlayers}" SelectedItem="{Binding Platform.SelectedLivePlayer, Mode=TwoWay}" IsEnabled="{Binding Platform.CanChooseLivePlayer}" PlaceholderText="Refresh players…" HorizontalAlignment="Stretch"/>
+        <controls:OptionControl Header="Render scale" Description="Percentage of your monitor's width and height, with a minimum source size of 640 × 360. Lower values trade image detail for fewer rendered pixels."><ComboBox x:Name="UpscaleScalePicker" ItemsSource="{Binding Platform.UpscaleResolutions}" SelectedIndex="{Binding Platform.UpscaleResolutionIndex, Mode=TwoWay}" IsEnabled="{Binding Platform.CanChooseUpscale}"/></controls:OptionControl>
+        <controls:OptionControl Header="Running player" Description="Start Roblox in windowed mode, then refresh. Choose explicitly when multiple players are open." Classes="stacked">
+            <ComboBox x:Name="UpscalePlayerPicker" ItemsSource="{Binding Platform.UpscalePlayers}" SelectedItem="{Binding Platform.UpscalePlayer, Mode=TwoWay}" IsEnabled="{Binding Platform.CanChooseUpscale}" PlaceholderText="Refresh players…" HorizontalAlignment="Stretch"/>
         </controls:OptionControl>
         <WrapPanel>
-            <Button Content="Refresh players" Command="{Binding Platform.RefreshLivePlayersCommand}" Margin="0,0,8,6"/>
-            <Button Content="Apply to player now" Command="{Binding Platform.ApplyLiveWindowSizeCommand}" Margin="0,0,8,6"/>
-            <Button Content="Restore previous size" Command="{Binding Platform.RestoreLiveWindowSizeCommand}" Margin="0,0,8,6"/>
-            <Button Content="Keep this size" Command="{Binding Platform.KeepLiveWindowSizeCommand}" Margin="0,0,0,6"/>
+            <Button Content="Refresh players" Command="{Binding Platform.RefreshUpscalePlayersCommand}" Margin="0,0,8,6"/>
+            <Button Content="Start upscaling" Command="{Binding Platform.StartUpscalerCommand}" Margin="0,0,8,6"/>
+            <Button Content="Stop upscaling" Command="{Binding Platform.StopUpscalerCommand}" Margin="0,0,0,6"/>
         </WrapPanel>
-        <TextBlock Text="{Binding Platform.LiveWindowStatus}" TextWrapping="Wrap" FontSize="12"/>
-        <controls:AnimatedReveal IsExpanded="{Binding Platform.LiveHasRestore}">
-            <TextBlock Text="Restore is available while this page is open. Reapplying another preset keeps the first backup. Keep this size, leaving the page or closing Settings leaves the applied size in place. Later manual moves, resizing or fullscreen changes are respected." TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
-        </controls:AnimatedReveal>
-        <TextBlock Text="Last launch result" FontWeight="SemiBold" FontSize="12"/>
-        <Border Padding="10" CornerRadius="6" Background="{DynamicResource SubtleFillColorSecondaryBrush}"><TextBlock Text="{Binding Platform.WindowSizeStatus}" TextWrapping="Wrap" FontSize="12"/></Border>
-        <Button Content="Refresh last window result" Command="{Binding Platform.RefreshWindowSizeStatusCommand}" HorizontalAlignment="Left"/>
-        <TextBlock Text="Roblox default stops resizing on future launches. If the watcher stops while its size is still unchanged, CoffeeStrap restores the original window. A size you change yourself is retained." TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+        <TextBlock Text="{Binding Platform.UpscaleStatus}" TextWrapping="Wrap" FontSize="12"/>
+        <TextBlock Text="Ctrl + Alt + U stops upscaling. Switching apps or closing this page also restores the owned window size and cursor state." TextWrapping="Wrap" FontSize="12" FontWeight="SemiBold"/>
+        <TextBlock Text="Windows 10+ with desktop composition. Supports mouse and keyboard in windowed games. Spatial scaling can soften the image and add latency; some games can block mirroring. Performance depends on the game and driver. Your desktop resolution, graphics 10 and effects override stay separate." TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
     </StackPanel>
 </controls:CardExpander>
 <controls:CardExpander Header="Texture resolution budget" Description="Use smaller existing mip levels for selected built-in texture groups." IsExpanded="False">
@@ -135,9 +127,12 @@
             <controls:OptionControl Header="Above-normal GPU priority" Description="Request the Windows WDDM above-normal GPU process class. Availability depends on the driver and access rights."><ToggleSwitch IsChecked="{Binding Platform.AboveNormalGpuPriority, Mode=TwoWay}"/></controls:OptionControl>
             <controls:OptionControl Header="Keep performance QoS" Description="Opt the player out of execution-speed power throttling for its launched session."><ToggleSwitch IsChecked="{Binding Platform.PreventEcoQoS, Mode=TwoWay}"/></controls:OptionControl>
             <controls:OptionControl Header="Honor player timer requests" Description="Ask Windows to keep honoring Roblox's own timer-resolution requests while occluded. Does not create a system-wide timer request."><ToggleSwitch IsChecked="{Binding Platform.HonorTimerRequests, Mode=TwoWay}"/></controls:OptionControl>
+            <controls:OptionControl Header="Background resource saver" Description="While the launched player is minimized, request EcoQoS and Below Normal CPU priority. Restoring the window restores its active policy. Enable before your next CoffeeStrap launch."><ToggleSwitch IsChecked="{Binding Platform.BackgroundResourceSaver, Mode=TwoWay}"/></controls:OptionControl>
         </controls:SettingsCardPanel>
         <TextBlock Text="{Binding Platform.SchedulingStatus}" TextWrapping="Wrap" FontSize="12"/>
         <Button Content="Refresh last session result" Command="{Binding Platform.RefreshSchedulingStatusCommand}" HorizontalAlignment="Left"/>
+        <TextBlock Text="{Binding Platform.BackgroundSaverStatus}" TextWrapping="Wrap" FontSize="12"/>
+        <Button Content="Refresh background saver result" Command="{Binding Platform.RefreshBackgroundSaverStatusCommand}" HorizontalAlignment="Left"/>
     </StackPanel>
 </controls:CardExpander>
 <TextBlock Text="Roblox may change supported overrides. Roblox default removes the override." FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />

@@ -24,7 +24,7 @@ namespace Froststrap.Models.Persistable
         public long LastPlaceId { get; set; }
         public string? LastGameName { get; set; }
         public string LastSchedulingResult { get; set; } = "No scheduling request has been made. Options apply to the next CoffeeStrap-launched player.";
-        public string LastWindowSizeResult { get; set; } = "No window size requested. Applies once to the next windowed player launched through CoffeeStrap.";
+        public string LastBackgroundSaverResult { get; set; } = "Background resource saver is off. Enable it before your next CoffeeStrap launch.";
         public int AutoReconnectAttempts { get; set; }
         public DateTime AutoReconnectWindowUtc { get; set; }
         public List<QuickLaunchPin> QuickLaunchPins { get; set; } = [];

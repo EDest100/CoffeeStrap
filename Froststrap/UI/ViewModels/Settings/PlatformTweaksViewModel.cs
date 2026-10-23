@@ -25,39 +25,6 @@ internal sealed partial class PlatformTweaksViewModel : NotifyPropertyChangedVie
     { _hardware = initial; _detect = detect; _player = player; _launch = launch; _runningPlayers = runningPlayers ?? RunningPlayerWindows.Find; _currentWindow = currentWindow ?? RunningPlayerWindows.IsCurrent; SetHardware(initial); }
     public string HardwareLabel => _hardware.Cpu + "\n" + _hardware.Gpu;
     public static bool IsWindows => OperatingSystem.IsWindows();
-    public static IReadOnlyList<string> WindowSizes => PlayerWindowSizing.Choices;
-    public int WindowSize
-    {
-        get => App.Settings.Prop.PlayerWindowSize is >= 1 and <= 4 ? App.Settings.Prop.PlayerWindowSize : 0;
-        set
-        {
-            if (value is < 0 or > 4) return;
-            App.Settings.Prop.PlayerWindowSize = value; App.Settings.SaveSetting(nameof(App.Settings.Prop.PlayerWindowSize));
-            OnPropertyChanged(); OnPropertyChanged(nameof(WindowPixelSummary));
-            NotifyLiveCommands();
-        }
-    }
-    public string WindowPixelSummary
-    {
-        get
-        {
-            var (width, height) = PlayerWindowSizing.Size(WindowSize);
-            return width == 0 ? "Roblox controls the window size." : $"{width * height:N0} pixels • {100.0 * width * height / (1920 * 1080):0}% of a 1080p window's pixels, before monitor fitting.";
-        }
-    }
-    private string _windowSizeStatus = App.State.Prop.LastWindowSizeResult;
-    public string WindowSizeStatus => _windowSizeStatus;
-    [RelayCommand] private void RefreshWindowSizeStatus()
-    {
-        try
-        {
-            if (new FileInfo(App.State.FileLocation).Length > 2097152) throw new InvalidDataException("Session state is too large.");
-            _windowSizeStatus = JsonSerializer.Deserialize<Models.Persistable.State>(File.ReadAllText(App.State.FileLocation))?.LastWindowSizeResult ?? "No window size result is available.";
-        }
-        catch (Exception error) when (error is IOException or JsonException or UnauthorizedAccessException)
-        { App.Logger.Warn(error, "Could not read window size result."); _windowSizeStatus = "Could not read the last window result. Refresh after the player starts."; }
-        OnPropertyChanged(nameof(WindowSizeStatus));
-    }
     public IReadOnlyList<HardwareTuning.Panel> DriverPanels => _hardware.Panels;
     public bool HasDriverPanel => DriverPanels.Count > 0;
     public HardwareTuning.Panel? SelectedPanel

@@ -55,16 +55,24 @@ internal sealed class WindowsSchedulingTarget : ISchedulingTarget
 internal sealed class SessionScheduling : IDisposable
 {
     private readonly ISchedulingTarget _target;
+    private readonly object _gate = new();
     private uint? _cpu;
     private int? _gpu;
     private PowerPolicy? _power;
     private uint _ownedPower;
     private bool _disposed;
     private bool _cpuSet, _gpuSet;
+    private bool _minimized, _backgroundCpuSet, _backgroundEnded;
+    private uint? _backgroundCpu;
+    private PowerPolicy? _backgroundPower;
+    private uint _backgroundOwnedPower;
+    internal bool BackgroundEnabled { get; }
+    internal string BackgroundResult { get; private set; } = "Enabled: active scheduling retained until all player windows are minimized.";
     internal string Result { get; private set; } = "";
-    internal SessionScheduling(ISchedulingTarget target, bool cpu, bool gpu, bool highQos, bool timers)
+    internal SessionScheduling(ISchedulingTarget target, bool cpu, bool gpu, bool highQos, bool timers, bool background = false)
     {
         _target = target;
+        BackgroundEnabled = background;
         var results = new List<string>();
         void Apply(string name, Func<bool> action)
         {
@@ -72,27 +80,27 @@ internal sealed class SessionScheduling : IDisposable
             catch (Exception error) when (error is Win32Exception or IOException or EntryPointNotFoundException or DllNotFoundException)
             { results.Add(name + ": unavailable — " + error.Message); App.Logger.Warn(error, name + " could not be applied."); }
         }
-        if (cpu) Apply("CPU priority", () => { _cpu = target.Cpu; if (_cpu is 0x80 or 0x100 or 0x8000) return false; target.Cpu = 0x8000; _cpuSet = true; if (target.Cpu != 0x8000) throw new IOException("The requested priority was not retained."); return true; });
-        if (gpu) Apply("GPU priority", () => { _gpu = target.Gpu; if (_gpu >= 3) return false; target.Gpu = 3; _gpuSet = true; if (target.Gpu != 3) throw new IOException("The requested GPU priority was not retained."); return true; });
+        if (cpu) Apply("CPU priority", () => { _cpu = target.Cpu; if (_cpu is 0x80 or 0x100 or 0x8000) return false; _cpuSet = true; target.Cpu = 0x8000; if (target.Cpu != 0x8000) throw new IOException("The requested priority was not retained."); return true; });
+        if (gpu) Apply("GPU priority", () => { _gpu = target.Gpu; if (_gpu >= 3) return false; _gpuSet = true; target.Gpu = 3; if (target.Gpu != 3) throw new IOException("The requested GPU priority was not retained."); return true; });
         void ApplyPower(string name, uint mechanism) => Apply(name, () =>
         {
             var current = target.Power;
             _power ??= current;
             if ((current.ControlMask & mechanism) == mechanism && (current.StateMask & mechanism) == 0) return false;
-            target.Power = new(1, current.ControlMask | mechanism, current.StateMask & ~mechanism);
             _ownedPower |= mechanism;
+            target.Power = new(1, current.ControlMask | mechanism, current.StateMask & ~mechanism);
             var applied = target.Power;
             if ((applied.ControlMask & mechanism) != mechanism || (applied.StateMask & mechanism) != 0) throw new IOException("Windows did not retain the requested power policy.");
             return true;
         });
         if (highQos) ApplyPower("Performance QoS", 1);
         if (timers) ApplyPower("Timer policy", 4);
-        Result = string.Join(" · ", results);
+        Result = results.Count == 0 ? "No foreground scheduling overrides selected." : string.Join(" · ", results);
     }
     internal static SessionScheduling? ForPlayer(int pid)
     {
         var settings = App.Settings.Prop;
-        if (!OperatingSystem.IsWindows() || !(settings.AboveNormalCpuPriority || settings.AboveNormalGpuPriority || settings.PreventEcoQoS || settings.HonorTimerRequests)) return null;
+        if (!OperatingSystem.IsWindows() || !(settings.AboveNormalCpuPriority || settings.AboveNormalGpuPriority || settings.PreventEcoQoS || settings.HonorTimerRequests || settings.BackgroundResourceSaver)) return null;
         WindowsSchedulingTarget? target = null;
         SessionScheduling? session = null;
         try
@@ -100,7 +108,7 @@ internal sealed class SessionScheduling : IDisposable
             target = new(pid);
             if (!Path.GetFileName(target.Image).Equals(App.RobloxPlayerAppName, StringComparison.OrdinalIgnoreCase) || target.Exited)
                 throw new IOException("The launched Roblox player is no longer available.");
-            session = new SessionScheduling(target, settings.AboveNormalCpuPriority, settings.AboveNormalGpuPriority, settings.PreventEcoQoS, settings.HonorTimerRequests);
+            session = new SessionScheduling(target, settings.AboveNormalCpuPriority, settings.AboveNormalGpuPriority, settings.PreventEcoQoS, settings.HonorTimerRequests, settings.BackgroundResourceSaver);
             App.State.Prop.LastSchedulingResult = $"Player {pid}: " + session.Result;
             App.State.SaveSetting(nameof(App.State.Prop.LastSchedulingResult));
             return session;
@@ -110,34 +118,137 @@ internal sealed class SessionScheduling : IDisposable
             if (session != null) session.Dispose(); else target?.Dispose(); App.Logger.Warn(error, "Player scheduling is unavailable.");
             App.State.Prop.LastSchedulingResult = "Unavailable: " + error.Message;
             App.State.SaveSetting(nameof(App.State.Prop.LastSchedulingResult));
+            if (settings.BackgroundResourceSaver)
+            {
+                App.State.Prop.LastBackgroundSaverResult = "Unavailable: " + error.Message;
+                App.State.SaveSetting(nameof(App.State.Prop.LastBackgroundSaverResult));
+            }
             return null;
+        }
+    }
+    internal bool SetMinimized(bool minimized)
+    {
+        lock (_gate)
+        {
+            if (_disposed || !BackgroundEnabled || _backgroundEnded) return false;
+            if (_target.Exited)
+            {
+                _backgroundEnded = true; _backgroundCpuSet = false; _backgroundOwnedPower = 0;
+                BackgroundResult = "Player exited; its session scheduling policy ended with it.";
+                return true;
+            }
+            if (_minimized == minimized && (minimized || (!_backgroundCpuSet && _backgroundOwnedPower == 0))) return false;
+            var results = new List<string>();
+            if (!minimized)
+            {
+                RestoreBackground(results);
+                _minimized = false;
+                BackgroundResult = "Active: " + string.Join(" · ", results.DefaultIfEmpty("active scheduling retained"));
+                return true;
+            }
+            if (_backgroundCpuSet || _backgroundOwnedPower != 0)
+            {
+                RestoreBackground(results);
+                if (_backgroundCpuSet || _backgroundOwnedPower != 0)
+                {
+                    BackgroundResult = "Previous background policy could not be restored: " + string.Join(" · ", results);
+                    return true;
+                }
+            }
+            _minimized = true;
+            ApplyBackground("CPU priority", () =>
+            {
+                _backgroundCpu = _target.Cpu;
+                if (_backgroundCpu is 0x40 or 0x4000) return false;
+                _backgroundCpuSet = true; _target.Cpu = 0x4000;
+                if (_target.Cpu != 0x4000) throw new IOException("Windows did not retain below-normal CPU priority.");
+                return true;
+            });
+            ApplyBackground("EcoQoS", () =>
+            {
+                var current = _target.Power;
+                _backgroundPower = current;
+                if ((current.ControlMask & current.StateMask & 1) != 0) return false;
+                _backgroundOwnedPower = 1; _target.Power = new(1, current.ControlMask | 1, current.StateMask | 1);
+                var applied = _target.Power;
+                if ((applied.ControlMask & applied.StateMask & 1) == 0) throw new IOException("Windows did not retain EcoQoS.");
+                return true;
+            });
+            BackgroundResult = "Minimized: " + string.Join(" · ", results);
+            return true;
+            void ApplyBackground(string name, Func<bool> action)
+            {
+                try { results.Add(name + (action() ? ": applied" : ": existing setting retained")); }
+                catch (Exception error) when (error is Win32Exception or IOException or EntryPointNotFoundException or DllNotFoundException)
+                { results.Add(name + ": unavailable — " + error.Message); App.Logger.Warn(error, "Background " + name + " could not be applied."); }
+            }
+        }
+    }
+    private void RestoreBackground(List<string> results)
+    {
+        if (_backgroundCpuSet && _backgroundCpu.HasValue) Restore("CPU priority", () =>
+        {
+            bool owned = _target.Cpu == 0x4000;
+            if (owned)
+            {
+                _target.Cpu = _backgroundCpu.Value;
+                if (_target.Cpu != _backgroundCpu.Value) throw new IOException("Windows did not retain the previous CPU priority.");
+            }
+            _backgroundCpuSet = false;
+            return owned;
+        });
+        if (_backgroundOwnedPower != 0 && _backgroundPower.HasValue) Restore("QoS", () =>
+        {
+            var current = _target.Power;
+            uint unchanged = _backgroundOwnedPower & current.ControlMask & current.StateMask;
+            if (unchanged != 0)
+            {
+                _target.Power = new(1, (current.ControlMask & ~unchanged) | (_backgroundPower.Value.ControlMask & unchanged),
+                    (current.StateMask & ~unchanged) | (_backgroundPower.Value.StateMask & unchanged));
+                var restored = _target.Power;
+                if (((restored.ControlMask ^ _backgroundPower.Value.ControlMask) & unchanged) != 0 ||
+                    ((restored.StateMask ^ _backgroundPower.Value.StateMask) & unchanged) != 0)
+                    throw new IOException("Windows did not retain the previous QoS policy.");
+            }
+            _backgroundOwnedPower = 0;
+            return unchanged != 0;
+        });
+        void Restore(string name, Func<bool> action)
+        {
+            try { results.Add(name + (action() ? ": restored" : ": external change retained")); }
+            catch (Exception error) when (error is Win32Exception or IOException or EntryPointNotFoundException or DllNotFoundException)
+            { results.Add(name + ": restore failed — " + error.Message); App.Logger.Warn(error, "Background " + name + " could not be restored."); }
         }
     }
     public void Dispose()
     {
-        if (_disposed) return;
-        _disposed = true;
-        try
+        lock (_gate)
         {
-            if (_target.Exited) return;
-            void Restore(Action action)
+            if (_disposed) return;
+            _disposed = true;
+            try
             {
-                try { action(); }
-                catch (Exception error) when (error is Win32Exception or IOException or EntryPointNotFoundException or DllNotFoundException)
-                { App.Logger.Warn(error, "A player scheduling setting could not be restored."); }
+                if (_target.Exited) return;
+                RestoreBackground([]);
+                void Restore(Action action)
+                {
+                    try { action(); }
+                    catch (Exception error) when (error is Win32Exception or IOException or EntryPointNotFoundException or DllNotFoundException)
+                    { App.Logger.Warn(error, "A player scheduling setting could not be restored."); }
+                }
+                if (_cpuSet && _cpu.HasValue) Restore(() => { if (_target.Cpu == 0x8000) _target.Cpu = _cpu.Value; });
+                if (_gpuSet && _gpu.HasValue) Restore(() => { if (_target.Gpu == 3) _target.Gpu = _gpu.Value; });
+                if (_ownedPower != 0 && _power.HasValue) Restore(() =>
+                {
+                    var current = _target.Power;
+                    uint unchanged = _ownedPower & current.ControlMask & ~current.StateMask;
+                    if (unchanged != 0)
+                        _target.Power = new(1, (current.ControlMask & ~unchanged) | (_power.Value.ControlMask & unchanged),
+                            (current.StateMask & ~unchanged) | (_power.Value.StateMask & unchanged));
+                });
             }
-            if (_cpuSet && _cpu.HasValue) Restore(() => { if (_target.Cpu == 0x8000) _target.Cpu = _cpu.Value; });
-            if (_gpuSet && _gpu.HasValue) Restore(() => { if (_target.Gpu == 3) _target.Gpu = _gpu.Value; });
-            if (_ownedPower != 0 && _power.HasValue) Restore(() =>
-            {
-                var current = _target.Power;
-                uint unchanged = _ownedPower & current.ControlMask & ~current.StateMask;
-                if (unchanged != 0)
-                    _target.Power = new(1, (current.ControlMask & ~unchanged) | (_power.Value.ControlMask & unchanged),
-                        (current.StateMask & ~unchanged) | (_power.Value.StateMask & unchanged));
-            });
+            catch (Win32Exception error) { App.Logger.Warn(error, "Player exited before scheduling cleanup."); }
+            finally { _target.Dispose(); }
         }
-        catch (Win32Exception error) { App.Logger.Warn(error, "Player exited before scheduling cleanup."); }
-        finally { _target.Dispose(); }
     }
 }

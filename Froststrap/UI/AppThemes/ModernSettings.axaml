@@ -140,7 +140,7 @@
                 </Grid>
             </ControlTemplate>
         </Setter></Style>
-    <!-- Template adapted from FluentAvalonia ToggleSwitchStyles.axaml (MIT); upstream license retained in LICENSES. -->
+    <!-- Template adapted from FluentAvalonia ToggleSwitchStyles.axaml (MIT); upstream license retained in THIRD_PARTY_NOTICES.txt. -->
     <!-- Retain Avalonia's switch input, drag and automation behavior. Only restyle its parts. -->
     <Style Selector="ToggleSwitch /template/ Border#OuterBorder, ToggleSwitch /template/ Border#SwitchKnobBounds">
         <Setter Property="Width" Value="48" />

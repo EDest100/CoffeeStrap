@@ -7,8 +7,6 @@ namespace Froststrap.Services;
 
 internal sealed class PlayerWindowSizing : IDisposable
 {
-    internal static IReadOnlyList<string> Choices { get; } = ["Roblox default", "1920 × 1080", "1600 × 900", "1280 × 720", "960 × 540"];
-    internal static (int Width, int Height) Size(int choice) => choice switch { 1 => (1920, 1080), 2 => (1600, 900), 3 => (1280, 720), 4 => (960, 540), _ => (0, 0) };
     [StructLayout(LayoutKind.Sequential)] internal record struct Rectangle(int Left, int Top, int Right, int Bottom)
     { internal int Width => Right - Left; internal int Height => Bottom - Top; }
     [StructLayout(LayoutKind.Sequential)] private struct MonitorInfo { internal uint Size; internal Rectangle Monitor, Work; internal uint Flags; }
@@ -78,44 +76,5 @@ internal sealed class PlayerWindowSizing : IDisposable
         try { Restore(); }
         catch (Win32Exception error) { App.Logger.Warn(error, "The original player window could not be restored."); }
         finally { _disposed = true; }
-    }
-    internal static async Task RunForPlayerAsync(int pid, int choice, CancellationToken cancellation)
-    {
-        var (width, height) = Size(choice);
-        if (!OperatingSystem.IsWindows() || width == 0) return;
-        PlayerWindowSizing? sizing = null;
-        void Report(string message)
-        {
-            App.State.Prop.LastWindowSizeResult = message;
-            App.State.SaveSetting(nameof(App.State.Prop.LastWindowSizeResult));
-        }
-        try
-        {
-            Report("Waiting for the launched player's window…");
-            using var process = Process.GetProcessById(pid);
-            if (!process.ProcessName.Equals(Path.GetFileNameWithoutExtension(App.RobloxPlayerAppName), StringComparison.OrdinalIgnoreCase))
-                throw new IOException("The launched process is not the Roblox player.");
-            nint handle = 0;
-            for (int attempt = 0; attempt < 40; attempt++)
-            {
-                cancellation.ThrowIfCancellationRequested(); process.Refresh();
-                if (process.HasExited) throw new IOException("The player exited before its window was available.");
-                handle = process.MainWindowHandle;
-                if (handle != 0) break;
-                await Task.Delay(750, cancellation).ConfigureAwait(false);
-            }
-            cancellation.ThrowIfCancellationRequested();
-            if (handle == 0) throw new IOException("No player window appeared within 30 seconds.");
-            sizing = new(handle, (uint)pid, width, height);
-            for (int attempt = 0; attempt < 20 && !sizing.Confirmed; attempt++) await Task.Delay(50, cancellation).ConfigureAwait(false);
-            if (!sizing.Confirmed) throw new IOException("Windows did not confirm the requested window size. The game may have changed it.");
-            var actual = sizing.ClientSize;
-            Report($"Player window: {actual.Width} × {actual.Height} client pixels. Applied once; your later resizing is respected.");
-            await Task.Delay(Timeout.InfiniteTimeSpan, cancellation).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
-        catch (Exception error) when (error is Win32Exception or IOException or InvalidOperationException or ArgumentException or EntryPointNotFoundException)
-        { App.Logger.Warn(error, "Player window size unavailable."); Report("Window size unavailable: " + error.Message); }
-        finally { sizing?.Dispose(); }
     }
 }

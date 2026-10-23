@@ -18,7 +18,7 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Build and verify single EXE
         shell: pwsh
-        run: ./tools/Build.ps1 -Publish
+        run: ./build/windows/Build.ps1 -Publish
       - uses: actions/upload-artifact@v7
         with:
           name: CoffeeStrap-win-x64

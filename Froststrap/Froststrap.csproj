@@ -47,6 +47,7 @@ SPDX-License-Identifier: MPL-2.0
   <!-- Resources needed by Avalonia -->
   <ItemGroup>
     <InternalsVisibleTo Include="CoffeeStrap.Preview" />
+    <InternalsVisibleTo Include="CoffeeStrap.ThemeBuilder" />
   </ItemGroup>
 
   <ItemGroup>
@@ -159,7 +160,7 @@ SPDX-License-Identifier: MPL-2.0
     <PropertyGroup>
       <_CryptoOutput>$([System.IO.Path]::GetFullPath('$(IntermediateOutputPath)compact-crypto', '$(MSBuildProjectDirectory)'))</_CryptoOutput>
     </PropertyGroup>
-    <Exec Command="pwsh -NoProfile -File &quot;$(MSBuildProjectDirectory)/../tools/Optimize-Crypto.ps1&quot; -Assembly &quot;@(_VerificationAssembly)&quot; -Linker &quot;$(PkgMicrosoft_NET_ILLink_Tasks)/tools/net/illink.dll&quot; -Output &quot;$(_CryptoOutput)&quot;" />
+    <Exec Command="pwsh -NoProfile -File &quot;$(MSBuildProjectDirectory)/../build/windows/Optimize-Crypto.ps1&quot; -Assembly &quot;@(_VerificationAssembly)&quot; -Linker &quot;$(PkgMicrosoft_NET_ILLink_Tasks)/tools/net/illink.dll&quot; -Output &quot;$(_CryptoOutput)&quot;" />
     <ItemGroup>
       <FilesToBundle Remove="@(_VerificationAssembly)" />
       <FilesToBundle Include="$(_CryptoOutput)/BouncyCastle.Cryptography.dll">
