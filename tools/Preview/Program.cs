@@ -72,6 +72,17 @@ internal static partial class Program
 
         try
         {
+            if (args.Contains("--portable-host-identity"))
+            {
+                File.WriteAllText(Path.Combine(_output, "host-identity.json"), JsonSerializer.Serialize(new
+                {
+                    processPath = Environment.ProcessPath, appBase = AppContext.BaseDirectory,
+                    entryAssembly = Assembly.GetEntryAssembly()!.Location, appAssembly = typeof(App).Assembly.Location,
+                    apartment = Thread.CurrentThread.GetApartmentState().ToString(), args,
+                    profileRoot = Froststrap.Paths.Base
+                }));
+                RenderRevisionSmoke(); SaveDiagnostics(); return 0;
+            }
             if (Array.IndexOf(args, "--coffee-theme-only") is int coffee && coffee >= 0 && args.Length > coffee + 1)
             {
                 VerifyCoffeeTheme(Path.GetFullPath(args[coffee + 1]));

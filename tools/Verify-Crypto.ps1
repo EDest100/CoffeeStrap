@@ -4,7 +4,8 @@ param([Parameter(Mandatory)][string]$Assembly)
 $ErrorActionPreference = 'Stop'
 $context = [Runtime.Loader.AssemblyLoadContext]::new('CoffeeStrap-Crypto-Probe', $true)
 try {
-    $library = $context.LoadFromAssemblyPath([IO.Path]::GetFullPath($Assembly))
+    $stream = [IO.MemoryStream]::new([IO.File]::ReadAllBytes([IO.Path]::GetFullPath($Assembly)))
+    try { $library = $context.LoadFromStream($stream) } finally { $stream.Dispose() }
     $signerType = $library.GetType('Org.BouncyCastle.Crypto.Signers.Ed25519Signer', $true)
     $keyType = $library.GetType('Org.BouncyCastle.Crypto.Parameters.Ed25519PublicKeyParameters', $true)
     $keyConstructor = $keyType.GetConstructor([type[]]@([byte[]],[int]))

@@ -34,6 +34,8 @@ Performance depends on the game and your hardware. I don't want to promise an FP
 
 Grab **CoffeeStrap.exe** from the [latest GitHub release](https://github.com/EDest100/CoffeeStrap/releases/latest). The current build is for **Windows x64** and needs the **[.NET 10 x64 runtime](https://dotnet.microsoft.com/en-us/download/dotnet/10.0/runtime)** installed. The app is one EXE; .NET is separate to keep the download smaller. You don't need the source code or the Espresso ZIP just to run the launcher.
 
+I changed the packaging to get the EXE down to **about 13.4 MB**, without cutting the UI, translations, renderers or tweaks. Everything the app needs is compressed inside that EXE. On startup it checks and unpacks its libraries into `%LOCALAPPDATA%\CoffeeStrap\RuntimeCache`, then runs in the same process. There are no DLLs to keep beside the download and no app libraries to download separately. The extracted files still total about 47.8 MB; Windows compresses that cache where supported. Settings and mods stay separate. You can clear the runtime cache while CoffeeStrap is closed, and it will rebuild on the next launch. More details are in the [packaging guide](docs/PORTABLE-PACKAGING.md).
+
 ## More Info
 
 I used AI while making CoffeeStrap to help remove features I thought were bloated, work on the UI and add more useful tweaks. The tweaks don't read or edit Roblox's process memory, inject code or shaders, patch game binaries, or bypass the FastFlag allowlist. They use supported flags, saved settings, local content replacements and optional Windows controls. That doesn't mean every feature will work in every game or on every GPU.

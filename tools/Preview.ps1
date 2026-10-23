@@ -11,7 +11,7 @@ try {
     Push-Location -LiteralPath $root
     try {
         $arguments = @('build','tools\Preview\CoffeeStrap.Preview.csproj','-c','Release',
-            '-p:UsedAvaloniaProducts=','-p:AppVersion=0.10.0','-v','minimal')
+            '-p:UsedAvaloniaProducts=','-p:AppVersion=0.10.1','-v','minimal')
         if ($NoRestore) { $arguments += '--no-restore' }
         & dotnet @arguments
         if ($LASTEXITCODE -ne 0) { throw 'Preview build failed.' }

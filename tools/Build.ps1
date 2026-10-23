@@ -13,7 +13,7 @@ try {
     if ($Publish) { $env:RUSTFLAGS += ' -C target-feature=+crt-static' }
     Push-Location -LiteralPath $projectRoot
     try {
-        $arguments = @('build','Froststrap\Froststrap.csproj','-c','Release','-p:AppVersion=0.10.0','-p:UsedAvaloniaProducts=','-v','minimal')
+        $arguments = @('build','Froststrap\Froststrap.csproj','-c','Release','-p:AppVersion=0.10.1','-p:UsedAvaloniaProducts=','-v','minimal')
         if ($Publish) {
             $destination = [IO.Path]::GetFullPath($PublishDirectory, $projectRoot)
             if (!$destination.StartsWith($projectRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Publish output must be inside this workspace.' }
@@ -30,11 +30,18 @@ try {
         if ($Publish) {
             & (Join-Path $PSScriptRoot 'Verify-Release.ps1') -Executable (Join-Path $stage 'CoffeeStrap.exe')
             & (Join-Path $PSScriptRoot 'Measure-Release.ps1') -Executable (Join-Path $stage 'CoffeeStrap.exe')
+            $compact = Join-Path $projectRoot '.build/compact-host/CoffeeStrap.exe'
+            & (Join-Path $PSScriptRoot 'Build-Portable.ps1') -InputExecutable (Join-Path $stage 'CoffeeStrap.exe') -OutputExecutable $compact -Version '0.10.1'
+            & (Join-Path $PSScriptRoot 'Verify-Release.ps1') -Executable $compact
+            & (Join-Path $PSScriptRoot 'Measure-Release.ps1') -Executable $compact
+            if ((Get-Item -LiteralPath $compact).Length -ge 20000000) { throw 'The release exceeded the 20 MB executable budget; inspect .build/release-size.json.' }
+            Copy-Item -LiteralPath $compact -Destination (Join-Path $stage 'CoffeeStrap.exe') -Force
             if ($StageOnly) {
                 & (Join-Path $PSScriptRoot 'Package.ps1') -PublishDirectory $stage
                 Write-Output 'Verified build staged in .build/publish. The current Release executable was left alone.'
                 return
             }
+            if (Get-Process -Name CoffeeStrap -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $exe }) { throw 'CoffeeStrap was opened during publishing. The verified build is staged in .build/publish; the running release was left alone.' }
             New-Item -ItemType Directory -Path $destination -Force | Out-Null
             Copy-Item -LiteralPath (Join-Path $stage 'CoffeeStrap.exe') -Destination $exe -Force
             Remove-Item -LiteralPath $stage -Recurse -Force

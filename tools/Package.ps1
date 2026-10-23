@@ -7,14 +7,16 @@ $publishRoot = [IO.Path]::GetFullPath($PublishDirectory, $projectRoot)
 if (!$publishRoot.StartsWith($projectRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Release must stay inside the workspace.' }
 $executable = Join-Path $publishRoot 'CoffeeStrap.exe'
 if (!(Test-Path -LiteralPath $executable)) { throw 'Publish CoffeeStrap before packaging.' }
-if ((Get-Item -LiteralPath $executable).VersionInfo.ProductVersion -notlike '0.10.0*') { throw 'Expected CoffeeStrap 0.10.0.' }
+if ((Get-Item -LiteralPath $executable).VersionInfo.ProductVersion -notlike '0.10.1*') { throw 'Expected CoffeeStrap 0.10.1.' }
 Copy-Item -LiteralPath (Join-Path $projectRoot 'LICENSE') -Destination $publishRoot -Force
 Copy-Item -LiteralPath (Join-Path $projectRoot 'branding\Discord-NOTICE.txt') -Destination $publishRoot -Force
 Copy-Item -LiteralPath (Join-Path $projectRoot 'LICENSES') -Destination $publishRoot -Recurse -Force
 $readme = @"
-CoffeeStrap 0.10.0 - Windows x64
+CoffeeStrap 0.10.1 - Windows x64
 
-Install the Microsoft .NET 10 x64 runtime, then run CoffeeStrap.exe. This smaller build excludes .NET. Runtime download: https://dotnet.microsoft.com/download/dotnet/10.0 . Bundled application-native libraries extract to the normal per-user .NET bundle cache. Keep the license notices with redistributed copies.
+Install the Microsoft .NET 10 x64 runtime, then run CoffeeStrap.exe. This build excludes .NET. Runtime download: https://dotnet.microsoft.com/download/dotnet/10.0 . Keep the license notices with redistributed copies.
+
+The EXE contains the complete application payload compressed with the Windows Compression API. It verifies and extracts its application libraries to %LOCALAPPDATA%\CoffeeStrap\RuntimeCache\<payload-hash>, then uses Microsoft's native .NET hosting API in the same process. No app DLLs are needed beside the EXE, and no application dependencies are downloaded. This reduces the download size, not the logical size of the extracted application. Only this cache is marked for NTFS compression when supported; other files and Windows settings are untouched. Missing or damaged cached files are repaired on startup. You may remove RuntimeCache while CoffeeStrap is closed; it is separate from settings/mods and will regenerate. Each distinct payload has its own cache, so old build caches may be removed after closing those builds. COFFEESTRAP_RUNTIME_CACHE can point to another absolute cache directory with an existing parent.
 
 Roblox downloads, network access and Windows system components are still required. This is the launcher, not an offline copy of Roblox. Preferences, mods and game downloads use your Windows user profile rather than this Release folder.
 
