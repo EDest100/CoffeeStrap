@@ -20,9 +20,8 @@ internal sealed partial class PlatformTweaksViewModel : NotifyPropertyChangedVie
     private string _hardwareStatus = "";
     public PlatformTweaksViewModel() : this(Hardware.Value, HardwareTuning.Detect, HardwareTuning.PlayerExecutable,
         info => { using var process = Process.Start(info); }) { }
-    internal PlatformTweaksViewModel(HardwareTuning.Snapshot initial, Func<HardwareTuning.Snapshot> detect, Func<string?> player, Action<ProcessStartInfo> launch,
-        Func<IReadOnlyList<RunningPlayerWindow>>? runningPlayers = null, Func<RunningPlayerWindow, bool>? currentWindow = null)
-    { _hardware = initial; _detect = detect; _player = player; _launch = launch; _runningPlayers = runningPlayers ?? RunningPlayerWindows.Find; _currentWindow = currentWindow ?? RunningPlayerWindows.IsCurrent; SetHardware(initial); }
+    internal PlatformTweaksViewModel(HardwareTuning.Snapshot initial, Func<HardwareTuning.Snapshot> detect, Func<string?> player, Action<ProcessStartInfo> launch)
+    { _hardware = initial; _detect = detect; _player = player; _launch = launch; SetHardware(initial); WatchUpscalerStatus(); }
     public string HardwareLabel => _hardware.Cpu + "\n" + _hardware.Gpu;
     public static bool IsWindows => OperatingSystem.IsWindows();
     public IReadOnlyList<HardwareTuning.Panel> DriverPanels => _hardware.Panels;

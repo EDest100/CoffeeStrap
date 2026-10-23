@@ -51,20 +51,13 @@
     </DataTemplate></ItemsControl.ItemTemplate></ItemsControl>
 </controls:CardExpander>
 <Button Content="Restore Roblox visuals" Command="{Binding ResetVisualsCommand}" HorizontalAlignment="Left"/>
-<controls:CardExpander Header="Fullscreen upscaler" Description="Experimental · render fewer pixels and let Windows scale the window across your monitor." IsExpanded="False" IsVisible="{Binding Platform.IsWindows}">
+<controls:CardExpander Header="Fullscreen upscaler" Description="Experimental · automatically render fewer pixels and scale Roblox across your monitor." IsExpanded="False" IsVisible="{Binding Platform.IsWindows}">
     <StackPanel Spacing="10">
-        <controls:OptionControl Header="Render scale" Description="Percentage of your monitor's width and height, with a minimum source size of 640 × 360. Lower values trade image detail for fewer rendered pixels."><ComboBox x:Name="UpscaleScalePicker" ItemsSource="{Binding Platform.UpscaleResolutions}" SelectedIndex="{Binding Platform.UpscaleResolutionIndex, Mode=TwoWay}" IsEnabled="{Binding Platform.CanChooseUpscale}"/></controls:OptionControl>
-        <controls:OptionControl Header="Running player" Description="Start Roblox in windowed mode, then refresh. Choose explicitly when multiple players are open." Classes="stacked">
-            <ComboBox x:Name="UpscalePlayerPicker" ItemsSource="{Binding Platform.UpscalePlayers}" SelectedItem="{Binding Platform.UpscalePlayer, Mode=TwoWay}" IsEnabled="{Binding Platform.CanChooseUpscale}" PlaceholderText="Refresh players…" HorizontalAlignment="Stretch"/>
-        </controls:OptionControl>
-        <WrapPanel>
-            <Button Content="Refresh players" Command="{Binding Platform.RefreshUpscalePlayersCommand}" Margin="0,0,8,6"/>
-            <Button Content="Start upscaling" Command="{Binding Platform.StartUpscalerCommand}" Margin="0,0,8,6"/>
-            <Button Content="Stop upscaling" Command="{Binding Platform.StopUpscalerCommand}" Margin="0,0,0,6"/>
-        </WrapPanel>
+        <controls:OptionControl Header="Enable automatic upscaling" Description="Applies to the active Roblox player launched through CoffeeStrap. Prepares its window automatically and resumes when you return from another app."><ToggleSwitch x:Name="UpscaleEnabledToggle" IsChecked="{Binding Platform.UpscaleEnabled, Mode=TwoWay}" IsEnabled="{Binding Platform.CanChooseUpscale}"/></controls:OptionControl>
+        <controls:OptionControl Header="Render scale" Description="Requested percentage of your monitor's width and height. Roblox's minimum window size may require a higher value. Lower sizes trade image detail for fewer rendered pixels."><ComboBox x:Name="UpscaleScalePicker" ItemsSource="{Binding Platform.UpscaleResolutions}" SelectedIndex="{Binding Platform.UpscaleResolutionIndex, Mode=TwoWay}" IsEnabled="{Binding Platform.UpscaleEnabled}"/></controls:OptionControl>
         <TextBlock Text="{Binding Platform.UpscaleStatus}" TextWrapping="Wrap" FontSize="12"/>
-        <TextBlock Text="Ctrl + Alt + U stops upscaling. Switching apps or closing this page also restores the owned window size and cursor state." TextWrapping="Wrap" FontSize="12" FontWeight="SemiBold"/>
-        <TextBlock Text="Windows 10+ with desktop composition. Supports mouse and keyboard in windowed games. Spatial scaling can soften the image and add latency; some games can block mirroring. Performance depends on the game and driver. Your desktop resolution, graphics 10 and effects override stay separate." TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
+        <TextBlock Text="Switching apps pauses upscaling; returning to Roblox resumes it. Ctrl + Alt + U stops it until you turn this feature off and on. Disable to restore your player window." TextWrapping="Wrap" FontSize="12" FontWeight="SemiBold"/>
+        <TextBlock Text="Windows 10+ with desktop composition and mouse/keyboard. CoffeeStrap temporarily prepares a smaller Roblox window for scaling. Spatial scaling can soften the image and add latency; some games can block mirroring. Your desktop resolution, graphics 10 and effects override stay separate." TextWrapping="Wrap" FontSize="12" Foreground="{DynamicResource TextFillColorSecondaryBrush}"/>
     </StackPanel>
 </controls:CardExpander>
 <controls:CardExpander Header="Texture resolution budget" Description="Use smaller existing mip levels for selected built-in texture groups." IsExpanded="False">

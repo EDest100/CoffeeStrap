@@ -13,7 +13,7 @@ try {
     if ($Publish) { $env:RUSTFLAGS += ' -C target-feature=+crt-static' }
     Push-Location -LiteralPath $projectRoot
     try {
-        $arguments = @('build','Froststrap\Froststrap.csproj','-c','Release','-p:AppVersion=0.11.0','-p:UsedAvaloniaProducts=','-v','minimal')
+        $arguments = @('build','Froststrap\Froststrap.csproj','-c','Release','-p:AppVersion=0.11.1','-p:UsedAvaloniaProducts=','-v','minimal')
         if ($Publish) {
             $destination = [IO.Path]::GetFullPath($PublishDirectory, $projectRoot)
             if (!$destination.StartsWith($projectRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Publish output must be inside this workspace.' }
@@ -31,7 +31,7 @@ try {
             & (Join-Path $PSScriptRoot 'Verify-Release.ps1') -Executable (Join-Path $stage 'CoffeeStrap.exe')
             & (Join-Path $PSScriptRoot 'Measure-Release.ps1') -Executable (Join-Path $stage 'CoffeeStrap.exe')
             $compact = Join-Path $projectRoot '.build/compact-host/CoffeeStrap.exe'
-            & (Join-Path $PSScriptRoot 'Build-Portable.ps1') -InputExecutable (Join-Path $stage 'CoffeeStrap.exe') -OutputExecutable $compact -Version '0.11.0'
+            & (Join-Path $PSScriptRoot 'Build-Portable.ps1') -InputExecutable (Join-Path $stage 'CoffeeStrap.exe') -OutputExecutable $compact -Version '0.11.1'
             & (Join-Path $PSScriptRoot 'Verify-Release.ps1') -Executable $compact
             & (Join-Path $PSScriptRoot 'Measure-Release.ps1') -Executable $compact
             if ((Get-Item -LiteralPath $compact).Length -ge 20000000) { throw 'The release exceeded the 20 MB executable budget; inspect .build/release-size.json.' }

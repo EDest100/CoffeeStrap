@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: MPL-2.0
 param([string]$InputExecutable = '.build/publish/CoffeeStrap.exe', [string]$PayloadDirectory,
       [string]$EntryAssembly = 'CoffeeStrap.dll', [string]$OutputExecutable = '.build/compact-host/CoffeeStrap.exe',
-      [string]$Version = '0.11.0', [ValidateSet(4,5)][int]$Algorithm = 5,
+      [string]$Version = '0.11.1', [ValidateSet(4,5)][int]$Algorithm = 5,
       [ValidateSet(0,1048576,16777216,67108864)][uint32]$BlockSize = 67108864,
       [string]$WorkDirectory = '.build/compact-host/build')
 $ErrorActionPreference = 'Stop'

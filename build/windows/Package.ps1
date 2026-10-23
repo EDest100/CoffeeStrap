@@ -7,7 +7,7 @@ $publishRoot = [IO.Path]::GetFullPath($PublishDirectory, $projectRoot)
 if (!$publishRoot.StartsWith($projectRoot + [IO.Path]::DirectorySeparatorChar, [StringComparison]::OrdinalIgnoreCase)) { throw 'Release must stay inside the workspace.' }
 $executable = Join-Path $publishRoot 'CoffeeStrap.exe'
 if (!(Test-Path -LiteralPath $executable)) { throw 'Publish CoffeeStrap before packaging.' }
-if ((Get-Item -LiteralPath $executable).VersionInfo.ProductVersion -notlike '0.11.0*') { throw 'Expected CoffeeStrap 0.11.0.' }
+if ((Get-Item -LiteralPath $executable).VersionInfo.ProductVersion -notlike '0.11.1*') { throw 'Expected CoffeeStrap 0.11.1.' }
 foreach ($notice in @('LICENSE','THIRD_PARTY_NOTICES.txt')) {
     Copy-Item -LiteralPath (Join-Path $projectRoot $notice) -Destination $publishRoot -Force
 }

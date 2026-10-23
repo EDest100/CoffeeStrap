@@ -62,6 +62,7 @@ namespace Froststrap.Models.Persistable
         public bool PreventEcoQoS { get; set; }
         public bool HonorTimerRequests { get; set; }
         public bool BackgroundResourceSaver { get; set; }
+        public bool UpscaleEnabled { get; set; }
         public int UpscaleResolutionPercent { get; set; } = 50;
         public string DefaultSkyPalette { get; set; } = "Roblox default";
         public bool SmoothWater { get; set; }

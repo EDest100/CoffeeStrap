@@ -53,13 +53,14 @@ internal sealed class RobloxSession(WatcherData watcher, HttpClient? client = nu
         using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
         var scheduling = SessionScheduling.ForPlayer(watcher.ProcessId);
         Integrations.WindowManipulation? window = null;
-        Task log = Task.CompletedTask, title = Task.CompletedTask, names = Task.CompletedTask, background = Task.CompletedTask;
+        Task log = Task.CompletedTask, title = Task.CompletedTask, names = Task.CompletedTask, background = Task.CompletedTask, upscaling = Task.CompletedTask;
         try
         {
             window = OperatingSystem.IsWindows() && App.Settings.Prop.ShowGameInTitle ? new Integrations.WindowManipulation(watcher.ProcessId) : null;
             title = window?.RunTitleAsync(() => Title, lifetime.Token) ?? Task.CompletedTask;
             names = window != null ? UpdateNamesAsync(lifetime.Token) : Task.CompletedTask;
             background = BackgroundMinimizeWatcher.RunForPlayerAsync(watcher.ProcessId, scheduling, lifetime.Token);
+            upscaling = PlayerUpscaleWatcher.RunForPlayerAsync(watcher.ProcessId, lifetime.Token);
             log = LastPlaceRecorder.ObserveAsync(watcher.LogFile, lifetime.Token, ReadLine);
             await Task.WhenAll(log, Task.Delay(Timeout.InfiniteTimeSpan, lifetime.Token));
         }
@@ -69,7 +70,7 @@ internal sealed class RobloxSession(WatcherData watcher, HttpClient? client = nu
             try { await lifetime.CancelAsync(); }
             finally
             {
-                try { await Task.WhenAll(log, title, names, background); } catch (OperationCanceledException) { }
+                try { await Task.WhenAll(log, title, names, background, upscaling); } catch (OperationCanceledException) { }
                 finally { window?.Dispose(); scheduling?.Dispose(); }
             }
         }

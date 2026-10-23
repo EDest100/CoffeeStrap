@@ -6,6 +6,8 @@ using System.Runtime.InteropServices;
 
 namespace Froststrap.Services;
 
+internal enum UpscalerStopReason { None, Requested, FocusLost, EmergencyHotkey, WindowChanged, DisplayChanged, TargetExited, Error }
+
 internal sealed class PlayerUpscaler : IDisposable
 {
     private const uint Layered = 0x80000, Transparent = 0x20, NoActivate = 0x8000000, ToolWindow = 0x80, Topmost = 8;
@@ -34,11 +36,13 @@ internal sealed class PlayerUpscaler : IDisposable
     private int _cursorWidth, _cursorHeight, _cursorHotX, _cursorHotY;
     private bool _magnifier, _cursorHidden, _clipped, _hotkey, _gameConfined;
     private volatile bool _active, _stop;
+    private int _stopReason;
     private string _status = "Starting the Windows compositor upscaler…";
     internal static bool IsSupported => OperatingSystem.IsWindowsVersionAtLeast(10);
     internal bool IsActive => _active;
     internal Task Completion => _completed.Task;
     internal string Status => Volatile.Read(ref _status);
+    internal UpscalerStopReason StopReason => (UpscalerStopReason)Volatile.Read(ref _stopReason);
     internal nint OverlayHandle => _overlay;
     internal Rectangle SourceBounds => _source;
     internal Rectangle DestinationBounds => _destination;
@@ -54,7 +58,7 @@ internal sealed class PlayerUpscaler : IDisposable
         if (!OperatingSystem.IsWindowsVersionAtLeast(10)) throw new PlatformNotSupportedException("The external upscaler requires Windows 10 or later.");
         if (percent is not (50 or 67 or 75)) throw new ArgumentOutOfRangeException(nameof(percent));
         cancellation.ThrowIfCancellationRequested();
-        if (Interlocked.CompareExchange(ref _running, 1, 0) != 0) throw new InvalidOperationException("An upscaler session is already running. Stop it before starting another.");
+        if (Interlocked.CompareExchange(ref _running, 1, 0) != 0) throw new InvalidOperationException("Another upscaler session is still active or finishing cleanup.");
         var session = new PlayerUpscaler(target, percent, fixture, guard, cancellation);
         try
         {
@@ -62,9 +66,14 @@ internal sealed class PlayerUpscaler : IDisposable
             session._thread = thread;
             thread.SetApartmentState(ApartmentState.STA);
             thread.Start();
-            return session._started.Task;
+            return AwaitStartedAsync(session);
         }
         catch { Interlocked.Exchange(ref _running, 0); throw; }
+    }
+    private static async Task<PlayerUpscaler> AwaitStartedAsync(PlayerUpscaler session)
+    {
+        try { return await session._started.Task.ConfigureAwait(false); }
+        catch { await session.Completion.ConfigureAwait(false); throw; }
     }
     private PlayerUpscaler(RunningPlayerWindow target, int percent, bool fixture, bool guard, CancellationToken cancellation)
     { _target = target; _percent = percent; _ownedFixture = fixture; _useNativeGuard = guard; _cancellation = cancellation; _eventProcedure = OnWindowEvent; _exitHandler = (_, _) => Dispose(); }
@@ -75,9 +84,9 @@ internal sealed class PlayerUpscaler : IDisposable
         if (_thread != Thread.CurrentThread && !_completed.Task.Wait(TimeSpan.FromSeconds(3)))
             Volatile.Write(ref _status, "Upscaler cleanup is still pending. Keep CoffeeStrap open until the session has stopped.");
     }
-    private void RequestStop(string status)
+    private void RequestStop(string status, UpscalerStopReason reason = UpscalerStopReason.Requested)
     {
-        if (_stop) return;
+        if (Interlocked.CompareExchange(ref _stopReason, (int)reason, 0) != 0) return;
         Volatile.Write(ref _status, status); _stop = true;
         nint window = _overlay;
         if (window != 0) PostMessage(window, StopMessage, 0, 0);
@@ -94,7 +103,8 @@ internal sealed class PlayerUpscaler : IDisposable
             _cancellation.ThrowIfCancellationRequested();
             previousDpi = SetThreadDpiAwarenessContext(-4);
             if (previousDpi == 0) ThrowLastError();
-            if (!TargetExists() || (!_ownedFixture && !RunningPlayerWindows.IsCurrent(_target))) throw new IOException("The selected Roblox window has closed or changed. Refresh players and try again.");
+            if (!TargetExists() || (!_ownedFixture && !RunningPlayerWindows.IsCurrent(_target))) throw new IOException("The launched Roblox window closed or changed before automatic upscaling could start.");
+            if (GetForegroundWindow() != _target.Handle) throw new IOException("Waiting for Roblox to become active before automatic upscaling.");
             _process = OpenProcess(0x101000, false, (uint)_target.ProcessId);
             if (_process == 0) ThrowLastError();
             Ensure(GetProcessTimes(_process, out long created, out _, out _, out _));
@@ -108,10 +118,11 @@ internal sealed class PlayerUpscaler : IDisposable
             int width = Math.Max(640, monitor.Monitor.Width * _percent / 100), height = Math.Max(360, monitor.Monitor.Height * _percent / 100);
             double ratio = (double)monitor.Monitor.Width / monitor.Monitor.Height;
             if ((double)width / height > ratio) height = (int)Math.Ceiling(width / ratio); else width = (int)Math.Ceiling(height * ratio);
-            _sizing = new(_target.Handle, (uint)_target.ProcessId, width, height);
-            for (int attempt = 0; attempt < 40 && !_sizing.Confirmed; attempt++)
+            _sizing = new(_target.Handle, (uint)_target.ProcessId, width, height, automaticPreparation: true);
+            for (int attempt = 0; attempt < 120 && !_sizing.Confirmed; attempt++)
             { _cancellation.ThrowIfCancellationRequested(); if (!TargetExists()) throw new IOException("The selected player closed while its render size was being changed."); Thread.Sleep(25); }
-            if (!_sizing.Confirmed) throw new IOException("Windows did not confirm the low-resolution player size.");
+            if (!_sizing.Confirmed) throw new IOException("Roblox did not confirm a smaller render size. " + _sizing.Diagnostics);
+            App.Logger.Info("Upscaler prepared player window: " + _sizing.Diagnostics);
             Ensure(GetWindowRect(_target.Handle, out _expectedWindow));
             Ensure(GetClientRect(_target.Handle, out Rectangle client));
             var origin = new Point(); Ensure(ClientToScreen(_target.Handle, ref origin));
@@ -137,8 +148,6 @@ internal sealed class PlayerUpscaler : IDisposable
             Ensure(RegisterHotKey(_overlay, 1, 0x4003, 0x55)); _hotkey = true;
             Ensure(GetClipCursor(out _oldClip));
             Ensure(MagInitialize()); _magnifier = true;
-            if (GetForegroundWindow() != _target.Handle && !SetForegroundWindow(_target.Handle))
-                throw new IOException("Windows did not allow the player to become active. Select Roblox and try again.");
             if (GetForegroundWindow() != _target.Handle) throw new IOException("The selected player is not the active window.");
             ShowWindow(_overlay, 4);
             Ensure(SetWindowPos(_overlay, -1, monitor.Monitor.Left, monitor.Monitor.Top, monitor.Monitor.Width, monitor.Monitor.Height, 0x10));
@@ -160,8 +169,8 @@ internal sealed class PlayerUpscaler : IDisposable
             while (!_stop)
             {
                 uint result = MsgWaitForMultipleObjects((uint)handles.Length, handles, false, uint.MaxValue, 0x04FF);
-                if (result == 0) { RequestStop("The selected player closed. Upscaler stopped."); break; }
-                if (guard != null && result == 1) { RequestStop("The cursor recovery helper exited unexpectedly. Upscaler stopped and restored the cursor."); break; }
+                if (result == 0) { RequestStop("The selected player closed. Upscaler stopped.", UpscalerStopReason.TargetExited); break; }
+                if (guard != null && result == 1) { RequestStop("The cursor recovery helper exited unexpectedly. Upscaler stopped and restored the cursor.", UpscalerStopReason.Error); break; }
                 if (result == uint.MaxValue) ThrowLastError();
                 while (PeekMessage(out var message, 0, 0, 0, 1))
                 {
@@ -173,6 +182,7 @@ internal sealed class PlayerUpscaler : IDisposable
         catch (Exception error) when (error is Win32Exception or IOException or InvalidOperationException or ArgumentException or ExternalException or OperationCanceledException
             or UnauthorizedAccessException or System.Security.SecurityException or NotSupportedException or DllNotFoundException or EntryPointNotFoundException)
         {
+            Interlocked.CompareExchange(ref _stopReason, (int)(error is OperationCanceledException ? UpscalerStopReason.Requested : UpscalerStopReason.Error), 0);
             Volatile.Write(ref _status, "Upscaler unavailable: " + error.Message);
             if (error is OperationCanceledException) _started.TrySetCanceled(_cancellation); else _started.TrySetException(error);
         }
@@ -203,9 +213,8 @@ internal sealed class PlayerUpscaler : IDisposable
             if (_magnifier && !MagUninitialize()) cleanup.Add("Windows did not close the magnification cursor session");
             if (_sizing != null)
             {
-                bool expectedRestore = _sizing.Confirmed;
                 _sizing.Dispose();
-                if (expectedRestore)
+                if (_sizing.RestorationRequested)
                 {
                     for (int attempt = 0; attempt < 40 && TargetExists() && !_sizing.OriginalRestored; attempt++) Thread.Sleep(25);
                     if (TargetExists() && !_sizing.OriginalRestored) cleanup.Add("the original player geometry was not confirmed");
@@ -224,19 +233,23 @@ internal sealed class PlayerUpscaler : IDisposable
     private void OnWindowEvent(nint hook, uint eventId, nint window, int objectId, int childId, uint eventThread, uint time)
     {
         if (!_active || _stop) return;
-        if (eventId == ForegroundEvent && window != _target.Handle) RequestStop("Upscaler stopped when focus left Roblox.");
+        if (eventId == ForegroundEvent && window != _target.Handle) RequestStop("Upscaler paused when focus left Roblox.", UpscalerStopReason.FocusLost);
         else if (window == _target.Handle && objectId == 0 && childId == 0)
         {
-            if (eventId == DestroyEvent) RequestStop("The selected player window closed. Upscaler stopped.");
+            if (eventId == DestroyEvent) RequestStop("The selected player window closed. Upscaler stopped.", UpscalerStopReason.TargetExited);
             else if (eventId == LocationEvent && (!GetWindowRect(window, out var rectangle) || rectangle != _expectedWindow))
-                RequestStop("Upscaler stopped after the player window changed. Your later window change is kept.");
+            {
+                if (IsIconic(window) || GetForegroundWindow() != window) RequestStop("Upscaler paused when Roblox was minimized or lost focus.", UpscalerStopReason.FocusLost);
+                else RequestStop("Upscaler stopped after the player window changed. Your later window change is kept.", UpscalerStopReason.WindowChanged);
+            }
         }
     }
     private void UpdateCursor()
     {
         if (!_active || _stop) return;
-        if (!TargetExists() || GetForegroundWindow() != _target.Handle) { RequestStop("Upscaler stopped when the selected player became unavailable or lost focus."); return; }
-        if (!GetWindowRect(_target.Handle, out var geometry) || geometry != _expectedWindow) { RequestStop("Upscaler stopped after the player window changed. Your later window change is kept."); return; }
+        if (!TargetExists()) { RequestStop("The selected player window closed. Upscaler stopped.", UpscalerStopReason.TargetExited); return; }
+        if (IsIconic(_target.Handle) || GetForegroundWindow() != _target.Handle) { RequestStop("Upscaler paused when Roblox was minimized or lost focus.", UpscalerStopReason.FocusLost); return; }
+        if (!GetWindowRect(_target.Handle, out var geometry) || geometry != _expectedWindow) { RequestStop("Upscaler stopped after the player window changed. Your later window change is kept.", UpscalerStopReason.WindowChanged); return; }
         if (!GetClipCursor(out var currentClip)) ThrowLastError();
         if (currentClip != _ownedClip)
         {
@@ -247,7 +260,7 @@ internal sealed class PlayerUpscaler : IDisposable
                 _gameConfined = false;
                 Ensure(ClipCursor(ref _ownedClip)); _clipped = true;
             }
-            else { RequestStop("Upscaler stopped after mouse confinement moved outside the selected player."); return; }
+            else { RequestStop("Upscaler stopped after mouse confinement moved outside the selected player.", UpscalerStopReason.WindowChanged); return; }
         }
         var info = new CursorInfo { Size = (uint)Marshal.SizeOf<CursorInfo>() };
         Ensure(GetCursorInfo(ref info));
@@ -313,12 +326,13 @@ internal sealed class PlayerUpscaler : IDisposable
         nint pointer = GetWindowLongPtr(window, -21);
         if (pointer != 0 && GCHandle.FromIntPtr(pointer).Target is PlayerUpscaler session)
         {
-            if (message is CloseMessage or HotkeyMessage or StopMessage) { session.RequestStop("Upscaler stopped. The original window is restored when it has not been changed."); return 0; }
-            if (message is 0x7E or 0x02E0) { session.RequestStop("Upscaler stopped after the display or DPI changed. Start again on the current monitor."); return 0; }
+            if (message == HotkeyMessage) { session.RequestStop("Upscaler stopped with Ctrl+Alt+U. Toggle the feature off and on to resume.", UpscalerStopReason.EmergencyHotkey); return 0; }
+            if (message is CloseMessage or StopMessage) { session.RequestStop("Upscaler stopped. The original window is restored when it has not been changed."); return 0; }
+            if (message is 0x7E or 0x02E0) { session.RequestStop("Upscaler stopped after the display or DPI changed.", UpscalerStopReason.DisplayChanged); return 0; }
             if (message == TimerMessage)
             {
                 try { session.UpdateCursor(); }
-                catch (Exception error) when (error is Win32Exception or IOException or ExternalException) { session.RequestStop("Upscaler stopped: " + error.Message); }
+                catch (Exception error) when (error is Win32Exception or IOException or ExternalException) { session.RequestStop("Upscaler stopped: " + error.Message, UpscalerStopReason.Error); }
                 return 0;
             }
             if (message == 0x0F)
@@ -328,10 +342,10 @@ internal sealed class PlayerUpscaler : IDisposable
                 {
                     GetClientRect(window, out var rectangle);
                     nint brush = CreateSolidBrush(window == session._cursorWindow ? 0xFF00FFu : 0);
-                    if (FillRect(dc, ref rectangle, brush) == 0) session.RequestStop("Upscaler stopped because Windows did not paint the presentation window.");
+                    if (FillRect(dc, ref rectangle, brush) == 0) session.RequestStop("Upscaler stopped because Windows did not paint the presentation window.", UpscalerStopReason.Error);
                     DeleteObject(brush);
                     if (window == session._cursorWindow && session._cursor != 0 && !DrawIconEx(dc, 0, 0, session._cursor, session._cursorWidth, session._cursorHeight, 0, 0, 3))
-                        session.RequestStop("Upscaler stopped because Windows did not render the mapped cursor.");
+                        session.RequestStop("Upscaler stopped because Windows did not render the mapped cursor.", UpscalerStopReason.Error);
                     EndPaint(window, ref paint);
                 }
                 return 0;
@@ -425,8 +439,8 @@ internal sealed class PlayerUpscaler : IDisposable
     [DllImport("user32.dll", SetLastError = true)] private static extern bool SetWindowPos(nint window, nint after, int x, int y, int width, int height, uint flags);
     [DllImport("user32.dll")] private static extern bool ShowWindow(nint window, int show);
     [DllImport("user32.dll", SetLastError = true)] private static extern bool DestroyWindow(nint window);
-    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(nint window);
     [DllImport("user32.dll")] private static extern nint GetForegroundWindow();
+    [DllImport("user32.dll")] private static extern bool IsIconic(nint window);
     [DllImport("user32.dll")] private static extern int GetSystemMetrics(int index);
     [DllImport("user32.dll", EntryPoint = "PostMessageW", SetLastError = true)] private static extern bool PostMessage(nint window, uint message, nuint wParam, nint lParam);
     [DllImport("user32.dll", EntryPoint = "PeekMessageW")] private static extern bool PeekMessage(out Message message, nint window, uint first, uint last, uint remove);
